@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crea Infantil - Centro Creativo</title>
+    <meta name="description" content="App de productividad para ilustradoras y escritoras de libros infantiles. Gestiona tareas, ideas y tu energía creativa.">
+    <meta name="theme-color" content="#1D9A8D">
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQ3JlYSBJbmZhbnRpbCIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNGRkZGRkYiLCJ0aGVtZV9jb2xvciI6IiMxRDlBOEQifQ==">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        :root {
+            --bg-color: #f8f9fa; --card-bg: #ffffff; --text-color: #212529;
+            --primary-color: #1D9A8D; --primary-light: #e8f5f4; --secondary-color: #f4a261;
+            --danger-color: #e76f51; --success-color: #2a9d8f; --border-color: #dee2e6;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08); --border-radius: 12px;
+        }
+        .dark-mode {
+            --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #e0e0e0;
+            --primary-light: #2c3e50; --border-color: #444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color); color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s; min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 15px; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; margin-bottom: 20px; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .header h1 { font-size: 24px; color: var(--primary-color); }
+        .focus-streak { font-size: 14px; background-color: var(--primary-light); color: var(--primary-color); padding: 5px 10px; border-radius: 20px; font-weight: 500;}
+        .theme-toggle { background: none; border: 1px solid var(--border-color); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .nav-tabs { display: flex; overflow-x: auto; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; -ms-overflow-style: none; scrollbar-width: none; }
+        .nav-tabs::-webkit-scrollbar { display: none; }
+        .nav-tab { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: none; border: none; color: var(--text-color); opacity: 0.7; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; border-bottom: 2px solid transparent; white-space: nowrap; }
+        .nav-tab:hover { opacity: 1; background-color: var(--primary-light); }
+        .nav-tab.active { opacity: 1; color: var(--primary-color); border-bottom-color: var(--primary-color); }
+        .tab-content { display: none; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card { background: var(--card-bg); border-radius: var(--border-radius); padding: 25px; margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--border-color); }
+        .card h3 { color: var(--primary-color); margin-bottom: 20px; font-size: 18px; }
+        
+        input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background-color: var(--bg-color); color: var(--text-color); outline: none; margin-bottom: 10px; transition: border-color .2s, box-shadow .2s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px var(--primary-light); }
+        button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-secondary { background-color: var(--secondary-color); color: white; }
+        .btn-subtle { background-color: var(--primary-light); color: var(--primary-color); border: 1px solid transparent; }
+        .btn-subtle.active { background-color: var(--primary-color); color: white; }
+        .btn-icon { background: none; padding: 5px; width: 32px; height: 32px; border: none; border-radius: 50%; }
+        .btn-icon:hover { background-color: var(--primary-light); }
+        .icon { display: inline-block; width: 1em; height: 1em; stroke-width: 0; stroke: currentColor; fill: currentColor; }
+        svg { fill: currentColor; }
+
+        .item-list { max-height: 250px; overflow-y: auto; padding-right: 5px; }
+        .list-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 8px; margin-bottom: 8px; transition: background-color 0.2s, opacity 0.3s; }
+        .list-item:hover { background-color: var(--bg-color); }
+        .list-item.completed { opacity: 0.6; }
+        .list-item.completed .item-text { text-decoration: line-through; }
+        .list-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary-color); cursor: pointer; flex-shrink: 0; }
+        .item-text-content { flex: 1; min-width: 0; }
+        .item-text { font-size: 15px; word-break: break-word; }
+        .item-details { font-size: 12px; opacity: 0.7; }
+        .item-actions { margin-left: auto; display:flex; gap: 5px; flex-shrink: 0; }
+        .divider { border: 0; height: 1px; background-color: var(--border-color); margin: 20px 0; }
+        
+        #inboxList .list-item { align-items: flex-start; }
+        .inbox-text { word-break: break-word; }
+        .inbox-link { display: block; margin-top: 5px; color: var(--secondary-color); text-decoration: none; font-weight: 500; word-break: break-all; }
+        
+        .report-controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .chart-container { position: relative; height: 280px; width: 100%; margin-bottom: 30px; }
+        #reportSummary { margin-top: 20px; line-height: 1.6; }
+        #reportSummary strong { color: var(--primary-color); }
+        #reportSummary ul { padding-left: 20px; margin-top: 10px; }
+
+        .achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; }
+        .achievement-card { padding: 15px; border: 1px solid var(--border-color); border-radius: 8px; text-align: center; transition: all 0.3s ease; }
+        .achievement-card .icon { font-size: 40px; }
+        .achievement-card p { font-size: 12px; font-weight: 500; margin-top: 5px; }
+        .achievement-card.locked { opacity: 0.4; filter: grayscale(1); }
+        .achievement-card.unlocked { color: var(--secondary-color); border-color: var(--secondary-color); transform: scale(1.05); }
+
+        .notification { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: #2c3e50; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 1001; transition: bottom 0.5s ease; pointer-events: none; }
+        .notification.show { bottom: 20px; }
+        
+        #currentActivity { display: none; text-align: center; }
+        #activityForm, #currentActivity { padding: 15px; background: var(--primary-light); border-radius: var(--border-radius); }
+    </style>
+</head>
+<body>
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+        <symbol id="icon-tasks" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/><path d="m9 17-3-3 1.41-1.41L9 14.17l4.59-4.59L15 11l-6 6z"/></symbol>
+        <symbol id="icon-inbox" viewBox="0 0 24 24"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 12h-4c0 1.66-1.34 3-3 3s-3-1.34-3-3H5V5h14v10z"/></symbol>
+        <symbol id="icon-activities" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14h2V7h-2v9zm1-11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" clip-rule="evenodd" fill-rule="evenodd"/></symbol>
+        <symbol id="icon-report" viewBox="0 0 24 24"><path d="M4 9h4v11H4zm6 3h4v8h-4zm6-6h4v14h-4z"/></symbol>
+        <symbol id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+        <symbol id="icon-stop" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></symbol>
+        <symbol id="icon-add" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+        <symbol id="icon-delete" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+        <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M9.37 5.51A7.35 7.35 0 0 0 9.1 7.5c0 4.08 3.32 7.4 7.4 7.4.68 0 1.35-.09 1.99-.27C17.45 18.2 14.9 20 12 20c-4.41 0-8-3.59-8-8 0-2.91 1.8-5.45 4.37-6.49z"/></symbol>
+        <symbol id="icon-sun" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.03-3.63 2.94-6.54 6.57-6.57L10 4.41c-4.22.36-7.64 3.78-8 8zM20 13h2c-.36-4.22-3.78-7.64-8-8v2.02c3.63.03 6.54 2.94 6.57 6.57L20 13z"/></symbol>
+        <symbol id="icon-google" viewBox="0 0 48 48"><path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.8l-7.11-5.52c-2.16 1.45-4.92 2.3-8.78 2.3-6.68 0-12.35-4.48-14.38-10.48H2.1v5.7C6.02 42.66 14.48 48 24 48z"/><path fill="#FBBC05" d="M9.62 28.18c-.48-1.45-.76-3-.76-4.68s.28-3.23.76-4.68V13.1H2.1c-1.4 2.78-2.23 5.92-2.23 9.22s.84 6.44 2.23 9.22l7.52-5.72z"/><path fill="#EA4335" d="M24 9.48c3.52 0 6.62 1.22 9.09 3.52l6.29-6.29C35.91 2.82 30.46 0 24 0 14.48 0 6.02 5.34 2.1 13.1l7.52 5.72C11.65 13.96 17.32 9.48 24 9.48z"/></symbol>
+        <symbol id="icon-trophy" viewBox="0 0 24 24"><path d="M19 4h-2.5l-1-2h-7l-1 2H5c-1.1 0-2 .9-2 2v13c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/><path d="M12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></symbol>
+        <symbol id="icon-forward" viewBox="0 0 24 24"><path d="m12 8-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14l-6-6z"/></symbol>
+    </svg>
+
+    <div class="container">
+        <header class="header">
+            <div class="header-left">
+                <h1>Crea Infantil</h1>
+                <div id="focusStreak" class="focus-streak" title="Días seguidos registrando actividad">🔥 Racha de 0 días</div>
+            </div>
+            <button class="theme-toggle" id="theme-toggle" title="Cambiar tema">
+                <svg class="icon"><use href="#icon-moon"/></svg>
+            </button>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="tasks"><svg class="icon"><use href="#icon-tasks"/></svg> Tareas</button>
+            <button class="nav-tab" data-tab="inbox"><svg class="icon"><use href="#icon-inbox"/></svg> Bandeja de Ideas</button>
+            <button class="nav-tab" data-tab="activities"><svg class="icon"><use href="#icon-activities"/></svg> Cronometrar</button>
+            <button class="nav-tab" data-tab="reports"><svg class="icon"><use href="#icon-report"/></svg> Reportes y Logros</button>
+        </nav>
+
+        <div class="tab-content active" id="tasks">
+            <div class="card">
+                <h3>📝 Tareas Pendientes</h3>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="taskInput" placeholder="Ej: Bocetar los personajes principales">
+                    <button class="btn-primary" id="addTaskBtn"><svg class="icon"><use href="#icon-add"/></svg></button>
+                </div>
+                <div class="item-list" id="taskListPending"></div>
+                <hr class="divider" id="completed-divider" style="display:none;">
+                <h3 id="completed-title" style="display:none; margin-top:20px;">✅ Tareas Completadas</h3>
+                <div class="item-list" id="taskListCompleted"></div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="inbox">
+            <div class="card">
+                <h3>💡 Bandeja de Ideas Rápidas</h3>
+                <p class="item-details" style="margin-bottom:15px;">Captura aquí todas esas ideas, enlaces o pensamientos que se te cruzan. ¡Libera tu mente!</p>
+                <textarea id="inboxText" rows="3" placeholder="Escribe tu idea, un fragmento de texto..."></textarea>
+                <input type="text" id="inboxUrl" placeholder="Pega un enlace (opcional)">
+                <button class="btn-primary" id="addInboxBtn" style="width:100%"><svg class="icon"><use href="#icon-add"/></svg> Guardar Idea</button>
+            </div>
+            <div class="card">
+                <h3>📦 Ideas Guardadas</h3>
+                <div class="item-list" id="inboxList"></div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="activities">
+            <div class="card">
+                <h3>⏱️ Cronometrar Actividad</h3>
+                <div id="activityForm">
+                    <select id="activityType">
+                        <option value="🎨 Ilustración">🎨 Ilustración</option>
+                        <option value="📝 Escritura">📝 Escritura</option>
+                        <option value="📐 Maquetación">📐 Maquetación</option>
+                        <option value="💡 Brainstorming">💡 Brainstorming</option>
+                        <option value="📚 Investigación">📚 Investigación</option>
+                        <option value="📱 Redes Sociales">📱 Redes Sociales</option>
+                    </select>
+                    <input type="text" id="activityDescription" placeholder="¿En qué estás trabajando específicamente?">
+                    <button class="btn-primary" id="startActivityBtn" style="width:100%;"><svg class="icon"><use href="#icon-play"/></svg> Empezar</button>
+                </div>
+                <div id="currentActivity">
+                    <p id="currentActivityInfo" style="font-weight:500;"></p>
+                    <div id="activityTimer" style="font-size: 2.5em; font-weight: 700; color: var(--primary-color); margin: 10px 0;">00:00:00</div>
+                    <button class="btn-danger" id="stopActivityBtn" style="width:100%; margin-top:15px;"><svg class="icon"><use href="#icon-stop"/></svg> Detener y Registrar</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📋 Actividades Registradas Hoy</h3>
+                <div class="item-list" id="activityList"></div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="reports">
+            <div class="card">
+                <h3>📊 Tu Productividad</h3>
+                <div class="report-controls">
+                    <button class="btn-subtle active" id="report-week">Semana</button>
+                    <button class="btn-subtle" id="report-month">Mes</button>
+                    <button class="btn-subtle" id="report-year">Año</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="activityDistributionChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="dailyProgressChart"></canvas>
+                </div>
+                <div id="reportSummary"></div>
+            </div>
+            <div class="card">
+                <h3>🏆 ¡Mis Logros!</h3>
+                <p class="item-details" style="margin-bottom:15px;">Completa objetivos para desbloquear premios y mantener la motivación.</p>
+                <div class="achievements-grid" id="achievementsGrid"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+
+    <script>
+    // --- ESTADO Y VARIABLES GLOBALES ---
+    let tasks = [];
+    let activities = [];
+    let inboxItems = [];
+    let achievements = {};
+    let currentTheme = 'light';
+    let activityDistributionChart = null;
+    let dailyProgressChart = null;
+    let activityTimer = { interval: null, startTime: null };
+
+    // --- DEFINICIONES ---
+    const ACHIEVEMENT_LIST = {
+        firstTask: { title: '¡Primer Paso!', icon: '📝', description: 'Completa tu primera tarea.', condition: () => tasks.filter(t => t.completed).length >= 1 },
+        tenTasks: { title: 'Decena Cumplida', icon: '✍️', description: 'Completa 10 tareas.', condition: () => tasks.filter(t => t.completed).length >= 10 },
+        firstHour: { title: 'Artista Enfocada', icon: '🎨', description: 'Registra tu primera hora de trabajo.', condition: () => activities.reduce((sum, a) => sum + a.duration, 0) >= 60 },
+        fiveHours: { title: 'Maestra del Tiempo', icon: '🕰️', description: 'Registra 5 horas de trabajo.', condition: () => activities.reduce((sum, a) => sum + a.duration, 0) >= 300 },
+        inboxZero: { title: 'Mente Clara', icon: '🧘‍♀️', description: 'Vacía tu bandeja de ideas.', condition: (justDeleted) => justDeleted && inboxItems.length === 0 },
+        streak3: { title: 'Constancia', icon: '🔥', description: 'Mantén una racha de 3 días de actividad.', condition: () => calculateFocusStreak() >= 3 },
+        streak7: { title: 'Imparable', icon: '🚀', description: 'Mantén una racha de 7 días de actividad.', condition: () => calculateFocusStreak() >= 7 },
+    };
+
+    // --- INICIALIZACIÓN ---
+    document.addEventListener('DOMContentLoaded', () => {
+        migrateOldData();
+        loadState();
+        setupEventListeners();
+        applyTheme(currentTheme);
+        saveAndRenderAll(); // Carga inicial de toda la UI
+    });
+
+    function migrateOldData() {
+        if (localStorage.getItem('tasks') && !localStorage.getItem('tasks_v2')) {
+            localStorage.setItem('tasks_v2', localStorage.getItem('tasks'));
+            localStorage.setItem('activities_v2', localStorage.getItem('activities'));
+            showNotification('Tus datos antiguos han sido recuperados.', 4000);
+        }
+    }
+
+    function loadState() {
+        tasks = JSON.parse(localStorage.getItem('tasks_v2')) || [];
+        activities = JSON.parse(localStorage.getItem('activities_v2')) || [];
+        inboxItems = JSON.parse(localStorage.getItem('inboxItems_v2')) || [];
+        achievements = JSON.parse(localStorage.getItem('achievements_v2')) || {};
+        currentTheme = localStorage.getItem('theme_v2') || 'light';
+    }
+
+    function setupEventListeners() {
+        document.querySelectorAll('.nav-tab').forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
+        document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+        document.getElementById('addTaskBtn').addEventListener('click', addTask);
+        document.getElementById('taskInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
+        document.getElementById('addInboxBtn').addEventListener('click', addInboxItem);
+        document.getElementById('startActivityBtn').addEventListener('click', startActivity);
+        document.getElementById('stopActivityBtn').addEventListener('click', stopActivity);
+        document.querySelectorAll('.report-controls button').forEach(button => {
+            button.addEventListener('click', (e) => renderReport(e.target.id.split('-')[1]));
+        });
+    }
+
+    // --- FUNCIONES DE RENDERIZADO Y GUARDADO ---
+    function saveAndRenderAll() {
+        localStorage.setItem('tasks_v2', JSON.stringify(tasks));
+        localStorage.setItem('activities_v2', JSON.stringify(activities));
+        localStorage.setItem('inboxItems_v2', JSON.stringify(inboxItems));
+        checkAchievements();
+        localStorage.setItem('achievements_v2', JSON.stringify(achievements));
+        
+        loadTasks();
+        loadActivities();
+        loadInboxItems();
+        updateFocusStreak();
+        renderAchievements();
+        
+        if (document.getElementById('reports').classList.contains('active')) {
+            const activePeriod = document.querySelector('.report-controls .active')?.id.split('-')[1] || 'week';
+            renderReport(activePeriod);
+        }
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        document.getElementById(tabName).classList.add('active');
+        if (tabName === 'reports') {
+            renderReport('week');
+        }
+    }
+
+    // --- TEMA ---
+    function applyTheme(theme) {
+        document.body.classList.toggle('dark-mode', theme === 'dark');
+        document.getElementById('theme-toggle').innerHTML = theme === 'dark' 
+            ? '<svg class="icon"><use href="#icon-sun"/></svg>' 
+            : '<svg class="icon"><use href="#icon-moon"/></svg>';
+    }
+    function toggleTheme() {
+        currentTheme = (currentTheme === 'light') ? 'dark' : 'light';
+        localStorage.setItem('theme_v2', currentTheme);
+        applyTheme(currentTheme);
+        if (document.getElementById('reports').classList.contains('active')) {
+            renderReport(document.querySelector('.report-controls .active')?.id.split('-')[1] || 'week');
+        }
+    }
+
+    // --- TAREAS ---
+    function addTask() {
+        const input = document.getElementById('taskInput');
+        if (!input.value.trim()) return;
+        tasks.unshift({ id: Date.now(), text: input.value, completed: false, createdAt: new Date().toISOString() });
+        input.value = '';
+        saveAndRenderAll();
+        showNotification('Tarea agregada ✅');
+    }
+
+    function toggleTask(id) {
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+            task.completed = !task.completed;
+            task.completedAt = task.completed ? new Date().toISOString() : null;
+        }
+        saveAndRenderAll();
+    }
+
+    function deleteTask(id) {
+        tasks = tasks.filter(t => t.id !== id);
+        saveAndRenderAll();
+    }
+    
+    function loadTasks() {
+        const pendingList = document.getElementById('taskListPending');
+        const completedList = document.getElementById('taskListCompleted');
+        pendingList.innerHTML = '';
+        completedList.innerHTML = '';
+
+        const pendingTasks = tasks.filter(t => !t.completed);
+        const completedTasks = tasks.filter(t => t.completed);
+
+        if (pendingTasks.length === 0) {
+            pendingList.innerHTML = '<p style="text-align:center; opacity:0.7; padding: 20px 0;">¡No tienes tareas pendientes! ¡Buen trabajo!</p>';
+        } else {
+            pendingTasks.forEach(task => pendingList.appendChild(createTaskElement(task)));
+        }
+
+        const divider = document.getElementById('completed-divider');
+        const completedTitle = document.getElementById('completed-title');
+        if (completedTasks.length > 0) {
+            divider.style.display = 'block';
+            completedTitle.style.display = 'block';
+            completedTasks.forEach(task => completedList.appendChild(createTaskElement(task)));
+        } else {
+            divider.style.display = 'none';
+            completedTitle.style.display = 'none';
+        }
+    }
+
+    function createTaskElement(task) {
+        const item = document.createElement('div');
+        item.className = `list-item ${task.completed ? 'completed' : ''}`;
+        item.innerHTML = `
+            <input type="checkbox" onchange="toggleTask(${task.id})" ${task.completed ? 'checked' : ''}>
+            <div class="item-text-content"><span class="item-text">${task.text}</span></div>
+            <div class="item-actions">
+                <button class="btn-icon" onclick="deleteTask(${task.id})"><svg class="icon" title="Eliminar"><use href="#icon-delete"/></svg></button>
+            </div>`;
+        return item;
+    }
+
+    // --- BANDEJA DE IDEAS ---
+    function addInboxItem() {
+        const text = document.getElementById('inboxText').value.trim();
+        const url = document.getElementById('inboxUrl').value.trim();
+        if (!text && !url) return;
+        
+        inboxItems.unshift({ id: Date.now(), text, url, createdAt: new Date().toISOString() });
+        document.getElementById('inboxText').value = '';
+        document.getElementById('inboxUrl').value = '';
+        saveAndRenderAll();
+        showNotification('Idea guardada en la bandeja ✨');
+    }
+
+    function loadInboxItems() {
+        const list = document.getElementById('inboxList');
+        list.innerHTML = '';
+        if (inboxItems.length === 0) {
+            list.innerHTML = '<p style="text-align:center; opacity:0.7; padding: 20px 0;">Tu bandeja de ideas está vacía. ¡Mente despejada!</p>';
+            return;
+        }
+
+        inboxItems.forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'list-item';
+            el.innerHTML = `
+                <div class="item-text-content">
+                    <p class="inbox-text">${item.text}</p>
+                    ${item.url ? `<a href="${item.url.startsWith('http') ? '' : '//'}${item.url}" target="_blank" class="inbox-link">${item.url}</a>` : ''}
+                    <p class="item-details">${new Date(item.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div class="item-actions">
+                    <button class="btn-icon" title="Convertir en Tarea" onclick="convertInboxToTask(${item.id})"><svg class="icon"><use href="#icon-forward"/></svg></button>
+                    <button class="btn-icon" title="Eliminar Idea" onclick="deleteInboxItem(${item.id})"><svg class="icon"><use href="#icon-delete"/></svg></button>
+                </div>`;
+            list.appendChild(el);
+        });
+    }
+
+    function deleteInboxItem(id) {
+        inboxItems = inboxItems.filter(i => i.id !== id);
+        checkAchievements(true); // Check for inbox zero achievement
+        saveAndRenderAll();
+    }
+
+    function convertInboxToTask(id) {
+        const item = inboxItems.find(i => i.id === id);
+        if (item) {
+            let taskText = item.text;
+            if (item.url) taskText += ` (ver: ${item.url})`;
+            tasks.unshift({ id: Date.now(), text: taskText, completed: false, createdAt: new Date().toISOString() });
+            deleteInboxItem(id); // This will call saveAndRenderAll
+            showNotification('Idea convertida en tarea 👍');
+            switchTab('tasks');
+        }
+    }
+
+    // --- CRONOMETRAR ACTIVIDAD ---
+    function startActivity() {
+        const type = document.getElementById('activityType').value;
+        const description = document.getElementById('activityDescription').value.trim();
+        if(!description) { showNotification('Por favor, añade una descripción.'); return; }
+
+        activityTimer.startTime = Date.now();
+        document.getElementById('activityForm').style.display = 'none';
+        document.getElementById('currentActivity').style.display = 'block';
+        document.getElementById('currentActivityInfo').textContent = `${type}: ${description}`;
+        activityTimer.interval = setInterval(updateActivityTimer, 1000);
+    }
+
+    function updateActivityTimer() {
+        const elapsed = Math.floor((Date.now() - activityTimer.startTime) / 1000);
+        const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
+        const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
+        const s = (elapsed % 60).toString().padStart(2, '0');
+        document.getElementById('activityTimer').textContent = `${h}:${m}:${s}`;
+    }
+
+    function stopActivity() {
+        clearInterval(activityTimer.interval);
+        const duration = Math.max(1, Math.round((Date.now() - activityTimer.startTime) / (1000 * 60)));
+        const type = document.getElementById('activityType').value;
+        const description = document.getElementById('activityDescription').value.trim();
+        
+        activities.unshift({ id: Date.now(), type, description, duration, date: new Date().toISOString().split('T')[0] });
+        
+        document.getElementById('activityForm').style.display = 'block';
+        document.getElementById('currentActivity').style.display = 'none';
+        document.getElementById('activityDescription').value = '';
+        saveAndRenderAll();
+        showNotification(`Actividad de ${duration} min registrada 👍`);
+    }
+
+    function loadActivities() {
+        const list = document.getElementById('activityList');
+        list.innerHTML = '';
+        const today = new Date().toISOString().split('T')[0];
+        const todayActivities = activities.filter(a => a.date === today);
+
+        if(todayActivities.length === 0) {
+            list.innerHTML = '<p style="text-align:center; opacity:0.7; padding: 20px 0;">Aún no has registrado actividades hoy.</p>';
+            return;
+        }
+
+        todayActivities.forEach(act => {
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.innerHTML = `
+                <div class="item-text-content">
+                    <span class="item-text">${act.type}: ${act.description}</span>
+                    <span class="item-details">${act.duration} minutos - ${new Date(act.id).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                </div>
+                <div class="item-actions">
+                    <button class="btn-icon" title="Añadir a Google Calendar" onclick="createGoogleCalendarEvent(${act.id})">
+                        <svg class="icon" style="width: 20px; height: 20px;"><use href="#icon-google"/></svg>
+                    </button>
+                </div>`;
+            list.prepend(item);
+        });
+    }
+
+    function createGoogleCalendarEvent(activityId) {
+        const activity = activities.find(a => a.id === activityId);
+        if (!activity) return;
+
+        const startTime = new Date(activity.id);
+        const endTime = new Date(startTime.getTime() + activity.duration * 60000);
+
+        function formatGCDate(date) { return date.toISOString().replace(/-|:|\.\d{3}/g, ''); }
+
+        const url = new URL('https://www.google.com/calendar/render');
+        url.searchParams.append('action', 'TEMPLATE');
+        url.searchParams.append('text', `${activity.type}: ${activity.description}`);
+        url.searchParams.append('dates', `${formatGCDate(startTime)}/${formatGCDate(endTime)}`);
+        url.searchParams.append('details', `Actividad registrada en Crea Infantil.\nDuración: ${activity.duration} minutos.`);
+        window.open(url, '_blank');
+    }
+
+    // --- REPORTES Y GRÁFICOS ---
+    function renderReport(period) {
+        document.querySelectorAll('.report-controls button').forEach(b => b.classList.remove('active'));
+        document.getElementById(`report-${period}`).classList.add('active');
+
+        const now = new Date();
+        const textColor = getComputedStyle(document.body).getPropertyValue('--text-color');
+        const gridColor = getComputedStyle(document.body).getPropertyValue('--border-color');
+
+        // 1. Filtrar datos para el período
+        let { periodActivities, periodTasksCompleted, labels, timeUnit } = getPeriodData(period);
+
+        // 2. Preparar datos para los gráficos
+        const activityDistributionData = periodActivities.reduce((acc, curr) => {
+            acc[curr.type] = (acc[curr.type] || 0) + curr.duration;
+            return acc;
+        }, {});
+
+        const dailyProgressData = labels.map(label => {
+            const dateStr = label.toISOString().split('T')[0];
+            const time = periodActivities
+                .filter(a => a.date.startsWith(dateStr))
+                .reduce((sum, a) => sum + a.duration, 0);
+            const taskCount = periodTasksCompleted
+                .filter(t => t.completedAt.startsWith(dateStr))
+                .length;
+            return { time, taskCount };
+        });
+
+        // 3. Renderizar gráfico de distribución de tiempo
+        const doughnutCtx = document.getElementById('activityDistributionChart').getContext('2d');
+        if (activityDistributionChart) activityDistributionChart.destroy();
+        if (periodActivities.length > 0) {
+            activityDistributionChart = new Chart(doughnutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(activityDistributionData),
+                    datasets: [{
+                        data: Object.values(activityDistributionData),
+                        backgroundColor: ['#1D9A8D', '#f4a261', '#e76f51', '#2a9d8f', '#e9c46a', '#264653'],
+                        borderColor: getComputedStyle(document.body).getPropertyValue('--card-bg'),
+                        borderWidth: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: textColor, padding: 15 } },
+                        title: { display: true, text: 'Distribución de Tiempo por Actividad (min)', color: textColor }
+                    }
+                }
+            });
+        }
+        
+        // 4. Renderizar gráfico de progreso diario/semanal/mensual
+        const barCtx = document.getElementById('dailyProgressChart').getContext('2d');
+        if (dailyProgressChart) dailyProgressChart.destroy();
+        
+        const chartLabels = labels.map(d => d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric'}));
+        dailyProgressChart = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: chartLabels,
+                datasets: [
+                    {
+                        label: 'Minutos de Foco',
+                        data: dailyProgressData.map(d => d.time),
+                        backgroundColor: 'rgba(29, 154, 141, 0.6)',
+                        borderColor: 'rgba(29, 154, 141, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'yTime'
+                    },
+                    {
+                        label: 'Tareas Completadas',
+                        data: dailyProgressData.map(d => d.taskCount),
+                        backgroundColor: 'rgba(244, 162, 97, 0.6)',
+                        borderColor: 'rgba(244, 162, 97, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'yTasks'
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                    yTime: { type: 'linear', position: 'left', title: { display: true, text: 'Minutos', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } },
+                    yTasks: { type: 'linear', position: 'right', title: { display: true, text: 'Tareas', color: textColor }, ticks: { color: textColor, stepSize: 1 }, grid: { drawOnChartArea: false } }
+                },
+                plugins: {
+                    title: { display: true, text: `Progreso ${period === 'week' ? 'Semanal' : 'Mensual/Anual'}`, color: textColor },
+                    legend: { labels: { color: textColor } }
+                }
+            }
+        });
+
+        // 5. Actualizar resumen de texto
+        const totalMinutes = periodActivities.reduce((sum, a) => sum + a.duration, 0);
+        const totalHours = (totalMinutes / 60).toFixed(1);
+        document.getElementById('reportSummary').innerHTML = `
+            <strong>Total de tiempo productivo:</strong> ${totalHours} horas.<br>
+            <strong>Tareas completadas:</strong> ${periodTasksCompleted.length}.
+        `;
+    }
+
+    function getPeriodData(period) {
+        const now = new Date();
+        let startDate = new Date();
+        let labels = [];
+
+        switch(period) {
+            case 'week':
+                startDate.setDate(now.getDate() - 6);
+                for(let i=0; i<=6; i++){
+                    const d = new Date(startDate);
+                    d.setDate(d.getDate() + i);
+                    labels.push(d);
+                }
+                break;
+            case 'month':
+                startDate.setDate(now.getDate() - 29);
+                 for(let i=0; i<=29; i++){
+                    const d = new Date(startDate);
+                    d.setDate(d.getDate() + i);
+                    labels.push(d);
+                }
+                break;
+            case 'year':
+                startDate.setFullYear(now.getFullYear() - 1);
+                startDate.setDate(1);
+                for(let i=0; i<=11; i++){
+                     const d = new Date(startDate);
+                     d.setMonth(d.getMonth() + i);
+                     labels.push(d);
+                }
+                break;
+        }
+        startDate.setHours(0,0,0,0);
+        
+        const periodActivities = activities.filter(a => new Date(a.date) >= startDate);
+        const periodTasksCompleted = tasks.filter(t => t.completed && t.completedAt && new Date(t.completedAt) >= startDate);
+
+        return { periodActivities, periodTasksCompleted, labels };
+    }
+
+
+    // --- MOTIVACIÓN Y LOGROS ---
+    function checkAchievements(justDeletedInboxItem = false) {
+        let newAchievementUnlocked = false;
+        for (const key in ACHIEVEMENT_LIST) {
+            const ach = ACHIEVEMENT_LIST[key];
+            const conditionArgs = key === 'inboxZero' ? [justDeletedInboxItem] : [];
+            if (!achievements[key] && ach.condition(...conditionArgs)) {
+                achievements[key] = true;
+                newAchievementUnlocked = true;
+                showNotification(`🏆 ¡Logro Desbloqueado: ${ach.title}!`, 4000);
+            }
+        }
+        if (newAchievementUnlocked) {
+            localStorage.setItem('achievements_v2', JSON.stringify(achievements));
+            renderAchievements();
+        }
+    }
+
+    function renderAchievements() {
+        const grid = document.getElementById('achievementsGrid');
+        grid.innerHTML = '';
+        for (const key in ACHIEVEMENT_LIST) {
+            const ach = ACHIEVEMENT_LIST[key];
+            const unlocked = achievements[key];
+            const card = document.createElement('div');
+            card.className = `achievement-card ${unlocked ? 'unlocked' : 'locked'}`;
+            card.title = unlocked ? ach.description : `Bloqueado: ${ach.description}`;
+            card.innerHTML = `<span class="icon" style="font-size: 3em;">${ach.icon}</span><p>${ach.title}</p>`;
+            grid.appendChild(card);
+        }
+    }
+
+    function calculateFocusStreak() {
+        const activityDates = [...new Set(activities.map(a => a.date.split('T')[0]))].sort((a,b) => new Date(b) - new Date(a));
+        if (activityDates.length === 0) return 0;
+
+        let streak = 0;
+        let today = new Date();
+        today.setHours(0,0,0,0);
+
+        let lastActivityDate = new Date(activityDates[0]);
+        lastActivityDate.setHours(0,0,0,0);
+        
+        const diffToday = (today.getTime() - lastActivityDate.getTime()) / (1000 * 3600 * 24);
+
+        if (diffToday > 1) return 0;
+        
+        streak = diffToday <= 1 ? 1 : 0;
+        if(streak === 0) return 0;
+
+        for (let i = 0; i < activityDates.length - 1; i++) {
+            const current = new Date(activityDates[i]);
+            const previous = new Date(activityDates[i+1]);
+            const diffDays = Math.round((current.getTime() - previous.getTime()) / (1000 * 3600 * 24));
+            if (diffDays === 1) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+        return streak;
+    }
+
+    function updateFocusStreak() {
+        const streak = calculateFocusStreak();
+        document.getElementById('focusStreak').textContent = `🔥 Racha de ${streak} día${streak === 1 ? '' : 's'}`;
+    }
+
+    // --- UTILIDADES ---
+    function showNotification(message, duration = 3000) {
+        const el = document.getElementById('notification');
+        el.textContent = message;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), duration);
+    }
+    
+    // El resto de funciones (cronómetro, etc.) se mantienen como en la versión anterior
+    // --- CRONOMETRAR ACTIVIDAD ---
+    function startActivity() {
+        const type = document.getElementById('activityType').value;
+        const description = document.getElementById('activityDescription').value.trim();
+        if(!description) { showNotification('Por favor, añade una descripción.'); return; }
+
+        activityTimer.startTime = Date.now();
+        document.getElementById('activityForm').style.display = 'none';
+        document.getElementById('currentActivity').style.display = 'block';
+        document.getElementById('currentActivityInfo').textContent = `${type}: ${description}`;
+        activityTimer.interval = setInterval(updateActivityTimer, 1000);
+    }
+
+    function updateActivityTimer() {
+        const elapsed = Math.floor((Date.now() - activityTimer.startTime) / 1000);
+        const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
+        const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
+        const s = (elapsed % 60).toString().padStart(2, '0');
+        document.getElementById('activityTimer').textContent = `${h}:${m}:${s}`;
+    }
+
+    function stopActivity() {
+        clearInterval(activityTimer.interval);
+        const duration = Math.max(1, Math.round((Date.now() - activityTimer.startTime) / (1000 * 60)));
+        const type = document.getElementById('activityType').value;
+        const description = document.getElementById('activityDescription').value.trim();
+        
+        activities.unshift({ id: Date.now(), type, description, duration, date: new Date().toISOString().split('T')[0] });
+        
+        document.getElementById('activityForm').style.display = 'block';
+        document.getElementById('currentActivity').style.display = 'none';
+        document.getElementById('activityDescription').value = '';
+        
+        saveAndRenderAll();
+        showNotification(`Actividad de ${duration} min registrada 👍`);
+    }
+    </script>
+</body>
+</html>
