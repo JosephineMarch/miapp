@@ -90,6 +90,50 @@
         #currentActivity { display: none; text-align: center; }
         #activityForm, #currentActivity { padding: 15px; background: var(--primary-light); border-radius: var(--border-radius); }
     </style>
+    <!-- Firebase SDKs -->
+<script type="module">
+  // Importa módulos desde CDN (usando Firestore)
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // Tu configuración
+  const firebaseConfig = {
+    apiKey: "TU_API_KEY",
+    authDomain: "TU_PROYECTO.firebaseapp.com",
+    projectId: "TU_PROYECTO",
+    storageBucket: "TU_PROYECTO.appspot.com",
+    messagingSenderId: "XXXXXXXXXXX",
+    appId: "X:XXXXXXXXXXX:web:XXXXXXX"
+  };
+
+  // Inicializar
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // EJEMPLO: Guardar una sopa de letras
+  async function guardarSopa(nombre, palabras) {
+    await addDoc(collection(db, "sopas"), {
+      nombre: nombre,
+      palabras: palabras,
+      fecha: new Date()
+    });
+    console.log("¡Sopa guardada!");
+  }
+
+  // EJEMPLO: Leer sopas guardadas
+  async function leerSopas() {
+    const querySnapshot = await getDocs(collection(db, "sopas"));
+    querySnapshot.forEach((doc) => {
+      console.log(doc.id, " => ", doc.data());
+    });
+  }
+
+  // Puedes llamar a estas funciones desde botones o eventos
+  // guardarSopa("sopa frutas", ["manzana", "pera", "uva"])
+  // leerSopas()
+
+</script>
+
 </head>
 <body>
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
