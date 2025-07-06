@@ -27,10 +27,14 @@
             transition: background-color 0.3s, color 0.3s; min-height: 100vh;
         }
         .container { max-width: 900px; margin: 0 auto; padding: 15px; }
+        #login-container { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 80vh; text-align: center; }
+        #app-container { display: none; }
         .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; margin-bottom: 20px; }
         .header-left { display: flex; align-items: center; gap: 15px; }
         .header h1 { font-size: 24px; color: var(--primary-color); }
         .focus-streak { font-size: 14px; background-color: var(--primary-light); color: var(--primary-color); padding: 5px 10px; border-radius: 20px; font-weight: 500;}
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-info span { font-size: 14px; }
         .theme-toggle { background: none; border: 1px solid var(--border-color); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .nav-tabs { display: flex; overflow-x: auto; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; -ms-overflow-style: none; scrollbar-width: none; }
         .nav-tabs::-webkit-scrollbar { display: none; }
@@ -90,46 +94,6 @@
         #currentActivity { display: none; text-align: center; }
         #activityForm, #currentActivity { padding: 15px; background: var(--primary-light); border-radius: var(--border-radius); }
     </style>
-    <!-- Firebase SDKs -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyD0gGVvxwFxEnfbOYIhwVDExSR9HZy1YG4",
-    authDomain: "miapp-e4dc6.firebaseapp.com",
-    projectId: "miapp-e4dc6",
-    storageBucket: "miapp-e4dc6.firebasestorage.app",
-    messagingSenderId: "815058398646",
-    appId: "1:815058398646:web:15d8a49b50ac5c660de517",
-    measurementId: "G-ZG1T9MZ8MD"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  async function guardarSopa(nombre, palabras) {
-    await addDoc(collection(db, "sopas"), {
-      nombre: nombre,
-      palabras: palabras,
-      fecha: new Date()
-    });
-    console.log("¡Sopa guardada!");
-  }
-
-  async function leerSopas() {
-    const querySnapshot = await getDocs(collection(db, "sopas"));
-    querySnapshot.forEach((doc) => {
-      console.log(doc.id, " => ", doc.data());
-    });
-  }
-
-  // 💡 Hacer las funciones accesibles desde consola
-  window.guardarSopa = guardarSopa;
-  window.leerSopas = leerSopas;
-</script>
-
-
 </head>
 <body>
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
@@ -146,17 +110,34 @@
         <symbol id="icon-google" viewBox="0 0 48 48"><path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.8l-7.11-5.52c-2.16 1.45-4.92 2.3-8.78 2.3-6.68 0-12.35-4.48-14.38-10.48H2.1v5.7C6.02 42.66 14.48 48 24 48z"/><path fill="#FBBC05" d="M9.62 28.18c-.48-1.45-.76-3-.76-4.68s.28-3.23.76-4.68V13.1H2.1c-1.4 2.78-2.23 5.92-2.23 9.22s.84 6.44 2.23 9.22l7.52-5.72z"/><path fill="#EA4335" d="M24 9.48c3.52 0 6.62 1.22 9.09 3.52l6.29-6.29C35.91 2.82 30.46 0 24 0 14.48 0 6.02 5.34 2.1 13.1l7.52 5.72C11.65 13.96 17.32 9.48 24 9.48z"/></symbol>
         <symbol id="icon-trophy" viewBox="0 0 24 24"><path d="M19 4h-2.5l-1-2h-7l-1 2H5c-1.1 0-2 .9-2 2v13c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/><path d="M12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></symbol>
         <symbol id="icon-forward" viewBox="0 0 24 24"><path d="m12 8-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14l-6-6z"/></symbol>
+        <symbol id="icon-logout" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></symbol>
     </svg>
+    
+    <div id="login-container" class="container">
+        <div class="card" style="max-width: 400px; text-align: center;">
+            <svg class="icon" style="font-size: 60px; color: var(--primary-color); margin-bottom: 20px;"><use href="#icon-tasks"/></svg>
+            <h2>Bienvenida a tu Centro Creativo</h2>
+            <p style="margin: 15px 0;">Inicia sesión para guardar y sincronizar tu progreso en todos tus dispositivos.</p>
+            <button id="loginBtn" class="btn-primary" style="width: 100%;">
+                <svg class="icon"><use href="#icon-google"/></svg>
+                Iniciar sesión con Google
+            </button>
+        </div>
+    </div>
 
-    <div class="container">
+    <div id="app-container" class="container">
         <header class="header">
             <div class="header-left">
                 <h1>Crea Infantil</h1>
-                <div id="focusStreak" class="focus-streak" title="Días seguidos registrando actividad">🔥 Racha de 0 días</div>
+                <div id="focusStreak" class="focus-streak" title="Días seguidos registrando actividad"></div>
             </div>
-            <button class="theme-toggle" id="theme-toggle" title="Cambiar tema">
-                <svg class="icon"><use href="#icon-moon"/></svg>
-            </button>
+            <div class="user-info">
+                 <span id="user-display"></span>
+                 <button class="btn-icon" id="logoutBtn" title="Cerrar sesión"><svg class="icon"><use href="#icon-logout"/></svg></button>
+                 <button class="theme-toggle" id="theme-toggle" title="Cambiar tema">
+                    <svg class="icon"><use href="#icon-moon"/></svg>
+                 </button>
+            </div>
         </header>
 
         <nav class="nav-tabs">
@@ -167,11 +148,11 @@
         </nav>
 
         <div class="tab-content active" id="tasks">
-            <div class="card">
+             <div class="card">
                 <h3>📝 Tareas Pendientes</h3>
                 <div style="display:flex; gap:10px;">
                     <input type="text" id="taskInput" placeholder="Ej: Bocetar los personajes principales">
-                    <button class="btn-primary" id="addTaskBtn"><svg class="icon"><use href="#icon-add"/></svg></button>
+                    <button class="btn-primary" id="addTaskBtn" title="Añadir Tarea"><svg class="icon"><use href="#icon-add"/></svg></button>
                 </div>
                 <div class="item-list" id="taskListPending"></div>
                 <hr class="divider" id="completed-divider" style="display:none;">
@@ -179,7 +160,6 @@
                 <div class="item-list" id="taskListCompleted"></div>
             </div>
         </div>
-
         <div class="tab-content" id="inbox">
             <div class="card">
                 <h3>💡 Bandeja de Ideas Rápidas</h3>
@@ -193,9 +173,8 @@
                 <div class="item-list" id="inboxList"></div>
             </div>
         </div>
-
         <div class="tab-content" id="activities">
-            <div class="card">
+             <div class="card">
                 <h3>⏱️ Cronometrar Actividad</h3>
                 <div id="activityForm">
                     <select id="activityType">
@@ -215,12 +194,11 @@
                     <button class="btn-danger" id="stopActivityBtn" style="width:100%; margin-top:15px;"><svg class="icon"><use href="#icon-stop"/></svg> Detener y Registrar</button>
                 </div>
             </div>
-            <div class="card">
+             <div class="card">
                 <h3>📋 Actividades Registradas Hoy</h3>
                 <div class="item-list" id="activityList"></div>
             </div>
         </div>
-
         <div class="tab-content" id="reports">
             <div class="card">
                 <h3>📊 Tu Productividad</h3>
@@ -230,10 +208,10 @@
                     <button class="btn-subtle" id="report-year">Año</button>
                 </div>
                 <div class="chart-container">
-                    <canvas id="activityDistributionChart"></canvas>
+                    <canvas id="dailyProgressChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <canvas id="dailyProgressChart"></canvas>
+                    <canvas id="activityDistributionChart"></canvas>
                 </div>
                 <div id="reportSummary"></div>
             </div>
@@ -243,60 +221,84 @@
                 <div class="achievements-grid" id="achievementsGrid"></div>
             </div>
         </div>
+
     </div>
     
     <div class="notification" id="notification"></div>
+    
+    <script type="module">
+        // --- 1. IMPORTAR FUNCIONES DE FIREBASE ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, serverTimestamp, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        
+        // --- 2. CONFIGURACIÓN DE FIREBASE (TU CÓDIGO) ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyD0gGVvxwFxEnfbOYIhwVDExSR9HZy1YG4",
+          authDomain: "miapp-e4dc6.firebaseapp.com",
+          projectId: "miapp-e4dc6",
+          storageBucket: "miapp-e4dc6.appspot.com",
+          messagingSenderId: "815058398646",
+          appId: "1:815058398646:web:15d8a49b50ac5c660de517",
+          measurementId: "G-ZG1T9MZ8MD"
+        };
 
-    <script>
-    // --- ESTADO Y VARIABLES GLOBALES ---
-    let tasks = [];
-    let activities = [];
-    let inboxItems = [];
-    let achievements = {};
-    let currentTheme = 'light';
-    let activityDistributionChart = null;
-    let dailyProgressChart = null;
-    let activityTimer = { interval: null, startTime: null };
+        // --- 3. INICIALIZACIÓN DE FIREBASE Y SERVICIOS ---
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
 
-    // --- DEFINICIONES ---
-    const ACHIEVEMENT_LIST = {
-        firstTask: { title: '¡Primer Paso!', icon: '📝', description: 'Completa tu primera tarea.', condition: () => tasks.filter(t => t.completed).length >= 1 },
-        tenTasks: { title: 'Decena Cumplida', icon: '✍️', description: 'Completa 10 tareas.', condition: () => tasks.filter(t => t.completed).length >= 10 },
-        firstHour: { title: 'Artista Enfocada', icon: '🎨', description: 'Registra tu primera hora de trabajo.', condition: () => activities.reduce((sum, a) => sum + a.duration, 0) >= 60 },
-        fiveHours: { title: 'Maestra del Tiempo', icon: '🕰️', description: 'Registra 5 horas de trabajo.', condition: () => activities.reduce((sum, a) => sum + a.duration, 0) >= 300 },
-        inboxZero: { title: 'Mente Clara', icon: '🧘‍♀️', description: 'Vacía tu bandeja de ideas.', condition: (justDeleted) => justDeleted && inboxItems.length === 0 },
-        streak3: { title: 'Constancia', icon: '🔥', description: 'Mantén una racha de 3 días de actividad.', condition: () => calculateFocusStreak() >= 3 },
-        streak7: { title: 'Imparable', icon: '🚀', description: 'Mantén una racha de 7 días de actividad.', condition: () => calculateFocusStreak() >= 7 },
-    };
+        // --- ESTADO GLOBAL Y REFERENCIAS A ELEMENTOS ---
+        let tasks = [];
+        let activities = [];
+        let inboxItems = [];
+        let achievements = {};
+        let currentTheme = 'light';
+        let userId = null;
+        let activityDistributionChart = null;
+        let dailyProgressChart = null;
+        let activityTimer = { interval: null, startTime: null };
 
-    // --- INICIALIZACIÓN ---
-    document.addEventListener('DOMContentLoaded', () => {
-        migrateOldData();
-        loadState();
-        setupEventListeners();
-        applyTheme(currentTheme);
-        saveAndRenderAll(); // Carga inicial de toda la UI
-    });
+        let unsubscribers = []; // Para limpiar listeners al cerrar sesión
 
-    function migrateOldData() {
-        if (localStorage.getItem('tasks') && !localStorage.getItem('tasks_v2')) {
-            localStorage.setItem('tasks_v2', localStorage.getItem('tasks'));
-            localStorage.setItem('activities_v2', localStorage.getItem('activities'));
-            showNotification('Tus datos antiguos han sido recuperados.', 4000);
-        }
-    }
+        const ACHIEVEMENT_LIST = {
+            firstTask: { title: '¡Primer Paso!', icon: '📝', description: 'Completa tu primera tarea.', condition: () => tasks.some(t => t.completed) },
+            tenTasks: { title: 'Decena Cumplida', icon: '✍️', description: 'Completa 10 tareas.', condition: () => tasks.filter(t => t.completed).length >= 10 },
+            firstHour: { title: 'Artista Enfocada', icon: '🎨', description: 'Registra tu primera hora de trabajo.', condition: () => activities.reduce((sum, a) => sum + a.duration, 0) >= 60 },
+            inboxZero: { title: 'Mente Clara', icon: '🧘‍♀️', description: 'Vacía tu bandeja de ideas.', condition: (justDeleted) => justDeleted && inboxItems.length === 0 },
+            streak3: { title: 'Constancia', icon: '🔥', description: 'Mantén una racha de 3 días de actividad.', condition: () => calculateFocusStreak() >= 3 },
+            streak7: { title: 'Imparable', icon: '🚀', description: 'Mantén una racha de 7 días de actividad.', condition: () => calculateFocusStreak() >= 7 },
+        };
+        
+        // --- GESTIÓN DE AUTENTICACIÓN Y CARGA INICIAL ---
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                // Usuario ha iniciado sesión
+                userId = user.uid;
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+                document.getElementById('user-display').textContent = `Hola, ${user.displayName.split(' ')[0]}`;
+                setupRealtimeListeners();
+            } else {
+                // Usuario no ha iniciado sesión
+                userId = null;
+                document.getElementById('login-container').style.display = 'flex';
+                document.getElementById('app-container').style.display = 'none';
+                
+                // Limpiar listeners y datos locales
+                unsubscribers.forEach(unsub => unsub());
+                unsubscribers = [];
+                clearLocalData();
+                renderAllComponents(); 
+            }
+        });
 
-    function loadState() {
-        tasks = JSON.parse(localStorage.getItem('tasks_v2')) || [];
-        activities = JSON.parse(localStorage.getItem('activities_v2')) || [];
-        inboxItems = JSON.parse(localStorage.getItem('inboxItems_v2')) || [];
-        achievements = JSON.parse(localStorage.getItem('achievements_v2')) || {};
-        currentTheme = localStorage.getItem('theme_v2') || 'light';
-    }
-
-    function setupEventListeners() {
-        document.querySelectorAll('.nav-tab').forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
+        // --- EVENT LISTENERS ---
+        document.getElementById('loginBtn').addEventListener('click', () => signInWithPopup(auth, provider).catch(error => console.error("Error en login:", error)));
+        document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
         document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+        document.querySelectorAll('.nav-tab').forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
         document.getElementById('addTaskBtn').addEventListener('click', addTask);
         document.getElementById('taskInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
         document.getElementById('addInboxBtn').addEventListener('click', addInboxItem);
@@ -305,287 +307,337 @@
         document.querySelectorAll('.report-controls button').forEach(button => {
             button.addEventListener('click', (e) => renderReport(e.target.id.split('-')[1]));
         });
-    }
 
-    // --- FUNCIONES DE RENDERIZADO Y GUARDADO ---
-    function saveAndRenderAll() {
-        localStorage.setItem('tasks_v2', JSON.stringify(tasks));
-        localStorage.setItem('activities_v2', JSON.stringify(activities));
-        localStorage.setItem('inboxItems_v2', JSON.stringify(inboxItems));
-        checkAchievements();
-        localStorage.setItem('achievements_v2', JSON.stringify(achievements));
+        // --- LÓGICA DE FIREBASE (TIEMPO REAL) ---
+        function setupRealtimeListeners() {
+            if (!userId) return;
+            const userDocRef = doc(db, 'users', userId);
+
+            // Listener para perfil de usuario (tema, logros)
+            const unsubProfile = onSnapshot(userDocRef, (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    achievements = data.achievements || {};
+                    currentTheme = data.theme || 'light';
+                } else {
+                    setDoc(userDocRef, { achievements: {}, theme: 'light' });
+                }
+                applyTheme(currentTheme);
+                renderAchievements();
+            });
+
+            // Listener para Tareas
+            const tasksQuery = query(collection(db, 'users', userId, 'tasks'), orderBy('createdAt', 'desc'));
+            const unsubTasks = onSnapshot(tasksQuery, (snapshot) => {
+                tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                loadTasks();
+                checkAndUnlockAchievements();
+                updateReportsIfVisible();
+            });
         
-        loadTasks();
-        loadActivities();
-        loadInboxItems();
-        updateFocusStreak();
-        renderAchievements();
+            // Listener para Actividades
+            const activitiesQuery = query(collection(db, 'users', userId, 'activities'), orderBy('id', 'desc'));
+            const unsubActivities = onSnapshot(activitiesQuery, (snapshot) => {
+                activities = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                loadActivities();
+                updateFocusStreak();
+                checkAndUnlockAchievements();
+                updateReportsIfVisible();
+            });
+
+            // Listener para Bandeja de Ideas
+            const inboxQuery = query(collection(db, 'users', userId, 'inboxItems'), orderBy('createdAt', 'desc'));
+            const unsubInbox = onSnapshot(inboxQuery, (snapshot) => {
+                inboxItems = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                loadInboxItems();
+            });
+
+            unsubscribers = [unsubProfile, unsubTasks, unsubActivities, unsubInbox];
+        }
+
+        // --- FUNCIONES DE LA APLICACIÓN ---
+
+        function clearLocalData() {
+            tasks = []; activities = []; inboxItems = []; achievements = {};
+        }
+
+        function renderAllComponents() {
+            loadTasks(); loadActivities(); loadInboxItems(); renderAchievements(); updateFocusStreak(); updateReportsIfVisible();
+        }
+
+        function updateReportsIfVisible(){
+            if (document.getElementById('reports').classList.contains('active')) {
+                const activePeriod = document.querySelector('.report-controls .active')?.id.split('-')[1] || 'week';
+                renderReport(activePeriod);
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
+            if (activeTab) activeTab.classList.add('active');
+            const activeContent = document.getElementById(tabName);
+            if(activeContent) activeContent.classList.add('active');
+            if (tabName === 'reports') renderReport('week');
+        }
+
+        async function toggleTheme() {
+            currentTheme = (currentTheme === 'light') ? 'dark' : 'light';
+            applyTheme(currentTheme);
+            if (userId) await updateDoc(doc(db, 'users', userId), { theme: currentTheme });
+            if (document.getElementById('reports').classList.contains('active')) {
+                renderReport(document.querySelector('.report-controls .active')?.id.split('-')[1] || 'week');
+            }
+        }
+
+        function applyTheme(theme) {
+            document.body.classList.toggle('dark-mode', theme === 'dark');
+            document.getElementById('theme-toggle').innerHTML = theme === 'dark' 
+                ? '<svg class="icon"><use href="#icon-sun"/></svg>' 
+                : '<svg class="icon"><use href="#icon-moon"/></svg>';
+        }
+
+        async function addTask() {
+            const input = document.getElementById('taskInput');
+            if (!input.value.trim() || !userId) return;
+            try {
+                await addDoc(collection(db, 'users', userId, 'tasks'), {
+                    text: input.value,
+                    completed: false,
+                    createdAt: serverTimestamp()
+                });
+                input.value = '';
+                showNotification('Tarea agregada ✅');
+            } catch (error) {
+                console.error("Error adding task: ", error);
+                showNotification('Error al añadir tarea', 3000, true);
+            }
+        }
+
+        async function toggleTask(id) {
+            if (!userId) return;
+            const taskRef = doc(db, 'users', userId, 'tasks', id);
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                await updateDoc(taskRef, {
+                    completed: !task.completed,
+                    completedAt: !task.completed ? serverTimestamp() : null
+                });
+            }
+        }
+
+        async function deleteTask(id) {
+            if (!userId) return;
+            await deleteDoc(doc(db, 'users', userId, 'tasks', id));
+        }
         
-        if (document.getElementById('reports').classList.contains('active')) {
-            const activePeriod = document.querySelector('.report-controls .active')?.id.split('-')[1] || 'week';
-            renderReport(activePeriod);
-        }
-    }
+        function loadTasks() {
+            const pendingList = document.getElementById('taskListPending');
+            const completedList = document.getElementById('taskListCompleted');
+            pendingList.innerHTML = '';
+            completedList.innerHTML = '';
 
-    function switchTab(tabName) {
-        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-        document.getElementById(tabName).classList.add('active');
-        if (tabName === 'reports') {
-            renderReport('week');
-        }
-    }
+            const pendingTasks = tasks.filter(t => !t.completed);
+            const completedTasks = tasks.filter(t => t.completed);
 
-    // --- TEMA ---
-    function applyTheme(theme) {
-        document.body.classList.toggle('dark-mode', theme === 'dark');
-        document.getElementById('theme-toggle').innerHTML = theme === 'dark' 
-            ? '<svg class="icon"><use href="#icon-sun"/></svg>' 
-            : '<svg class="icon"><use href="#icon-moon"/></svg>';
-    }
-    function toggleTheme() {
-        currentTheme = (currentTheme === 'light') ? 'dark' : 'light';
-        localStorage.setItem('theme_v2', currentTheme);
-        applyTheme(currentTheme);
-        if (document.getElementById('reports').classList.contains('active')) {
-            renderReport(document.querySelector('.report-controls .active')?.id.split('-')[1] || 'week');
-        }
-    }
+            if (pendingTasks.length === 0) {
+                pendingList.innerHTML = '<p style="text-align:center; opacity:0.7; padding: 20px 0;">¡No tienes tareas pendientes!</p>';
+            } else {
+                pendingTasks.forEach(task => pendingList.appendChild(createTaskElement(task)));
+            }
 
-    // --- TAREAS ---
-    function addTask() {
-        const input = document.getElementById('taskInput');
-        if (!input.value.trim()) return;
-        tasks.unshift({ id: Date.now(), text: input.value, completed: false, createdAt: new Date().toISOString() });
-        input.value = '';
-        saveAndRenderAll();
-        showNotification('Tarea agregada ✅');
-    }
-
-    function toggleTask(id) {
-        const task = tasks.find(t => t.id === id);
-        if (task) {
-            task.completed = !task.completed;
-            task.completedAt = task.completed ? new Date().toISOString() : null;
-        }
-        saveAndRenderAll();
-    }
-
-    function deleteTask(id) {
-        tasks = tasks.filter(t => t.id !== id);
-        saveAndRenderAll();
-    }
-    
-    function loadTasks() {
-        const pendingList = document.getElementById('taskListPending');
-        const completedList = document.getElementById('taskListCompleted');
-        pendingList.innerHTML = '';
-        completedList.innerHTML = '';
-
-        const pendingTasks = tasks.filter(t => !t.completed);
-        const completedTasks = tasks.filter(t => t.completed);
-
-        if (pendingTasks.length === 0) {
-            pendingList.innerHTML = '<p style="text-align:center; opacity:0.7; padding: 20px 0;">¡No tienes tareas pendientes! ¡Buen trabajo!</p>';
-        } else {
-            pendingTasks.forEach(task => pendingList.appendChild(createTaskElement(task)));
+            const divider = document.getElementById('completed-divider');
+            const completedTitle = document.getElementById('completed-title');
+            if (completedTasks.length > 0) {
+                divider.style.display = 'block';
+                completedTitle.style.display = 'block';
+                completedTasks.forEach(task => completedList.appendChild(createTaskElement(task)));
+            } else {
+                divider.style.display = 'none';
+                completedTitle.style.display = 'none';
+            }
         }
 
-        const divider = document.getElementById('completed-divider');
-        const completedTitle = document.getElementById('completed-title');
-        if (completedTasks.length > 0) {
-            divider.style.display = 'block';
-            completedTitle.style.display = 'block';
-            completedTasks.forEach(task => completedList.appendChild(createTaskElement(task)));
-        } else {
-            divider.style.display = 'none';
-            completedTitle.style.display = 'none';
-        }
-    }
-
-    function createTaskElement(task) {
-        const item = document.createElement('div');
-        item.className = `list-item ${task.completed ? 'completed' : ''}`;
-        item.innerHTML = `
-            <input type="checkbox" onchange="toggleTask(${task.id})" ${task.completed ? 'checked' : ''}>
-            <div class="item-text-content"><span class="item-text">${task.text}</span></div>
-            <div class="item-actions">
-                <button class="btn-icon" onclick="deleteTask(${task.id})"><svg class="icon" title="Eliminar"><use href="#icon-delete"/></svg></button>
-            </div>`;
-        return item;
-    }
-
-    // --- BANDEJA DE IDEAS ---
-    function addInboxItem() {
-        const text = document.getElementById('inboxText').value.trim();
-        const url = document.getElementById('inboxUrl').value.trim();
-        if (!text && !url) return;
-        
-        inboxItems.unshift({ id: Date.now(), text, url, createdAt: new Date().toISOString() });
-        document.getElementById('inboxText').value = '';
-        document.getElementById('inboxUrl').value = '';
-        saveAndRenderAll();
-        showNotification('Idea guardada en la bandeja ✨');
-    }
-
-    function loadInboxItems() {
-        const list = document.getElementById('inboxList');
-        list.innerHTML = '';
-        if (inboxItems.length === 0) {
-            list.innerHTML = '<p style="text-align:center; opacity:0.7; padding: 20px 0;">Tu bandeja de ideas está vacía. ¡Mente despejada!</p>';
-            return;
-        }
-
-        inboxItems.forEach(item => {
-            const el = document.createElement('div');
-            el.className = 'list-item';
-            el.innerHTML = `
-                <div class="item-text-content">
-                    <p class="inbox-text">${item.text}</p>
-                    ${item.url ? `<a href="${item.url.startsWith('http') ? '' : '//'}${item.url}" target="_blank" class="inbox-link">${item.url}</a>` : ''}
-                    <p class="item-details">${new Date(item.createdAt).toLocaleDateString()}</p>
-                </div>
-                <div class="item-actions">
-                    <button class="btn-icon" title="Convertir en Tarea" onclick="convertInboxToTask(${item.id})"><svg class="icon"><use href="#icon-forward"/></svg></button>
-                    <button class="btn-icon" title="Eliminar Idea" onclick="deleteInboxItem(${item.id})"><svg class="icon"><use href="#icon-delete"/></svg></button>
-                </div>`;
-            list.appendChild(el);
-        });
-    }
-
-    function deleteInboxItem(id) {
-        inboxItems = inboxItems.filter(i => i.id !== id);
-        checkAchievements(true); // Check for inbox zero achievement
-        saveAndRenderAll();
-    }
-
-    function convertInboxToTask(id) {
-        const item = inboxItems.find(i => i.id === id);
-        if (item) {
-            let taskText = item.text;
-            if (item.url) taskText += ` (ver: ${item.url})`;
-            tasks.unshift({ id: Date.now(), text: taskText, completed: false, createdAt: new Date().toISOString() });
-            deleteInboxItem(id); // This will call saveAndRenderAll
-            showNotification('Idea convertida en tarea 👍');
-            switchTab('tasks');
-        }
-    }
-
-    // --- CRONOMETRAR ACTIVIDAD ---
-    function startActivity() {
-        const type = document.getElementById('activityType').value;
-        const description = document.getElementById('activityDescription').value.trim();
-        if(!description) { showNotification('Por favor, añade una descripción.'); return; }
-
-        activityTimer.startTime = Date.now();
-        document.getElementById('activityForm').style.display = 'none';
-        document.getElementById('currentActivity').style.display = 'block';
-        document.getElementById('currentActivityInfo').textContent = `${type}: ${description}`;
-        activityTimer.interval = setInterval(updateActivityTimer, 1000);
-    }
-
-    function updateActivityTimer() {
-        const elapsed = Math.floor((Date.now() - activityTimer.startTime) / 1000);
-        const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
-        const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
-        const s = (elapsed % 60).toString().padStart(2, '0');
-        document.getElementById('activityTimer').textContent = `${h}:${m}:${s}`;
-    }
-
-    function stopActivity() {
-        clearInterval(activityTimer.interval);
-        const duration = Math.max(1, Math.round((Date.now() - activityTimer.startTime) / (1000 * 60)));
-        const type = document.getElementById('activityType').value;
-        const description = document.getElementById('activityDescription').value.trim();
-        
-        activities.unshift({ id: Date.now(), type, description, duration, date: new Date().toISOString().split('T')[0] });
-        
-        document.getElementById('activityForm').style.display = 'block';
-        document.getElementById('currentActivity').style.display = 'none';
-        document.getElementById('activityDescription').value = '';
-        saveAndRenderAll();
-        showNotification(`Actividad de ${duration} min registrada 👍`);
-    }
-
-    function loadActivities() {
-        const list = document.getElementById('activityList');
-        list.innerHTML = '';
-        const today = new Date().toISOString().split('T')[0];
-        const todayActivities = activities.filter(a => a.date === today);
-
-        if(todayActivities.length === 0) {
-            list.innerHTML = '<p style="text-align:center; opacity:0.7; padding: 20px 0;">Aún no has registrado actividades hoy.</p>';
-            return;
-        }
-
-        todayActivities.forEach(act => {
+        function createTaskElement(task) {
             const item = document.createElement('div');
-            item.className = 'list-item';
+            item.className = `list-item ${task.completed ? 'completed' : ''}`;
             item.innerHTML = `
-                <div class="item-text-content">
-                    <span class="item-text">${act.type}: ${act.description}</span>
-                    <span class="item-details">${act.duration} minutos - ${new Date(act.id).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                </div>
+                <input type="checkbox" onchange="toggleTask('${task.id}')" ${task.completed ? 'checked' : ''}>
+                <div class="item-text-content"><span class="item-text">${task.text}</span></div>
                 <div class="item-actions">
-                    <button class="btn-icon" title="Añadir a Google Calendar" onclick="createGoogleCalendarEvent(${act.id})">
-                        <svg class="icon" style="width: 20px; height: 20px;"><use href="#icon-google"/></svg>
-                    </button>
+                    <button class="btn-icon" onclick="deleteTask('${task.id}')" title="Eliminar Tarea"><svg class="icon"><use href="#icon-delete"/></svg></button>
                 </div>`;
-            list.prepend(item);
-        });
-    }
+            return item;
+        }
+        
+        // --- BANDEJA DE IDEAS ---
+        async function addInboxItem() {
+            const text = document.getElementById('inboxText').value.trim();
+            const url = document.getElementById('inboxUrl').value.trim();
+            if ((!text && !url) || !userId) return;
+            
+            await addDoc(collection(db, 'users', userId, 'inboxItems'), {
+                text, url, createdAt: serverTimestamp()
+            });
+            document.getElementById('inboxText').value = '';
+            document.getElementById('inboxUrl').value = '';
+            showNotification('Idea guardada en la bandeja ✨');
+        }
 
-    function createGoogleCalendarEvent(activityId) {
-        const activity = activities.find(a => a.id === activityId);
-        if (!activity) return;
+        function loadInboxItems() {
+            const list = document.getElementById('inboxList');
+            list.innerHTML = '';
+            if (inboxItems.length === 0) {
+                list.innerHTML = '<p style="text-align:center; opacity:0.7; padding: 20px 0;">Tu bandeja de ideas está vacía. ¡Mente despejada!</p>';
+                return;
+            }
 
-        const startTime = new Date(activity.id);
-        const endTime = new Date(startTime.getTime() + activity.duration * 60000);
+            inboxItems.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'list-item';
+                const createdAtDate = item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString() : 'Ahora';
+                el.innerHTML = `
+                    <div class="item-text-content">
+                        <p class="inbox-text">${item.text}</p>
+                        ${item.url ? `<a href="${item.url.startsWith('http') ? '' : '//'}${item.url}" target="_blank" class="inbox-link">${item.url}</a>` : ''}
+                        <p class="item-details">${createdAtDate}</p>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-icon" title="Convertir en Tarea" onclick="convertInboxToTask('${item.id}')"><svg class="icon"><use href="#icon-forward"/></svg></button>
+                        <button class="btn-icon" title="Eliminar Idea" onclick="deleteInboxItem('${item.id}')"><svg class="icon"><use href="#icon-delete"/></svg></button>
+                    </div>`;
+                list.appendChild(el);
+            });
+        }
+        
+        async function deleteInboxItem(id) {
+            if (!userId) return;
+            await deleteDoc(doc(db, 'users', userId, 'inboxItems', id));
+            checkAndUnlockAchievements(true);
+        }
 
-        function formatGCDate(date) { return date.toISOString().replace(/-|:|\.\d{3}/g, ''); }
+        async function convertInboxToTask(id) {
+            if (!userId) return;
+            const item = inboxItems.find(i => i.id === id);
+            if (item) {
+                let taskText = item.text;
+                if (item.url) taskText += ` (ver: ${item.url})`;
+                await addDoc(collection(db, 'users', userId, 'tasks'), {
+                    text: taskText,
+                    completed: false,
+                    createdAt: serverTimestamp()
+                });
+                await deleteInboxItem(id);
+                showNotification('Idea convertida en tarea 👍');
+                switchTab('tasks');
+            }
+        }
+        
+        // --- CRONOMETRAR ACTIVIDAD ---
+        function startActivity() {
+            const type = document.getElementById('activityType').value;
+            const description = document.getElementById('activityDescription').value.trim();
+            if(!description) { showNotification('Por favor, añade una descripción.'); return; }
+            activityTimer.startTime = Date.now();
+            document.getElementById('activityForm').style.display = 'none';
+            document.getElementById('currentActivity').style.display = 'block';
+            document.getElementById('currentActivityInfo').textContent = `${type}: ${description}`;
+            activityTimer.interval = setInterval(updateActivityTimer, 1000);
+        }
 
-        const url = new URL('https://www.google.com/calendar/render');
-        url.searchParams.append('action', 'TEMPLATE');
-        url.searchParams.append('text', `${activity.type}: ${activity.description}`);
-        url.searchParams.append('dates', `${formatGCDate(startTime)}/${formatGCDate(endTime)}`);
-        url.searchParams.append('details', `Actividad registrada en Crea Infantil.\nDuración: ${activity.duration} minutos.`);
-        window.open(url, '_blank');
-    }
+        function updateActivityTimer() {
+            const elapsed = Math.floor((Date.now() - activityTimer.startTime) / 1000);
+            const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
+            const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
+            const s = (elapsed % 60).toString().padStart(2, '0');
+            document.getElementById('activityTimer').textContent = `${h}:${m}:${s}`;
+        }
 
-    // --- REPORTES Y GRÁFICOS ---
-    function renderReport(period) {
-        document.querySelectorAll('.report-controls button').forEach(b => b.classList.remove('active'));
-        document.getElementById(`report-${period}`).classList.add('active');
+        async function stopActivity() {
+            clearInterval(activityTimer.interval);
+            if (!userId || !activityTimer.startTime) return;
+            const duration = Math.max(1, Math.round((Date.now() - activityTimer.startTime) / (1000 * 60)));
+            const type = document.getElementById('activityType').value;
+            const description = document.getElementById('activityDescription').value.trim();
+            
+            await addDoc(collection(db, 'users', userId, 'activities'), {
+                type, description, duration, 
+                date: new Date().toISOString().split('T')[0],
+                id: Date.now()
+            });
+            
+            document.getElementById('activityForm').style.display = 'block';
+            document.getElementById('currentActivity').style.display = 'none';
+            document.getElementById('activityDescription').value = '';
+            document.getElementById('activityTimer').textContent = '00:00:00';
+            activityTimer = { interval: null, startTime: null };
+            showNotification(`Actividad de ${duration} min registrada 👍`);
+        }
 
-        const now = new Date();
-        const textColor = getComputedStyle(document.body).getPropertyValue('--text-color');
-        const gridColor = getComputedStyle(document.body).getPropertyValue('--border-color');
+        function loadActivities() {
+            const list = document.getElementById('activityList');
+            list.innerHTML = '';
+            const today = new Date().toISOString().split('T')[0];
+            const todayActivities = activities.filter(a => a.date === today);
 
-        // 1. Filtrar datos para el período
-        let { periodActivities, periodTasksCompleted, labels, timeUnit } = getPeriodData(period);
+            if(todayActivities.length === 0) {
+                list.innerHTML = '<p style="text-align:center; opacity:0.7; padding: 20px 0;">No has registrado actividades hoy.</p>';
+                return;
+            }
 
-        // 2. Preparar datos para los gráficos
-        const activityDistributionData = periodActivities.reduce((acc, curr) => {
-            acc[curr.type] = (acc[curr.type] || 0) + curr.duration;
-            return acc;
-        }, {});
+            todayActivities.forEach(act => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                const activityTime = act.id ? new Date(act.id).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+                item.innerHTML = `
+                    <div class="item-text-content">
+                        <span class="item-text">${act.type}: ${act.description}</span>
+                        <span class="item-details">${act.duration} minutos - ${activityTime}</span>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-icon" title="Añadir a Google Calendar" onclick="createGoogleCalendarEvent('${act.id}')">
+                            <svg class="icon" style="width: 20px; height: 20px;"><use href="#icon-google"/></svg>
+                        </button>
+                    </div>`;
+                list.prepend(item);
+            });
+        }
 
-        const dailyProgressData = labels.map(label => {
-            const dateStr = label.toISOString().split('T')[0];
-            const time = periodActivities
-                .filter(a => a.date.startsWith(dateStr))
-                .reduce((sum, a) => sum + a.duration, 0);
-            const taskCount = periodTasksCompleted
-                .filter(t => t.completedAt.startsWith(dateStr))
-                .length;
-            return { time, taskCount };
-        });
+        function createGoogleCalendarEvent(activityIdStr) {
+            const activityId = parseInt(activityIdStr, 10);
+            const activity = activities.find(a => a.id === activityId);
+            if (!activity) return;
 
-        // 3. Renderizar gráfico de distribución de tiempo
-        const doughnutCtx = document.getElementById('activityDistributionChart').getContext('2d');
-        if (activityDistributionChart) activityDistributionChart.destroy();
-        if (periodActivities.length > 0) {
+            const startTime = new Date(activity.id);
+            const endTime = new Date(startTime.getTime() + activity.duration * 60000);
+            function formatGCDate(date) { return date.toISOString().replace(/[-:]|\.\d{3}/g, ''); }
+
+            const url = new URL('https://www.google.com/calendar/render');
+            url.searchParams.append('action', 'TEMPLATE');
+            url.searchParams.append('text', `${activity.type}: ${activity.description}`);
+            url.searchParams.append('dates', `${formatGCDate(startTime)}/${formatGCDate(endTime)}`);
+            url.searchParams.append('details', `Actividad registrada en Crea Infantil.\nDuración: ${activity.duration} minutos.`);
+            window.open(url, '_blank');
+        }
+
+        // --- REPORTES Y GRÁFICOS ---
+        function renderReport(period) {
+            document.querySelectorAll('.report-controls button').forEach(b => b.classList.remove('active'));
+            document.getElementById(`report-${period}`).classList.add('active');
+
+            const { periodActivities, periodTasksCompleted, labels, timeUnit, formatLabel } = getPeriodData(period);
+            const textColor = getComputedStyle(document.body).getPropertyValue('--text-color');
+            const gridColor = getComputedStyle(document.body).getPropertyValue('--border-color');
+
+            // Gráfico 1: Distribución de tiempo
+            const activityDistributionData = periodActivities.reduce((acc, curr) => {
+                acc[curr.type] = (acc[curr.type] || 0) + curr.duration;
+                return acc;
+            }, {});
+            
+            const doughnutCtx = document.getElementById('activityDistributionChart').getContext('2d');
+            if (activityDistributionChart) activityDistributionChart.destroy();
             activityDistributionChart = new Chart(doughnutCtx, {
                 type: 'doughnut',
                 data: {
@@ -600,218 +652,170 @@
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'right', labels: { color: textColor, padding: 15 } },
-                        title: { display: true, text: 'Distribución de Tiempo por Actividad (min)', color: textColor }
+                        legend: { display: periodActivities.length > 0, position: 'right', labels: { color: textColor, padding: 15 } },
+                        title: { display: true, text: 'Distribución de Tiempo por Actividad (min)', color: textColor, font: {size: 14} },
+                        tooltip: { callbacks: { label: (c) => `${c.label}: ${c.parsed} min` } }
                     }
                 }
             });
-        }
-        
-        // 4. Renderizar gráfico de progreso diario/semanal/mensual
-        const barCtx = document.getElementById('dailyProgressChart').getContext('2d');
-        if (dailyProgressChart) dailyProgressChart.destroy();
-        
-        const chartLabels = labels.map(d => d.toLocaleDateString('es-ES', { month: 'short', day: 'numeric'}));
-        dailyProgressChart = new Chart(barCtx, {
-            type: 'bar',
-            data: {
-                labels: chartLabels,
-                datasets: [
-                    {
-                        label: 'Minutos de Foco',
-                        data: dailyProgressData.map(d => d.time),
-                        backgroundColor: 'rgba(29, 154, 141, 0.6)',
-                        borderColor: 'rgba(29, 154, 141, 1)',
-                        borderWidth: 1,
-                        yAxisID: 'yTime'
-                    },
-                    {
-                        label: 'Tareas Completadas',
-                        data: dailyProgressData.map(d => d.taskCount),
-                        backgroundColor: 'rgba(244, 162, 97, 0.6)',
-                        borderColor: 'rgba(244, 162, 97, 1)',
-                        borderWidth: 1,
-                        yAxisID: 'yTasks'
-                    }
-                ]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: {
-                    x: { ticks: { color: textColor }, grid: { color: gridColor } },
-                    yTime: { type: 'linear', position: 'left', title: { display: true, text: 'Minutos', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } },
-                    yTasks: { type: 'linear', position: 'right', title: { display: true, text: 'Tareas', color: textColor }, ticks: { color: textColor, stepSize: 1 }, grid: { drawOnChartArea: false } }
+            
+            // Gráfico 2: Progreso en el tiempo
+            const progressData = labels.map(labelDate => {
+                const labelKey = formatLabel(labelDate);
+                const time = periodActivities
+                    .filter(a => formatLabel(new Date(a.date + "T00:00:00")) === labelKey)
+                    .reduce((sum, a) => sum + a.duration, 0);
+                const taskCount = periodTasksCompleted
+                    .filter(t => t.completedAt && formatLabel(t.completedAt.toDate()) === labelKey)
+                    .length;
+                return { time, taskCount };
+            });
+            
+            const barCtx = document.getElementById('dailyProgressChart').getContext('2d');
+            if (dailyProgressChart) dailyProgressChart.destroy();
+            dailyProgressChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels.map(d => formatLabel(d)),
+                    datasets: [
+                        { label: 'Minutos de Foco', data: progressData.map(d => d.time), backgroundColor: 'rgba(29, 154, 141, 0.6)', yAxisID: 'yTime' },
+                        { label: 'Tareas Completadas', data: progressData.map(d => d.taskCount), backgroundColor: 'rgba(244, 162, 97, 0.6)', yAxisID: 'yTasks' }
+                    ]
                 },
-                plugins: {
-                    title: { display: true, text: `Progreso ${period === 'week' ? 'Semanal' : 'Mensual/Anual'}`, color: textColor },
-                    legend: { labels: { color: textColor } }
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                        yTime: { beginAtZero: true, position: 'left', title: { display: true, text: 'Minutos', color: textColor }, ticks: { color: textColor }, grid: { color: gridColor } },
+                        yTasks: { beginAtZero: true, position: 'right', title: { display: true, text: 'Tareas', color: textColor }, ticks: { color: textColor, stepSize: 1 }, grid: { drawOnChartArea: false } }
+                    },
+                    plugins: {
+                        title: { display: true, text: `Progreso ${timeUnit}`, color: textColor, font: {size: 14} },
+                        legend: { labels: { color: textColor } }
+                    }
+                }
+            });
+            
+            const totalMinutes = periodActivities.reduce((sum, a) => sum + a.duration, 0);
+            document.getElementById('reportSummary').innerHTML = `<hr class="divider"><p>En este período has dedicado <strong>${(totalMinutes / 60).toFixed(1)} horas</strong> a crear y has completado <strong>${periodTasksCompleted.length} tareas</strong>.</p>`;
+        }
+
+        function getPeriodData(period) {
+            const now = new Date();
+            now.setHours(23, 59, 59, 999);
+            let startDate = new Date();
+            startDate.setHours(0, 0, 0, 0);
+            let labels = [], timeUnit = '', formatLabel;
+
+            switch(period) {
+                case 'week':
+                    startDate.setDate(now.getDate() - 6);
+                    for(let i=0; i<=6; i++){ const d = new Date(startDate); d.setDate(d.getDate() + i); labels.push(d); }
+                    timeUnit = 'Semanal';
+                    formatLabel = (d) => d.toLocaleDateString('es-ES', { weekday: 'short' });
+                    break;
+                case 'month':
+                    startDate.setDate(now.getDate() - 29);
+                    for(let i=0; i<=29; i++){ const d = new Date(startDate); d.setDate(d.getDate() + i); labels.push(d); }
+                    timeUnit = 'Mensual';
+                    formatLabel = (d) => d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                    break;
+                case 'year':
+                    labels = [];
+                    const currentYear = now.getFullYear();
+                    for(let i = 0; i < 12; i++) {
+                        labels.push(new Date(currentYear, i, 1));
+                    }
+                    startDate = new Date(currentYear, 0, 1);
+                    timeUnit = 'Anual';
+                    formatLabel = (d) => d.toLocaleDateString('es-ES', { month: 'short' });
+                    break;
+            }
+            
+            const periodActivities = activities.filter(a => a.date && new Date(a.date) >= startDate && new Date(a.date) <= now);
+            const periodTasksCompleted = tasks.filter(t => t.completed && t.completedAt && t.completedAt.toDate() >= startDate && t.completedAt.toDate() <= now);
+
+            return { periodActivities, periodTasksCompleted, labels, timeUnit, formatLabel };
+        }
+        
+        // --- MOTIVACIÓN Y LOGROS ---
+        async function checkAndUnlockAchievements(justDeletedInboxItem = false) {
+            if (!userId) return;
+            let newAchievementUnlocked = false;
+            const docRef = doc(db, 'users', userId);
+            const currentAchievements = (await getDoc(docRef)).data().achievements || {};
+            const updates = {};
+            
+            for (const key in ACHIEVEMENT_LIST) {
+                const ach = ACHIEVEMENT_LIST[key];
+                if (!currentAchievements[key] && ach.condition(justDeletedInboxItem)) {
+                    updates[`achievements.${key}`] = true;
+                    newAchievementUnlocked = true;
+                    showNotification(`🏆 ¡Logro Desbloqueado: ${ach.title}!`, 4000);
                 }
             }
-        });
-
-        // 5. Actualizar resumen de texto
-        const totalMinutes = periodActivities.reduce((sum, a) => sum + a.duration, 0);
-        const totalHours = (totalMinutes / 60).toFixed(1);
-        document.getElementById('reportSummary').innerHTML = `
-            <strong>Total de tiempo productivo:</strong> ${totalHours} horas.<br>
-            <strong>Tareas completadas:</strong> ${periodTasksCompleted.length}.
-        `;
-    }
-
-    function getPeriodData(period) {
-        const now = new Date();
-        let startDate = new Date();
-        let labels = [];
-
-        switch(period) {
-            case 'week':
-                startDate.setDate(now.getDate() - 6);
-                for(let i=0; i<=6; i++){
-                    const d = new Date(startDate);
-                    d.setDate(d.getDate() + i);
-                    labels.push(d);
-                }
-                break;
-            case 'month':
-                startDate.setDate(now.getDate() - 29);
-                 for(let i=0; i<=29; i++){
-                    const d = new Date(startDate);
-                    d.setDate(d.getDate() + i);
-                    labels.push(d);
-                }
-                break;
-            case 'year':
-                startDate.setFullYear(now.getFullYear() - 1);
-                startDate.setDate(1);
-                for(let i=0; i<=11; i++){
-                     const d = new Date(startDate);
-                     d.setMonth(d.getMonth() + i);
-                     labels.push(d);
-                }
-                break;
-        }
-        startDate.setHours(0,0,0,0);
-        
-        const periodActivities = activities.filter(a => new Date(a.date) >= startDate);
-        const periodTasksCompleted = tasks.filter(t => t.completed && t.completedAt && new Date(t.completedAt) >= startDate);
-
-        return { periodActivities, periodTasksCompleted, labels };
-    }
-
-
-    // --- MOTIVACIÓN Y LOGROS ---
-    function checkAchievements(justDeletedInboxItem = false) {
-        let newAchievementUnlocked = false;
-        for (const key in ACHIEVEMENT_LIST) {
-            const ach = ACHIEVEMENT_LIST[key];
-            const conditionArgs = key === 'inboxZero' ? [justDeletedInboxItem] : [];
-            if (!achievements[key] && ach.condition(...conditionArgs)) {
-                achievements[key] = true;
-                newAchievementUnlocked = true;
-                showNotification(`🏆 ¡Logro Desbloqueado: ${ach.title}!`, 4000);
+            if (newAchievementUnlocked) {
+                await updateDoc(docRef, updates);
             }
         }
-        if (newAchievementUnlocked) {
-            localStorage.setItem('achievements_v2', JSON.stringify(achievements));
-            renderAchievements();
-        }
-    }
 
-    function renderAchievements() {
-        const grid = document.getElementById('achievementsGrid');
-        grid.innerHTML = '';
-        for (const key in ACHIEVEMENT_LIST) {
-            const ach = ACHIEVEMENT_LIST[key];
-            const unlocked = achievements[key];
-            const card = document.createElement('div');
-            card.className = `achievement-card ${unlocked ? 'unlocked' : 'locked'}`;
-            card.title = unlocked ? ach.description : `Bloqueado: ${ach.description}`;
-            card.innerHTML = `<span class="icon" style="font-size: 3em;">${ach.icon}</span><p>${ach.title}</p>`;
-            grid.appendChild(card);
-        }
-    }
-
-    function calculateFocusStreak() {
-        const activityDates = [...new Set(activities.map(a => a.date.split('T')[0]))].sort((a,b) => new Date(b) - new Date(a));
-        if (activityDates.length === 0) return 0;
-
-        let streak = 0;
-        let today = new Date();
-        today.setHours(0,0,0,0);
-
-        let lastActivityDate = new Date(activityDates[0]);
-        lastActivityDate.setHours(0,0,0,0);
-        
-        const diffToday = (today.getTime() - lastActivityDate.getTime()) / (1000 * 3600 * 24);
-
-        if (diffToday > 1) return 0;
-        
-        streak = diffToday <= 1 ? 1 : 0;
-        if(streak === 0) return 0;
-
-        for (let i = 0; i < activityDates.length - 1; i++) {
-            const current = new Date(activityDates[i]);
-            const previous = new Date(activityDates[i+1]);
-            const diffDays = Math.round((current.getTime() - previous.getTime()) / (1000 * 3600 * 24));
-            if (diffDays === 1) {
-                streak++;
-            } else {
-                break;
+        function renderAchievements() {
+            const grid = document.getElementById('achievementsGrid');
+            grid.innerHTML = '';
+            for (const key in ACHIEVEMENT_LIST) {
+                const ach = ACHIEVEMENT_LIST[key];
+                const unlocked = achievements[key];
+                const card = document.createElement('div');
+                card.className = `achievement-card ${unlocked ? 'unlocked' : 'locked'}`;
+                card.title = unlocked ? ach.description : `Bloqueado: ${ach.description}`;
+                card.innerHTML = `<span class="icon" style="font-size: 3em;">${ach.icon}</span><p>${ach.title}</p>`;
+                grid.appendChild(card);
             }
         }
-        return streak;
-    }
 
-    function updateFocusStreak() {
-        const streak = calculateFocusStreak();
-        document.getElementById('focusStreak').textContent = `🔥 Racha de ${streak} día${streak === 1 ? '' : 's'}`;
-    }
+        function calculateFocusStreak() {
+            const activityDates = [...new Set(activities.map(a => a.date.split('T')[0]))].sort((a,b) => new Date(b) - new Date(a));
+            if (activityDates.length === 0) return 0;
+            
+            let streak = 0;
+            let checkDate = new Date();
+            checkDate.setHours(0,0,0,0);
+            
+            let lastActivityDate = new Date(activityDates[0]);
+            lastActivityDate.setHours(0,0,0,0);
+            
+            const diffToday = (checkDate.getTime() - lastActivityDate.getTime()) / (1000 * 3600 * 24);
 
-    // --- UTILIDADES ---
-    function showNotification(message, duration = 3000) {
-        const el = document.getElementById('notification');
-        el.textContent = message;
-        el.classList.add('show');
-        setTimeout(() => el.classList.remove('show'), duration);
-    }
-    
-    // El resto de funciones (cronómetro, etc.) se mantienen como en la versión anterior
-    // --- CRONOMETRAR ACTIVIDAD ---
-    function startActivity() {
-        const type = document.getElementById('activityType').value;
-        const description = document.getElementById('activityDescription').value.trim();
-        if(!description) { showNotification('Por favor, añade una descripción.'); return; }
+            if (diffToday > 1) return 0;
+            
+            streak = (diffToday <= 1) ? 1 : 0;
+            if (streak === 0) return 0;
 
-        activityTimer.startTime = Date.now();
-        document.getElementById('activityForm').style.display = 'none';
-        document.getElementById('currentActivity').style.display = 'block';
-        document.getElementById('currentActivityInfo').textContent = `${type}: ${description}`;
-        activityTimer.interval = setInterval(updateActivityTimer, 1000);
-    }
+            for (let i = 0; i < activityDates.length - 1; i++) {
+                const current = new Date(activityDates[i]);
+                const previous = new Date(activityDates[i+1]);
+                const diffDays = Math.round((current.getTime() - previous.getTime()) / (1000 * 3600 * 24));
+                if (diffDays === 1) {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+            return streak;
+        }
 
-    function updateActivityTimer() {
-        const elapsed = Math.floor((Date.now() - activityTimer.startTime) / 1000);
-        const h = Math.floor(elapsed / 3600).toString().padStart(2, '0');
-        const m = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
-        const s = (elapsed % 60).toString().padStart(2, '0');
-        document.getElementById('activityTimer').textContent = `${h}:${m}:${s}`;
-    }
-
-    function stopActivity() {
-        clearInterval(activityTimer.interval);
-        const duration = Math.max(1, Math.round((Date.now() - activityTimer.startTime) / (1000 * 60)));
-        const type = document.getElementById('activityType').value;
-        const description = document.getElementById('activityDescription').value.trim();
+        function updateFocusStreak() {
+            const streak = calculateFocusStreak();
+            document.getElementById('focusStreak').innerHTML = `🔥 Racha de ${streak} día${streak === 1 ? '' : 's'}`;
+        }
         
-        activities.unshift({ id: Date.now(), type, description, duration, date: new Date().toISOString().split('T')[0] });
-        
-        document.getElementById('activityForm').style.display = 'block';
-        document.getElementById('currentActivity').style.display = 'none';
-        document.getElementById('activityDescription').value = '';
-        
-        saveAndRenderAll();
-        showNotification(`Actividad de ${duration} min registrada 👍`);
-    }
+        // --- UTILIDADES ---
+        function showNotification(message, duration = 3000) {
+            const el = document.getElementById('notification');
+            el.textContent = message;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), duration);
+        }
     </script>
 </body>
 </html>
