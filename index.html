@@ -92,11 +92,9 @@
     </style>
     <!-- Firebase SDKs -->
 <script type="module">
-  // Importar desde los módulos CDN
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // Tu configuración (copiada de Firebase)
   const firebaseConfig = {
     apiKey: "AIzaSyD0gGVvxwFxEnfbOYIhwVDExSR9HZy1YG4",
     authDomain: "miapp-e4dc6.firebaseapp.com",
@@ -107,11 +105,9 @@
     measurementId: "G-ZG1T9MZ8MD"
   };
 
-  // Inicializar Firebase y Firestore
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // EJEMPLO: Guardar una sopa
   async function guardarSopa(nombre, palabras) {
     await addDoc(collection(db, "sopas"), {
       nombre: nombre,
@@ -121,7 +117,6 @@
     console.log("¡Sopa guardada!");
   }
 
-  // EJEMPLO: Leer sopas
   async function leerSopas() {
     const querySnapshot = await getDocs(collection(db, "sopas"));
     querySnapshot.forEach((doc) => {
@@ -129,9 +124,9 @@
     });
   }
 
-  // Para probar en consola:
-  // guardarSopa("Frutas", ["manzana", "naranja", "plátano"]);
-  // leerSopas();
+  // 💡 Hacer las funciones accesibles desde consola
+  window.guardarSopa = guardarSopa;
+  window.leerSopas = leerSopas;
 </script>
 
 
