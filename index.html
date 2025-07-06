@@ -92,25 +92,26 @@
     </style>
     <!-- Firebase SDKs -->
 <script type="module">
-  // Importa módulos desde CDN (usando Firestore)
+  // Importar desde los módulos CDN
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // Tu configuración
+  // Tu configuración (copiada de Firebase)
   const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_PROYECTO.firebaseapp.com",
-    projectId: "TU_PROYECTO",
-    storageBucket: "TU_PROYECTO.appspot.com",
-    messagingSenderId: "XXXXXXXXXXX",
-    appId: "X:XXXXXXXXXXX:web:XXXXXXX"
+    apiKey: "AIzaSyD0gGVvxwFxEnfbOYIhwVDExSR9HZy1YG4",
+    authDomain: "miapp-e4dc6.firebaseapp.com",
+    projectId: "miapp-e4dc6",
+    storageBucket: "miapp-e4dc6.firebasestorage.app",
+    messagingSenderId: "815058398646",
+    appId: "1:815058398646:web:15d8a49b50ac5c660de517",
+    measurementId: "G-ZG1T9MZ8MD"
   };
 
-  // Inicializar
+  // Inicializar Firebase y Firestore
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // EJEMPLO: Guardar una sopa de letras
+  // EJEMPLO: Guardar una sopa
   async function guardarSopa(nombre, palabras) {
     await addDoc(collection(db, "sopas"), {
       nombre: nombre,
@@ -120,7 +121,7 @@
     console.log("¡Sopa guardada!");
   }
 
-  // EJEMPLO: Leer sopas guardadas
+  // EJEMPLO: Leer sopas
   async function leerSopas() {
     const querySnapshot = await getDocs(collection(db, "sopas"));
     querySnapshot.forEach((doc) => {
@@ -128,11 +129,11 @@
     });
   }
 
-  // Puedes llamar a estas funciones desde botones o eventos
-  // guardarSopa("sopa frutas", ["manzana", "pera", "uva"])
-  // leerSopas()
-
+  // Para probar en consola:
+  // guardarSopa("Frutas", ["manzana", "naranja", "plátano"]);
+  // leerSopas();
 </script>
+
 
 </head>
 <body>
