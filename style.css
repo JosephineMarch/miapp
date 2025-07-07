@@ -1,33 +1,295 @@
-onAuthStateChanged(auth, user => {
-    const loginContainer = document.getElementById('login-container');
-    const appContainer = document.getElementById('app-container');
-    const bottomNav = document.querySelector('.bottom-nav');
+/* --- 1. CONFIGURACIÓN GLOBAL Y VARIABLES DE TEMA --- */
+:root {
+    --primary-color: #7B61FF;
+    --primary-light: #EAEAFB;
+    --secondary-color: #FF8D85;
+    --tertiary-color: #FFD166;
+    --bg-color: #F8F9FA;
+    --card-bg: #FFFFFF;
+    --text-color: #2D3748;
+    --text-muted: #718096;
+    --border-color: #E2E8F0;
+    --success-color: #34D399;
+    --danger-color: #F87171;
+    --border-radius-lg: 20px;
+    --border-radius-md: 12px;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
 
-    if (user) {
-        if (userId !== user.uid) { 
-            userId = user.uid;
-            
-            // Poblar el header
-            document.getElementById('user-display-name').textContent = user.displayName.split(' ')[0];
-            document.getElementById('user-avatar').src = user.photoURL || 'https://i.pravatar.cc/40';
+.dark-mode {
+    --primary-light: #312b4f;
+    --bg-color: #1A202C;
+    --card-bg: #2D3748;
+    --text-color: #E2E8F0;
+    --text-muted: #A0AEC0;
+    --border-color: #4A5568;
+}
 
-            // Mostrar la app
-            loginContainer.classList.remove('visible');
-            appContainer.classList.add('visible');
-            bottomNav.classList.add('visible');
-            
-            setupRealtimeListeners();
-        }
-    } else {
-        userId = null;
-        
-        // Mostrar el login
-        loginContainer.classList.add('visible');
-        appContainer.classList.remove('visible');
-        bottomNav.classList.remove('visible');
-        
-        unsubscribers.forEach(unsub => unsub());
-        unsubscribers = [];
-        clearLocalData();
+/* --- 2. RESET Y ESTILOS BASE --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html { scroll-behavior: smooth; }
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* --- 3. LAYOUT PRINCIPAL Y VISIBILIDAD --- */
+/* Por defecto todo está oculto, JS maneja la visibilidad */
+#login-container, #app-container, .bottom-nav {
+    display: none;
+}
+#login-container.visible, #app-container.visible, .bottom-nav.visible {
+    display: flex; /* O block, dependiendo del elemento */
+}
+#app-container.visible {
+    display: block; /* app-container necesita ser block */
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+/* --- 4. PANTALLA DE LOGIN --- */
+#login-container {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+.login-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 30px;
+    text-align: center;
+    max-width: 380px;
+    width: 100%;
+    box-shadow: var(--shadow);
+}
+.login-illustration { margin-bottom: 25px; }
+.login-illustration svg { width: 100%; height: auto; }
+.login-card h2 { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+.login-card p { color: var(--text-muted); font-size: 15px; margin-bottom: 30px; line-height: 1.5; }
+
+
+/* --- 5. HEADER Y NAVEGACIÓN --- */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 15px;
+}
+.user-greeting { display: flex; align-items: center; gap: 12px; }
+.user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.greeting-text { display: block; color: var(--text-muted); font-size: 14px; }
+.user-name { display: block; font-size: 18px; font-weight: 600; }
+.header-actions { display: flex; gap: 8px; }
+
+.main-content {
+    padding: 0 15px 100px 15px; /* Espacio para barra inferior */
+}
+
+/* Navegación para móvil */
+.bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    justify-content: space-around;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    padding: 8px 0;
+    z-index: 1000;
+}
+/* Ocultar la de escritorio en móvil */
+.desktop-nav { display: none; }
+
+/* Botones de navegación (estilo base) */
+.nav-button {
+    font-family: var(--font-family); cursor: pointer; border: none; background: none;
+    transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px; font-weight: 500;
+}
+.bottom-nav .nav-button {
+    flex-direction: column; color: var(--text-muted); font-size: 11px;
+    flex-grow: 1; padding: 5px 0;
+}
+.bottom-nav .nav-button .icon { width: 24px; height: 24px; }
+.bottom-nav .nav-button.active { color: var(--primary-color); }
+
+/* --- 6. CONTENIDO DE PESTAÑAS --- */
+.tab-content { display: none; animation: fadeIn 0.4s ease-in-out; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- 7. COMPONENTES REUTILIZABLES --- */
+.card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+}
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.card-title { font-size: 18px; font-weight: 600; margin: 0; }
+.card-subtitle { color: var(--text-muted); font-size: 14px; margin-top: 4px; margin-bottom: 15px; }
+
+/* Botones */
+.btn-primary {
+    background-color: var(--primary-color); color: white; padding: 12px 20px;
+    border-radius: var(--border-radius-md); font-size: 15px;
+}
+.btn-primary:hover { background-color: #6a50e0; }
+.btn-full-width { width: 100%; }
+.btn-icon { width: 40px; height: 40px; border-radius: 50%; color: var(--text-muted); }
+.btn-icon:hover { background-color: var(--primary-light); color: var(--primary-color); }
+.btn-subtle {
+    background-color: var(--primary-light); color: var(--primary-color); padding: 8px 12px;
+    border-radius: var(--border-radius-md); font-size: 14px;
+}
+.btn-subtle.active { background-color: var(--primary-color); color: white; }
+
+/* Formularios */
+input, select, textarea {
+    width: 100%; padding: 12px 15px; border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md); font-size: 15px; background-color: var(--bg-color);
+    color: var(--text-color); font-family: var(--font-family); margin-bottom: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-light);
+}
+.input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+.input-group input { margin-bottom: 0; }
+.input-group .btn-primary { padding: 12px; }
+
+/* Íconos */
+.icon { width: 1.2em; height: 1.2em; fill: currentColor; }
+.nav-button .icon { width: 1.4em; height: 1.4em; }
+
+/* Listas */
+.item-list { display: flex; flex-direction: column; gap: 8px; }
+.list-item {
+    display: flex; align-items: center; gap: 15px; padding: 10px;
+    border-radius: var(--border-radius-md); transition: background-color 0.2s;
+}
+.list-item:hover { background-color: var(--bg-color); }
+.list-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary-color); cursor: pointer; flex-shrink: 0; }
+.item-text-content { flex: 1; min-width: 0; }
+.item-text { font-size: 15px; font-weight: 500; word-break: break-word; }
+.item-details { font-size: 13px; color: var(--text-muted); }
+.item-actions { margin-left: auto; display: flex; gap: 5px; flex-shrink: 0; }
+.list-item.completed { opacity: 0.6; }
+.list-item.completed .item-text { text-decoration: line-through; }
+.section-subtitle { display: none; }
+#taskListCompleted:not(:empty) ~ .section-subtitle, #taskListCompleted:not(:empty) { display: block; }
+
+/* --- 8. COMPONENTES ESPECÍFICOS --- */
+/* Finanzas */
+.finance-hero-card { background: linear-gradient(135deg, var(--primary-color) 0%, #a261ff 100%); color: white; }
+.finance-hero-label { font-size: 16px; opacity: 0.8; }
+.finance-hero-balance { font-size: 36px; font-weight: 700; margin: 5px 0 25px 0; }
+.finance-hero-details { display: flex; justify-content: space-between; gap: 20px; }
+.detail-item { display: flex; align-items: center; gap: 10px; }
+.detail-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.15); }
+.detail-label { font-size: 14px; opacity: 0.8; }
+.detail-value { font-size: 16px; font-weight: 600; }
+.transaction-amount { margin-left: auto; font-weight: 600; }
+.transaction-amount.income { color: var(--success-color); }
+.transaction-amount.expense { color: var(--danger-color); }
+
+/* Pomodoro */
+.pomodoro-card { text-align: center; }
+.pomodoro-timer { font-size: 48px; font-weight: 700; color: var(--primary-color); margin: 15px 0; }
+.pomodoro-status { color: var(--text-muted); margin-bottom: 20px; font-weight: 500; }
+.pomodoro-controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* Logros */
+.achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; }
+.achievement-card { padding: 20px 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); text-align: center; transition: all 0.3s ease; }
+.achievement-card .icon { font-size: 40px; }
+.achievement-card p { font-size: 13px; font-weight: 500; margin-top: 10px; }
+.achievement-card.locked { opacity: 0.4; filter: grayscale(1); }
+.achievement-card.unlocked { color: var(--tertiary-color); border-color: var(--tertiary-color); transform: translateY(-5px); box-shadow: 0 4px 15px rgba(255, 209, 102, 0.3); }
+
+/* Gráficos */
+.chart-container { position: relative; width: 100%; height: 220px; }
+.report-controls { display: flex; gap: 10px; margin-bottom: 20px; }
+
+/* Notificación */
+.notification {
+    position: fixed; bottom: -100px; left: 15px; right: 15px;
+    background: #2D3748; color: white; padding: 15px 25px;
+    border-radius: var(--border-radius-md); box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    z-index: 1001; transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    pointer-events: none;
+}
+.notification.show { transform: translateY(-110px); }
+.notification.achievement { background: linear-gradient(45deg, var(--secondary-color), var(--tertiary-color)); }
+
+/* --- 9. DISEÑO ADAPTATIVO PARA ESCRITORIO --- */
+@media (min-width: 768px) {
+    #app-container.visible {
+        display: block;
+        max-width: 1200px;
+        margin: 0 auto;
     }
-});
+    .main-content { padding: 0 0 40px 0; }
+    .main-header { padding: 30px 0; }
+
+    /* Ocultar barra móvil y mostrar la de escritorio */
+    .bottom-nav { display: none !important; }
+    .desktop-nav {
+        display: flex;
+        gap: 10px;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 30px;
+    }
+    .desktop-nav .nav-button {
+        padding: 12px 16px;
+        color: var(--text-muted);
+        border-bottom: 2px solid transparent;
+        border-radius: 6px 6px 0 0;
+    }
+    .desktop-nav .nav-button:hover { background-color: var(--bg-color); }
+    .desktop-nav .nav-button.active {
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+    }
+    
+    /* Layout en columnas */
+    #dashboard-content, #projects-content {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
+        gap: 30px;
+        align-items: start;
+    }
+    #dashboard-content > .card, #projects-content > .card { margin-bottom: 0; }
+    #dashboard-content > .card:first-child { grid-column: 1 / -1; }
+
+    #finances-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+    #finances-content > .finance-hero-card { grid-column: 1 / -1; }
+    
+    .notification {
+        left: auto;
+        right: 20px;
+        bottom: 20px;
+        transform: none;
+        transition: opacity 0.3s, transform 0.3s;
+    }
+    .notification.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
