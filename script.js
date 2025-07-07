@@ -429,3 +429,174 @@ function renderTransactions() {
     balanceEl.textContent = `$${balance.toFixed(2)}`;
     balanceEl.className = balance >= 0 ? 'finance-hero-balance income' : 'finance-hero-balance expense';
 }
+// --- GRÁFICOS Y PROGRESO ---
+function renderWeeklyRoutineChart() {
+    const canvas = document.getElementById('weekly-routine-chart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const labels = [];
+    const data = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+        const day = new Date(today);
+        day.setDate(today.getDate() - i);
+        labels.push(day.toLocaleDateString('es-ES', { weekday: 'short' }));
+        const dayStr = getTodayString(day);
+        const completed = routineCompletions[dayStr] || [];
+        const completedObligatory = obligatoryRoutines.filter(r => completed.includes(r.id)).length;
+        const percentage = obligatoryRoutines.length > 0 ? (completedObligatory / obligatoryRoutines.length) * 100 : 0;
+        data.push(percentage);
+    }
+    if (weeklyRoutineChart) weeklyRoutineChart.destroy();
+    weeklyRoutineChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '% Completado', data: data,
+                backgroundColor: 'rgba(34, 211, 238, 0.6)', // Cyan
+                borderColor: 'rgba(34, 211, 238, 1)',
+                borderWidth: 2, borderRadius: 8, barThickness: 15,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: { display: false, beginAtZero: true, max: 100 },
+                x: { grid: { display: false }, ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-muted') } }
+            },
+            plugins: { legend: { display: false }, title: { display: false } }
+        }
+    });
+}
+
+function renderReport(period) {
+    const canvas = document.getElementById('tasksCompletedChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const textColor = getComputedStyle(document.body).getPropertyValue('--text-muted');
+    const gridColor = getComputedStyle(document.body).getPropertyValue('--border-color');
+    
+    const now = new Date();
+    const chartLabels = [];
+    const chartData = [];
+
+    if (period === 'week') {
+        for (let i = 6; i >= 0; i--) {
+            const day = new Date(now);
+            day.setDate(now.getDate() - i);
+            chartLabels.push(day.toLocaleDateString('es-ES', { weekday: 'short' }));
+            const dayStr = getTodayString(day);
+            const tasksOnDay = tasks.filter(t => t.completedAt && getTodayString(t.completedAt.toDate()) === dayStr).length;
+            chartData.push(tasksOnDay);
+        }
+    } else { // 'month'
+        for (let i = 3; i >= 0; i--) { // Últimas 4 semanas
+            const endOfWeek = new Date(now);
+            endOfWeek.setDate(now.getDate() - (i * 7));
+            const startOfWeek = new Date(endOfWeek);
+            startOfWeek.setDate(endOfWeek.getDate() - 6);
+            chartLabels.push(`Sem ${startOfWeek.getDate()}/${startOfWeek.getMonth()+1}`);
+            const tasksInWeek = tasks.filter(t => {
+                const completedDate = t.completedAt?.toDate();
+                return completedDate && completedDate >= startOfWeek && completedDate <= endOfWeek;
+            }).length;
+            chartData.push(tasksInWeek);
+        }
+    }
+
+    if (tasksChart) tasksChart.destroy();
+    tasksChart = new Chart(ctx, {
+        type: 'bar',
+        data: { 
+            labels: chartLabels, 
+            datasets: [{ 
+                label: 'Tareas Completadas', 
+                data: chartData, 
+                backgroundColor: 'rgba(34, 211, 238, 0.6)', // Cyan
+                borderColor: 'rgba(34, 211, 238, 1)',
+                borderWidth: 2, borderRadius: 8, barThickness: 20,
+            }] 
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: { grid: { color: gridColor }, ticks: { color: textColor, stepSize: 1 }, beginAtZero: true },
+                x: { grid: { display: false }, ticks: { color: textColor } }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+function renderSummaryStats() {
+    const tasksCompleted = tasks.filter(t => t.completed).length;
+    const ideasCount = inboxItems.length;
+    
+    const todayStr = getTodayString();
+    const routinesToday = (routineCompletions[todayStr] || []).length;
+    
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const financesMonth = transactions.filter(t => (t.date?.toDate() || new Date(t.date)) >= firstDayOfMonth).length;
+
+    document.getElementById('stat-tasks').textContent = tasksCompleted;
+    document.getElementById('stat-inbox').textContent = ideasCount;
+    document.getElementById('stat-routines').textContent = routinesToday;
+    document.getElementById('stat-finances').textContent = financesMonth;
+}
+
+
+// --- LOGROS Y RACHA ---
+async function checkAndUnlockAchievements(args = {}) {
+    if (!userId) return;
+    let newAchievementUnlocked = false;
+    for (const key in ACHIEVEMENT_LIST) {
+        if (!achievements[key] && ACHIEVEMENT_LIST[key].condition(args)) {
+            achievements[key] = true;
+            newAchievementUnlocked = true;
+            showNotification(`🏆 ¡Logro Desbloqueado: ${ACHIEVEMENT_LIST[key].title}!`, 4000, true);
+        }
+    }
+    if (newAchievementUnlocked) {
+        try {
+            await updateDoc(doc(db, 'users', userId), { achievements: achievements });
+        } catch(e) { console.error("Error saving achievements", e); }
+    }
+}
+function renderAchievements() {
+    const grid = document.getElementById('achievementsGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    for (const key in ACHIEVEMENT_LIST) {
+        const ach = ACHIEVEMENT_LIST[key];
+        const unlocked = achievements[key];
+        const card = document.createElement('div');
+        card.className = `achievement-card ${unlocked ? 'unlocked' : 'locked'}`;
+        card.title = unlocked ? ach.description : `Bloqueado: ${ach.description}`;
+        card.innerHTML = `<span class="icon">${ach.icon}</span><p>${ach.title}</p>`;
+        grid.appendChild(card);
+    }
+}
+function calculateRoutineStreak() {
+    if (!obligatoryRoutines || obligatoryRoutines.length === 0) return 0;
+    const completionDates = Object.keys(routineCompletions).filter(date => {
+        const completedIds = routineCompletions[date] || [];
+        return obligatoryRoutines.every(r => completedIds.includes(r.id));
+    }).sort((a, b) => new Date(b) - new Date(a));
+    if (completionDates.length === 0) return 0;
+    let streak = 0;
+    let today = new Date(getTodayString());
+    let lastCompletion = new Date(completionDates[0]);
+    let diffDays = Math.round((today - lastCompletion) / (1000 * 3600 * 24));
+    if (diffDays > 1) return 0;
+    streak = (diffDays <= 1) ? 1 : 0;
+    if (streak === 0) return 0;
+    for (let i = 0; i < completionDates.length - 1; i++) {
+        const current = new Date(completionDates[i]);
+        const previous = new Date(completionDates[i + 1]);
+        const diff = Math.round((current - previous) / (1000 * 3600 * 24));
+        if (diff === 1) streak++; else break;
+    }
+    return streak;
+}
