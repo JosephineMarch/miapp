@@ -23,7 +23,6 @@ let tasks = [], inboxItems = [], achievements = {}, routineCompletions = {}, tra
 let obligatoryRoutines = [], extraRoutines = [];
 let currentTheme = 'light', userId = null;
 let weeklyRoutineChart = null, tasksChart = null;
-let pomodoro = { interval: null, state: 'idle', timeLeft: 25 * 60, targetTime: 0 };
 let unsubscribers = [];
 
 // --- DEFINICIONES ---
@@ -35,7 +34,6 @@ const DEFAULT_EXTRA_ROUTINES = [ { id: 'meditate', text: 'Meditar 5 minutos' }, 
 const ACHIEVEMENT_LIST = {
     firstTask: { title: '¡Primer Proyecto!', icon: '📝', description: 'Completa tu primera tarea de proyecto.', condition: () => tasks.some(t => t.completed) },
     tenTasks: { title: 'Maestra de Proyectos', icon: '✍️', description: 'Completa 10 tareas de proyecto.', condition: () => tasks.filter(t => t.completed).length >= 10 },
-    firstPomodoro: { title: 'Foco Total', icon: '🍅', description: 'Completa tu primer Pomodoro.', condition: (args) => args?.pomodoro_completed },
     inboxZero: { title: 'Mente Clara', icon: '🧘‍♀️', description: 'Vacía tu bandeja de ideas.', condition: (args) => args?.justDeleted && inboxItems.length === 0 },
     routinePerfectDay: { title: 'Día Perfecto', icon: '🌟', description: 'Completa todas las rutinas obligatorias en un día.', condition: (args) => args?.perfectDay },
     streak3: { title: 'Constancia', icon: '🔥', description: 'Mantén una racha de 3 días completando rutinas.', condition: (args) => args?.streak >= 3 },
@@ -54,62 +52,54 @@ const getTodayString = (date = new Date()) => {
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     onAuthStateChanged(auth, user => {
-    const loginContainer = document.getElementById('login-container');
-    const appContainer = document.getElementById('app-container');
-    const bottomNav = document.querySelector('.bottom-nav');
+        const loginContainer = document.getElementById('login-container');
+        const appWrapper = document.getElementById('app-wrapper');
+        const bottomNav = document.querySelector('.bottom-nav');
 
-    if (user) {
-        if (userId !== user.uid) { 
-            userId = user.uid;
-            
-            // Poblar el header
-            document.getElementById('user-display-name').textContent = user.displayName.split(' ')[0];
-            document.getElementById('user-avatar').src = user.photoURL || 'https://i.pravatar.cc/40';
+        if (user) {
+            if (userId !== user.uid) { 
+                userId = user.uid;
+                
+                document.getElementById('user-display-name').textContent = user.displayName.split(' ')[0];
+                document.getElementById('user-avatar').src = user.photoURL || 'https://i.pravatar.cc/40';
 
-            // Mostrar la app
-            loginContainer.classList.remove('visible');
-            appContainer.classList.add('visible');
-            bottomNav.classList.add('visible');
+                loginContainer.classList.remove('visible');
+                appWrapper.classList.add('visible');
+                bottomNav.classList.add('visible');
+                
+                setupRealtimeListeners();
+            }
+        } else {
+            userId = null;
             
-            setupRealtimeListeners();
+            loginContainer.classList.add('visible');
+            appWrapper.classList.remove('visible');
+            bottomNav.classList.remove('visible');
+            
+            unsubscribers.forEach(unsub => unsub());
+            unsubscribers = [];
+            clearLocalData();
         }
-    } else {
-        userId = null;
-        
-        // Mostrar el login
-        loginContainer.classList.add('visible');
-        appContainer.classList.remove('visible');
-        bottomNav.classList.remove('visible');
-        
-        unsubscribers.forEach(unsub => unsub());
-        unsubscribers = [];
-        clearLocalData();
-    }
+    });
 });
-});
-
 function setupEventListeners() {
     document.getElementById('loginBtn').addEventListener('click', () => signInWithPopup(auth, provider).catch(error => console.error("Error en login:", error)));
     document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+    
+    // Listeners para ambos botones de tema
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+    document.getElementById('mobile-theme-toggle').addEventListener('click', toggleTheme);
+
+    // Listener para todos los botones de navegación (móvil y escritorio)
     document.querySelectorAll('.nav-button').forEach(tab => tab.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab)));
 
+    // Listeners de acciones de la app
     document.getElementById('addTaskBtn').addEventListener('click', addTask);
     document.getElementById('taskInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
     document.getElementById('addInboxBtn').addEventListener('click', addInboxItem);
     document.getElementById('addObligatoryRoutineBtn').addEventListener('click', () => addRoutine('obligatory'));
     document.getElementById('addExtraRoutineBtn').addEventListener('click', () => addRoutine('extra'));
     document.getElementById('finance-form').addEventListener('submit', addTransaction);
-    
-    document.getElementById('pomodoroControls').addEventListener('click', (e) => {
-        const button = e.target.closest('button');
-        if (!button) return;
-        if (button.id.includes('StartWork')) startPomodoro('work');
-        if (button.id.includes('Pause')) pausePomodoro();
-        if (button.id.includes('Resume')) resumePomodoro();
-    });
-
-
 }
 
 function setupRealtimeListeners() {
@@ -135,7 +125,7 @@ function setupRealtimeListeners() {
         tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         loadTasks();
         checkAndUnlockAchievements();
-        updateReportsIfVisible();
+        renderSummaryStats();
     }));
     
     unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'routineCompletions')), (snapshot) => {
@@ -146,7 +136,6 @@ function setupRealtimeListeners() {
         const todayStr = getTodayString();
         const oldTodayCompletions = oldCompletions[todayStr] || [];
         const newTodayCompletions = routineCompletions[todayStr] || [];
-
         if (newTodayCompletions.length > oldTodayCompletions.length) {
             const allObligatoryDone = obligatoryRoutines.every(r => newTodayCompletions.includes(r.id));
             if (allObligatoryDone) {
@@ -159,42 +148,34 @@ function setupRealtimeListeners() {
         checkAndUnlockAchievements({ streak: currentStreak });
         
         renderRoutines();
-        updateReportsIfVisible();
+        renderSummaryStats();
     }));
 
     unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'inboxItems'), orderBy('createdAt', 'desc')), (snapshot) => {
         inboxItems = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         loadInboxItems();
+        renderSummaryStats();
     }));
 
     unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'transactions'), orderBy('date', 'desc')), (snapshot) => {
         transactions = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         renderTransactions();
         checkAndUnlockAchievements();
+        renderSummaryStats();
     }));
-
-    // CORRECCIÓN: Inicializar el Pomodoro al cargar
-    updatePomodoroUI();
 }
 
-// --- LÓGICA DE UI (NAVEGACIÓN, TEMA, NOTIFICACIONES) ---
+// --- LÓGICA DE UI ---
 function switchTab(tabId) {
-    // Actualiza ambos menús de navegación
     document.querySelectorAll('.nav-button').forEach(el => {
         el.classList.remove('active');
-        if (el.dataset.tab === tabId) {
-            el.classList.add('active');
-        }
+        if (el.dataset.tab === tabId) el.classList.add('active');
     });
     
-    // Muestra el contenido de la pestaña correcta
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     
-    // Si la pestaña es de progreso, renderiza el reporte
-    if (tabId === 'progress-content') {
-        renderReport('week');
-    }
+    if (tabId === 'progress-content') renderReport('week');
 }
 
 async function toggleTheme() {
@@ -205,12 +186,13 @@ async function toggleTheme() {
             await updateDoc(doc(db, 'users', userId), { theme: currentTheme });
         } catch (error) { showNotification("Error al guardar el tema."); }
     }
-    updateReportsIfVisible();
 }
 
 function applyTheme(theme) {
     document.body.classList.toggle('dark-mode', theme === 'dark');
-    document.getElementById('theme-toggle').innerHTML = theme === 'dark' ? '<svg class="icon"><use href="#icon-sun"/></svg>' : '<svg class="icon"><use href="#icon-moon"/></svg>';
+    const themeIcon = theme === 'dark' ? '<svg class="icon"><use href="#icon-sun"/></svg>' : '<svg class="icon"><use href="#icon-moon"/></svg>';
+    document.getElementById('theme-toggle').innerHTML = themeIcon;
+    document.getElementById('mobile-theme-toggle').innerHTML = themeIcon;
 }
 
 function showNotification(message, duration = 3000, isAchievement = false) {
@@ -218,21 +200,13 @@ function showNotification(message, duration = 3000, isAchievement = false) {
     el.textContent = message;
     el.className = 'notification show';
     if(isAchievement) el.classList.add('achievement');
-    setTimeout(() => { el.classList.remove('show', 'achievement'); }, duration);
-}
-
-function updateReportsIfVisible(){
-    if (document.getElementById('progress-content').classList.contains('active')) {
-        const activePeriod = document.querySelector('.report-controls .active')?.dataset.period || 'week';
-        renderReport(activePeriod);
-    }
+    setTimeout(() => { el.classList.remove('show'); }, duration);
 }
 
 function clearLocalData() {
     tasks = []; inboxItems = []; achievements = {}; routineCompletions = {}; transactions = [];
     obligatoryRoutines = DEFAULT_OBLIGATORY_ROUTINES; extraRoutines = DEFAULT_EXTRA_ROUTINES;
 }
-
 // --- DASHBOARD (RUTINAS) ---
 function renderRoutines() {
     renderWeeklyRoutineChart();
@@ -312,6 +286,7 @@ async function toggleRoutine(routineId) {
         }
     } catch (e) { showNotification("Error al actualizar la rutina."); }
 }
+
 // --- PROYECTOS ---
 async function addTask() {
     const input = document.getElementById('taskInput');
@@ -441,7 +416,7 @@ function renderTransactions() {
                 <span class="item-text">${trans.description}</span>
                 <span class="item-details">${(trans.date?.toDate() || new Date(trans.date)).toLocaleDateString()}</span>
             </div>
-            <span class="transaction-amount ${trans.type}">
+            <span class="transaction-amount ${trans.type === 'income' ? 'income' : 'expense'}">
                 ${trans.type === 'income' ? '+' : '-'}$${trans.amount.toFixed(2)}
             </span>`;
         list.appendChild(item);
@@ -454,100 +429,3 @@ function renderTransactions() {
     balanceEl.textContent = `$${balance.toFixed(2)}`;
     balanceEl.className = balance >= 0 ? 'finance-hero-balance income' : 'finance-hero-balance expense';
 }
-
-
-// --- GRÁFICOS Y PROGRESO ---
-function renderWeeklyRoutineChart() {
-    const canvas = document.getElementById('weekly-routine-chart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const labels = [];
-    const data = [];
-    const today = new Date();
-    for (let i = 6; i >= 0; i--) {
-        const day = new Date(today);
-        day.setDate(today.getDate() - i);
-        labels.push(day.toLocaleDateString('es-ES', { weekday: 'short' }));
-        const dayStr = getTodayString(day);
-        const completed = routineCompletions[dayStr] || [];
-        const completedObligatory = obligatoryRoutines.filter(r => completed.includes(r.id)).length;
-        const percentage = obligatoryRoutines.length > 0 ? (completedObligatory / obligatoryRoutines.length) * 100 : 0;
-        data.push(percentage);
-    }
-    if (weeklyRoutineChart) weeklyRoutineChart.destroy();
-    weeklyRoutineChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: '% Completado', data: data,
-                backgroundColor: 'rgba(123, 97, 255, 0.6)',
-                borderColor: 'rgba(123, 97, 255, 1)',
-                borderWidth: 2, borderRadius: 8, barThickness: 15,
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: {
-                y: { display: false, beginAtZero: true, max: 100 },
-                x: { grid: { display: false }, ticks: { color: '#718096' } }
-            },
-            plugins: { legend: { display: false }, title: { display: false } }
-        }
-    });
-}
-
-// --- LOGROS Y RACHA ---
-async function checkAndUnlockAchievements(args = {}) {
-    if (!userId) return;
-    let newAchievementUnlocked = false;
-    for (const key in ACHIEVEMENT_LIST) {
-        if (!achievements[key] && ACHIEVEMENT_LIST[key].condition(args)) {
-            achievements[key] = true;
-            newAchievementUnlocked = true;
-            showNotification(`🏆 ¡Logro Desbloqueado: ${ACHIEVEMENT_LIST[key].title}!`, 4000, true);
-        }
-    }
-    if (newAchievementUnlocked) {
-        try {
-            await updateDoc(doc(db, 'users', userId), { achievements: achievements });
-        } catch(e) { console.error("Error saving achievements", e); }
-    }
-}
-function renderAchievements() {
-    const grid = document.getElementById('achievementsGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    for (const key in ACHIEVEMENT_LIST) {
-        const ach = ACHIEVEMENT_LIST[key];
-        const unlocked = achievements[key];
-        const card = document.createElement('div');
-        card.className = `achievement-card ${unlocked ? 'unlocked' : 'locked'}`;
-        card.title = unlocked ? ach.description : `Bloqueado: ${ach.description}`;
-        card.innerHTML = `<span class="icon">${ach.icon}</span><p>${ach.title}</p>`;
-        grid.appendChild(card);
-    }
-}
-function calculateRoutineStreak() {
-    if (!obligatoryRoutines || obligatoryRoutines.length === 0) return 0;
-    const completionDates = Object.keys(routineCompletions).filter(date => {
-        const completedIds = routineCompletions[date] || [];
-        return obligatoryRoutines.every(r => completedIds.includes(r.id));
-    }).sort((a, b) => new Date(b) - new Date(a));
-    if (completionDates.length === 0) return 0;
-    let streak = 0;
-    let today = new Date(getTodayString());
-    let lastCompletion = new Date(completionDates[0]);
-    let diffDays = Math.round((today - lastCompletion) / (1000 * 3600 * 24));
-    if (diffDays > 1) return 0;
-    streak = (diffDays <= 1) ? 1 : 0;
-    if (streak === 0) return 0;
-    for (let i = 0; i < completionDates.length - 1; i++) {
-        const current = new Date(completionDates[i]);
-        const previous = new Date(completionDates[i + 1]);
-        const diff = Math.round((current - previous) / (1000 * 3600 * 24));
-        if (diff === 1) streak++; else break;
-    }
-    return streak;
-}
-
