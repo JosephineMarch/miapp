@@ -385,7 +385,7 @@ button .icon { width: 1.4em; height: 1.4em; }
     bottom: 0;
     left: 0;
     right: 0;
-    display: flex;
+    display: none; /* <-- AÑADE ESTA LÍNEA. OCULTA LA BARRA POR DEFECTO */
     justify-content: space-around;
     background: var(--card-bg);
     border-top: 1px solid var(--border-color);
