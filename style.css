@@ -145,6 +145,10 @@ input[type="checkbox"] {
 /* --- 7. COMPONENTES ESPECÍFICOS --- */
 /* Finanzas */
 .finance-hero-card { background: linear-gradient(135deg, var(--primary-color) 0%, #a261ff 100%); color: white; }
+.finance-hero-label { font-size: 16px; opacity: 0.8; }
+.finance-hero-balance { font-size: 36px; font-weight: 700; margin: 5px 0 25px 0; }
+.finance-hero-details { display: flex; justify-content: space-between; gap: 20px; }
+.detail-item { display: flex; align-items: center; gap: 10px; }
 .detail-icon { font-size: 18px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .income-bg { background-color: rgba(52, 211, 153, 0.2); color: var(--success-color); }
 .expense-bg { background-color: rgba(239, 68, 68, 0.2); color: var(--danger-color); }
@@ -163,7 +167,28 @@ input[type="checkbox"] {
 .chart-container { position: relative; width: 100%; height: 220px; }
 
 /* Notificación */
-.notification { position: fixed; bottom: 90px; left: 15px; right: 15px; /* ... */ }
+.notification {
+    position: fixed;
+    bottom: -100px;
+    left: 15px;
+    right: 15px;
+    background: #2D3748;
+    color: white;
+    padding: 15px 25px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    transform: translateY(0);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.4s cubic-bezier(0.17, 0.67, 0.2, 1.2), opacity 0.4s ease;
+}
+.notification.show {
+    transform: translateY(-110px);
+    opacity: 1;
+}
+.notification.achievement { background: linear-gradient(45deg, var(--secondary-color), var(--tertiary-color)); }
+
 
 /* --- 8. DISEÑO ADAPTATIVO PARA ESCRITORIO --- */
 @media (min-width: 992px) {
@@ -196,15 +221,23 @@ input[type="checkbox"] {
     .main-content { padding: 0 40px 40px 40px; }
 
     /* Layout en columnas */
-    #dashboard-content, #projects-content {
+    #dashboard-content {
         display: grid;
         grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
         gap: 30px;
     }
     #dashboard-content > .card:first-child { grid-column: 1 / -1; }
-    #projects-content > .card:nth-child(2) { grid-row: 1; grid-column: 2; }
-    #projects-content > .card:first-child { grid-row: 1; grid-column: 1; }
 
     #finances-content { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
     #finances-content > .finance-hero-card { grid-column: 1 / -1; }
+    
+    .notification {
+        left: auto;
+        right: 20px;
+        bottom: 20px;
+        transform: translateY(20px);
+    }
+    .notification.show {
+        transform: translateY(0);
+    }
 }
