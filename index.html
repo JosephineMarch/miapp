@@ -48,12 +48,12 @@
     </div>
 
     <div id="app-wrapper">
-        <!-- (NUEVO) Barra lateral para escritorio -->
+        <!-- Barra lateral para escritorio -->
         <nav class="sidebar-nav">
             <div class="sidebar-header">
                 <h1 class="logo">Crea</h1>
             </div>
-            <button class="nav-button active" data-tab="dashboard-content"><svg class="icon"><use href="#icon-home"/></svg> Dashboard</button>
+            <button class="nav-button" data-tab="dashboard-content"><svg class="icon"><use href="#icon-home"/></svg> Dashboard</button>
             <button class="nav-button" data-tab="projects-content"><svg class="icon"><use href="#icon-tasks"/></svg> Proyectos</button>
             <button class="nav-button" data-tab="finances-content"><svg class="icon"><use href="#icon-finance"/></svg> Finanzas</button>
             <button class="nav-button" data-tab="progress-content"><svg class="icon"><use href="#icon-progress"/></svg> Progreso</button>
@@ -73,7 +73,6 @@
                         <span id="user-display-name" class="user-name"></span>
                     </div>
                 </div>
-                <!-- Los botones de la derecha ahora están en el footer del sidebar en escritorio -->
                 <div class="mobile-header-actions">
                     <button class="btn-icon" id="mobile-theme-toggle" title="Cambiar tema"><svg class="icon"><use href="#icon-moon"/></svg></button>
                 </div>
@@ -81,7 +80,7 @@
 
             <main class="main-content">
                 <!-- Pestaña Dashboard -->
-                <div class="tab-content active" id="dashboard-content">
+                <div class="tab-content" id="dashboard-content">
                     <div class="card">
                         <h2 class="card-title">Resumen Semanal de Rutinas</h2>
                         <div class="chart-container" style="height: 180px;">
@@ -216,7 +215,7 @@
 
     <!-- Barra de navegación para móvil -->
     <nav class="bottom-nav">
-        <button class="nav-button active" data-tab="dashboard-content"><svg class="icon"><use href="#icon-home"/></svg><span>Dashboard</span></button>
+        <button class="nav-button" data-tab="dashboard-content"><svg class="icon"><use href="#icon-home"/></svg><span>Dashboard</span></button>
         <button class="nav-button" data-tab="projects-content"><svg class="icon"><use href="#icon-tasks"/></svg><span>Proyectos</span></button>
         <button class="nav-button" data-tab="finances-content"><svg class="icon"><use href="#icon-finance"/></svg><span>Finanzas</span></button>
         <button class="nav-button" data-tab="progress-content"><svg class="icon"><use href="#icon-progress"/></svg><span>Progreso</span></button>

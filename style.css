@@ -44,7 +44,7 @@ body {
 
 /* --- 3. LAYOUT PRINCIPAL Y VISIBILIDAD --- */
 #login-container, #app-wrapper, .bottom-nav { display: none; }
-#login-container.visible, #app-wrapper.visible, .bottom-nav.visible { display: flex; }
+#login-container.visible, .bottom-nav.visible { display: flex; }
 #app-wrapper.visible { display: block; } /* app-wrapper es el contenedor principal */
 
 .container { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
@@ -73,6 +73,10 @@ body {
 
 .main-content { padding: 0 15px 100px 15px; }
 
+/* Control de visibilidad de pestañas - CORRECCIÓN CLAVE */
+.tab-content { display: none; }
+.tab-content.active { display: block; } /* Por defecto es block */
+
 /* Navegación para móvil */
 .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
@@ -100,28 +104,20 @@ body {
 .card-title { font-size: 18px; font-weight: 600; margin: 0; }
 .card-subtitle { color: var(--text-muted); font-size: 14px; margin-top: 4px; margin-bottom: 15px; }
 
-/* Botones rediseñados */
+/* Botones */
 .btn-primary {
     background-color: var(--primary-color); color: white; padding: 12px 20px;
     border-radius: var(--border-radius); font-size: 15px; border: none; box-shadow: none; width: 100%;
-    display: inline-flex; align-items: center; justify-content: center; /* Para alinear icono y texto */
+    display: inline-flex; align-items: center; justify-content: center;
 }
 .btn-primary:hover { background-color: #6A5ACD; }
-/* CORRECCIÓN 4: Tamaño del icono de Google */
-.btn-primary .icon {
-    width: 24px;
-    height: 24px;
-    vertical-align: middle;
-    margin-right: 8px;
-}
+.btn-primary .icon { width: 24px; height: 24px; vertical-align: middle; margin-right: 8px; }
 .btn-icon {
     width: 40px; height: 40px; border-radius: 50%; color: var(--text-muted);
     background-color: transparent; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
 }
 .btn-icon:hover { background-color: var(--primary-light); color: var(--primary-color); }
-.btn-icon.btn-primary {
-    background-color: var(--primary-color); color: white; width: 44px; height: 44px;
-}
+.btn-icon.btn-primary { background-color: var(--primary-color); color: white; width: 44px; height: 44px; }
 .btn-icon.btn-primary:hover { background-color: #6A5ACD; }
 
 /* Formularios */
@@ -134,29 +130,15 @@ input:focus, select:focus, textarea:focus {
     outline: none; border-color: var(--primary-color);
     box-shadow: 0 0 0 2px var(--primary-light);
 }
-input[type="checkbox"] {
-    width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent-color);
-}
-/* CORRECCIÓN 1: Estilos para el input-group de tareas */
-.input-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-.input-group input {
-    margin-bottom: 0;
-}
-.input-group .btn-icon {
-    flex-shrink: 0;
-}
+input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent-color); }
+.input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+.input-group input { margin-bottom: 0; }
+.input-group .btn-icon { flex-shrink: 0; }
 
 /* Listas */
 .item-list { display: flex; flex-direction: column; gap: 8px; }
-.list-item {
-    display: flex; align-items: center; gap: 15px; padding: 10px;
-    border-radius: var(--border-radius);
-}
-.list-item .item-text-content { flex-grow: 1; } /* Para que el texto ocupe el espacio */
+.list-item { display: flex; align-items: center; gap: 15px; padding: 10px; border-radius: var(--border-radius); }
+.list-item .item-text-content { flex-grow: 1; }
 .item-text { font-size: 15px; font-weight: 500; }
 .list-item.completed { opacity: 0.6; }
 .list-item.completed .item-text { text-decoration: line-through; }
@@ -174,85 +156,37 @@ input[type="checkbox"] {
 .income-bg { background-color: rgba(52, 211, 153, 0.2); color: var(--success-color); }
 .expense-bg { background-color: rgba(239, 68, 68, 0.2); color: var(--danger-color); }
 .dark-mode .income-bg, .dark-mode .expense-bg { color: white; }
-/* CORRECCIÓN 3: Colores para montos de transacciones */
-.transaction-amount {
-    font-weight: 600;
-    margin-left: auto;
-}
+.transaction-amount { font-weight: 600; margin-left: auto; }
 .transaction-amount.income { color: var(--success-color); }
 .transaction-amount.expense { color: var(--danger-color); }
 
 /* Progreso */
 .summary-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-.stat-card {
-    background: var(--bg-color); padding: 20px; border-radius: var(--border-radius);
-    text-align: center; border: 1px solid var(--border-color);
-}
+.stat-card { background: var(--bg-color); padding: 20px; border-radius: var(--border-radius); text-align: center; border: 1px solid var(--border-color); }
 .stat-value { font-size: 28px; font-weight: 700; display: block; color: var(--primary-color); }
 .stat-label { font-size: 13px; color: var(--text-muted); margin-top: 5px; display: block; }
 
 /* Gráficos */
 .chart-container { position: relative; width: 100%; height: 220px; }
 
-/* CORRECCIÓN 2: Estilos para la cuadrícula de logros */
-.achievements-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 15px;
-}
-.achievement-card {
-    background-color: var(--bg-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: 15px;
-    text-align: center;
-    transition: all 0.2s ease;
-    cursor: help;
-}
-.achievement-card .icon {
-    font-size: 28px;
-    display: block;
-    margin-bottom: 8px;
-}
-.achievement-card p {
-    font-size: 14px;
-    font-weight: 500;
-    margin: 0;
-}
-.achievement-card.locked {
-    opacity: 0.5;
-    filter: grayscale(80%);
-}
-.achievement-card.unlocked {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 10px var(--accent-light);
-}
+/* Logros */
+.achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; }
+.achievement-card { background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 15px; text-align: center; transition: all 0.2s ease; cursor: help; }
+.achievement-card .icon { font-size: 28px; display: block; margin-bottom: 8px; }
+.achievement-card p { font-size: 14px; font-weight: 500; margin: 0; }
+.achievement-card.locked { opacity: 0.5; filter: grayscale(80%); }
+.achievement-card.unlocked { border-color: var(--accent-color); box-shadow: 0 0 10px var(--accent-light); }
 
 /* Notificación */
 .notification {
-    position: fixed;
-    bottom: -100px;
-    left: 15px;
-    right: 15px;
-    background: #2D3748;
-    color: white;
-    padding: 15px 25px;
-    border-radius: var(--border-radius);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    z-index: 1001;
-    transform: translateY(0);
-    opacity: 0;
-    pointer-events: none;
+    position: fixed; bottom: -100px; left: 15px; right: 15px; background: #2D3748;
+    color: white; padding: 15px 25px; border-radius: var(--border-radius);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); z-index: 1001; transform: translateY(0);
+    opacity: 0; pointer-events: none;
     transition: transform 0.4s cubic-bezier(0.17, 0.67, 0.2, 1.2), opacity 0.4s ease;
 }
-.notification.show {
-    transform: translateY(-110px);
-    opacity: 1;
-}
-/* CORRECCIÓN 5: Usar variables de color existentes */
-.notification.achievement {
-    background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
-}
+.notification.show { transform: translateY(-110px); opacity: 1; }
+.notification.achievement { background: linear-gradient(45deg, var(--accent-color), var(--primary-color)); }
 
 /* --- 8. DISEÑO ADAPTATIVO PARA ESCRITORIO --- */
 @media (min-width: 992px) {
@@ -284,24 +218,21 @@ input[type="checkbox"] {
     .main-header { padding: 30px 40px; }
     .main-content { padding: 0 40px 40px 40px; }
 
-    /* Layout en columnas */
-    #dashboard-content {
+    /* Layout en columnas - CORRECCIÓN CLAVE */
+    #dashboard-content.active {
         display: grid;
         grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
         gap: 30px;
     }
     #dashboard-content > .card:first-child { grid-column: 1 / -1; }
 
-    #finances-content { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+    #finances-content.active {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
     #finances-content > .finance-hero-card { grid-column: 1 / -1; }
     
-    .notification {
-        left: auto;
-        right: 20px;
-        bottom: 20px;
-        transform: translateY(20px);
-    }
-    .notification.show {
-        transform: translateY(0);
-    }
+    .notification { left: auto; right: 20px; bottom: 20px; transform: translateY(20px); }
+    .notification.show { transform: translateY(0); }
 }

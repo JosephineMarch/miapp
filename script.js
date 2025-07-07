@@ -68,6 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 bottomNav.classList.add('visible');
                 
                 setupRealtimeListeners();
+                // CORRECCIÓN CLAVE: Establecer la pestaña inicial
+                switchTab('dashboard-content');
             }
         } else {
             userId = null;
@@ -82,18 +84,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
 function setupEventListeners() {
     document.getElementById('loginBtn').addEventListener('click', () => signInWithPopup(auth, provider).catch(error => console.error("Error en login:", error)));
     document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
     
-    // Listeners para ambos botones de tema
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
     document.getElementById('mobile-theme-toggle').addEventListener('click', toggleTheme);
 
-    // Listener para todos los botones de navegación (móvil y escritorio)
-    document.querySelectorAll('.nav-button').forEach(tab => tab.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab)));
+    document.querySelectorAll('.nav-button').forEach(tab => {
+        tab.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab));
+    });
 
-    // Listeners de acciones de la app
     document.getElementById('addTaskBtn').addEventListener('click', addTask);
     document.getElementById('taskInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
     document.getElementById('addInboxBtn').addEventListener('click', addInboxItem);
@@ -167,15 +169,21 @@ function setupRealtimeListeners() {
 
 // --- LÓGICA DE UI ---
 function switchTab(tabId) {
+    // CORRECCIÓN CLAVE: Activar/desactivar clases en botones y contenido
     document.querySelectorAll('.nav-button').forEach(el => {
-        el.classList.remove('active');
-        if (el.dataset.tab === tabId) el.classList.add('active');
+        el.classList.toggle('active', el.dataset.tab === tabId);
     });
     
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.toggle('active', el.id === tabId);
+    });
     
-    if (tabId === 'progress-content') renderReport('week');
+    // CORRECCIÓN CLAVE: Re-renderizar gráficos solo cuando su pestaña está activa
+    if (tabId === 'dashboard-content') {
+        renderWeeklyRoutineChart();
+    } else if (tabId === 'progress-content') {
+        renderReport('week');
+    }
 }
 
 async function toggleTheme() {
@@ -190,9 +198,9 @@ async function toggleTheme() {
 
 function applyTheme(theme) {
     document.body.classList.toggle('dark-mode', theme === 'dark');
-    const themeIcon = theme === 'dark' ? '<svg class="icon"><use href="#icon-sun"/></svg>' : '<svg class="icon"><use href="#icon-moon"/></svg>';
-    document.getElementById('theme-toggle').innerHTML = themeIcon;
-    document.getElementById('mobile-theme-toggle').innerHTML = themeIcon;
+    const themeIconUse = theme === 'dark' ? '#icon-sun' : '#icon-moon';
+    document.querySelector('#theme-toggle use').setAttribute('href', themeIconUse);
+    document.querySelector('#mobile-theme-toggle use').setAttribute('href', themeIconUse);
 }
 
 function showNotification(message, duration = 3000, isAchievement = false) {
@@ -209,7 +217,6 @@ function clearLocalData() {
 }
 // --- DASHBOARD (RUTINAS) ---
 function renderRoutines() {
-    renderWeeklyRoutineChart();
     const todayStr = getTodayString();
     const completedToday = routineCompletions[todayStr] || [];
     
