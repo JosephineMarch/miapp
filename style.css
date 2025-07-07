@@ -1,26 +1,19 @@
-/* --- 1. CONFIGURACIÓN GLOBAL Y VARIABLES DE TEMA --- */
 :root {
-    /* Paleta de colores rediseñada */
-    --primary-color: #7B61FF;      /* Violeta para acciones principales */
-    --primary-light: #EAEAFB;      /* Tono muy claro de violeta para hovers */
-    --accent-color: #22D3EE;       /* Cyan para acentos visuales y gráficos */
-    --accent-light: #e0fcff;       /* Tono muy claro de cyan */
-    
-    /* Colores base y de estado */
-    --bg-color: #F7F7F9;           /* Un fondo ligeramente más cálido */
+    --primary-color: #7B61FF;
+    --primary-light: #EAEAFB;
+    --accent-color: #22D3EE;
+    --accent-light: #e0fcff;
+    --bg-color: #F7F7F9;
     --card-bg: #FFFFFF;
-    --text-color: #1A202C;         /* Un negro más suave (slate) */
+    --text-color: #1A202C;
     --text-muted: #718096;
     --border-color: #E2E8F0;
     --success-color: #34D399;
     --danger-color: #EF4444;
-
-    /* Propiedades de UI estilo Material */
     --border-radius: 12px;
     --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.05);
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
-
 .dark-mode {
     --primary-light: #312b4f;
     --accent-light: #2c4a5c;
@@ -30,8 +23,6 @@
     --text-muted: #A0AEC0;
     --border-color: #4A5568;
 }
-
-/* --- 2. RESET Y ESTILOS BASE --- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
@@ -41,15 +32,10 @@ body {
     transition: background-color 0.3s, color 0.3s;
     -webkit-font-smoothing: antialiased;
 }
-
-/* --- 3. LAYOUT PRINCIPAL Y VISIBILIDAD --- */
 #login-container, #app-wrapper, .bottom-nav { display: none; }
 #login-container.visible, .bottom-nav.visible { display: flex; }
-#app-wrapper.visible { display: block; } /* app-wrapper es el contenedor principal */
-
+#app-wrapper.visible { display: block; }
 .container { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
-
-/* --- 4. PANTALLA DE LOGIN --- */
 #login-container { flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; }
 .login-card {
     background: var(--card-bg); border-radius: var(--border-radius);
@@ -60,24 +46,16 @@ body {
 .login-illustration svg { width: 100%; height: auto; }
 .login-card h2 { font-size: 22px; font-weight: 600; margin-bottom: 10px; }
 .login-card p { color: var(--text-muted); font-size: 15px; margin-bottom: 30px; line-height: 1.5; }
-
-/* --- 5. LAYOUT DE LA APP (MÓVIL PRIMERO) --- */
-.sidebar-nav { display: none; } /* Oculto en móvil */
-
+.sidebar-nav { display: none; }
 .main-container { width: 100%; }
 .main-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 15px; }
 .user-greeting { display: flex; align-items: center; gap: 12px; }
 .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
 .greeting-text { display: block; color: var(--text-muted); font-size: 14px; }
 .user-name { display: block; font-size: 18px; font-weight: 600; }
-
 .main-content { padding: 0 15px 100px 15px; }
-
-/* Control de visibilidad de pestañas - CORRECCIÓN CLAVE */
 .tab-content { display: none; }
-.tab-content.active { display: block; } /* Por defecto es block */
-
-/* Navegación para móvil */
+.tab-content.active { display: block; }
 .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
     justify-content: space-around; background: var(--card-bg);
@@ -94,8 +72,6 @@ body {
 }
 .bottom-nav .nav-button .icon { width: 24px; height: 24px; }
 .bottom-nav .nav-button.active { color: var(--primary-color); }
-
-/* --- 6. ESTILO DE COMPONENTES (MATERIAL MINIMALIST) --- */
 .card {
     background: var(--card-bg); border-radius: var(--border-radius);
     padding: 20px; margin-bottom: 20px; border: 1px solid var(--border-color);
@@ -104,12 +80,10 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px; /* Ajustado para mejor espaciado */
+    margin-bottom: 15px;
 }
 .card-title { font-size: 18px; font-weight: 600; margin: 0; }
 .card-subtitle { color: var(--text-muted); font-size: 14px; margin-top: 4px; margin-bottom: 15px; line-height: 1.5; }
-
-/* Botones */
 .btn-primary {
     background-color: var(--primary-color); color: white; padding: 12px 20px;
     border-radius: var(--border-radius); font-size: 15px; border: none; box-shadow: none; width: 100%;
@@ -120,13 +94,11 @@ body {
 .btn-icon {
     width: 40px; height: 40px; border-radius: 50%; color: var(--text-muted);
     background-color: transparent; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-    flex-shrink: 0; /* Asegura que no se achique en flex containers */
+    flex-shrink: 0;
 }
 .btn-icon:hover { background-color: var(--primary-light); color: var(--primary-color); }
 .btn-icon.btn-primary { background-color: var(--primary-color); color: white; width: 44px; height: 44px; }
 .btn-icon.btn-primary:hover { background-color: #6A5ACD; }
-
-/* Formularios */
 input, select, textarea {
     width: 100%; padding: 12px; border: 1px solid var(--border-color);
     border-radius: var(--border-radius); font-size: 15px; background-color: var(--bg-color);
@@ -139,8 +111,6 @@ input:focus, select:focus, textarea:focus {
 input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent-color); flex-shrink: 0; }
 .input-group { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
 .input-group input { margin-bottom: 0; }
-
-/* Listas */
 .item-list { display: flex; flex-direction: column; gap: 8px; }
 .list-item {
     display: flex;
@@ -149,33 +119,28 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
     padding: 10px;
     border-radius: var(--border-radius);
     transition: background-color 0.2s ease;
-    min-height: 48px; /* Altura mínima para mejor tacto/clic */
+    min-height: 48px;
 }
 .list-item:hover {
-    background-color: var(--primary-light); /* Ligerísimo hover para todas las listas */
+    background-color: var(--primary-light);
 }
 .list-item .item-text-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
 .item-text { font-size: 15px; font-weight: 500; color: var(--text-color); line-height: 1.4; }
 .item-details { font-size: 13px; color: var(--text-muted); margin-top: 2px; display: block; }
-
 .list-item .item-actions {
-    display: flex; /* Siempre flex para mantener el espacio */
+    display: flex;
     gap: 5px;
-    opacity: 0; /* Ocultar por defecto */
+    opacity: 0;
     transition: opacity 0.2s ease;
 }
-.list-item:hover .item-actions { opacity: 1; } /* Mostrar en hover */
-.list-item .item-actions .btn-icon { width: 32px; height: 32px; } /* Botones más pequeños en listas */
-
+.list-item:hover .item-actions { opacity: 1; }
+.list-item .item-actions .btn-icon { width: 32px; height: 32px; }
 .list-item.completed {
     opacity: 0.7;
 }
 .list-item.completed .item-text { text-decoration: line-through; color: var(--text-muted); }
-
 .section-subtitle { display: none; margin-top: 25px; margin-bottom: 15px; font-weight: 600; color: var(--text-muted); }
 #taskListCompleted:not(:empty) ~ .section-subtitle, #taskListCompleted:not(:empty) { display: block; }
-
-/* Para items sin checkbox (e.g., inbox items, summary items) */
 .list-item .icon-placeholder {
     width: 20px;
     height: 20px;
@@ -183,13 +148,10 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin-right: 15px; /* Para alinear con el checkbox */
-    font-size: 18px; /* Tamaño del icono si es un emoji/texto */
-    color: var(--text-muted); /* Color genérico para placeholders */
+    margin-right: 15px;
+    font-size: 18px;
+    color: var(--text-muted);
 }
-
-/* --- 7. COMPONENTES ESPECÍFICOS --- */
-/* Finanzas */
 .finance-hero-card { background: linear-gradient(135deg, var(--primary-color) 0%, #a261ff 100%); color: white; }
 .finance-hero-label { font-size: 16px; opacity: 0.8; }
 .finance-hero-balance { font-size: 36px; font-weight: 700; margin: 5px 0 25px 0; }
@@ -202,25 +164,17 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
 .transaction-amount { font-weight: 600; margin-left: auto; }
 .transaction-amount.income { color: var(--success-color); }
 .transaction-amount.expense { color: var(--danger-color); }
-
-/* Progreso */
 .summary-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 .stat-card { background: var(--bg-color); padding: 20px; border-radius: var(--border-radius); text-align: center; border: 1px solid var(--border-color); }
 .stat-value { font-size: 28px; font-weight: 700; display: block; color: var(--primary-color); }
 .stat-label { font-size: 13px; color: var(--text-muted); margin-top: 5px; display: block; }
-
-/* Gráficos */
 .chart-container { position: relative; width: 100%; height: 220px; }
-
-/* Logros */
 .achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; }
 .achievement-card { background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 15px; text-align: center; transition: all 0.2s ease; cursor: help; }
 .achievement-card .icon { font-size: 28px; display: block; margin-bottom: 8px; }
 .achievement-card p { font-size: 14px; font-weight: 500; margin: 0; }
 .achievement-card.locked { opacity: 0.5; filter: grayscale(80%); }
 .achievement-card.unlocked { border-color: var(--accent-color); box-shadow: 0 0 10px var(--accent-light); }
-
-/* Notificación */
 .notification {
     position: fixed; bottom: -100px; left: 15px; right: 15px; background: #2D3748;
     color: white; padding: 15px 25px; border-radius: var(--border-radius);
@@ -230,8 +184,6 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
 }
 .notification.show { transform: translateY(-110px); opacity: 1; }
 .notification.achievement { background: linear-gradient(45deg, var(--accent-color), var(--primary-color)); }
-
-/* --- NUEVOS ESTILOS PARA DASHBOARD --- */
 .month-title {
     font-size: 24px;
     font-weight: 700;
@@ -239,14 +191,12 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
     margin-bottom: 25px;
     text-align: center;
 }
-
 .weekly-dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Más grande para días */
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 15px;
     margin-bottom: 30px;
 }
-
 .day-card {
     background: var(--card-bg);
     border-radius: var(--border-radius);
@@ -255,28 +205,24 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
     text-align: center;
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Empuja el contenido para usar el espacio */
-    min-height: 100px; /* Altura mínima para tarjetas de día */
+    justify-content: space-between;
+    min-height: 100px;
     transition: all 0.2s ease;
 }
-
 .day-card.today {
     border-color: var(--primary-color);
     box-shadow: 0 0 10px rgba(123, 97, 255, 0.1);
 }
-
 .day-card h4 {
     font-size: 16px;
     font-weight: 600;
     margin-bottom: 5px;
     color: var(--primary-color);
 }
-
 .day-card p.date {
     font-size: 13px;
     color: var(--text-muted);
 }
-
 .day-card .routine-summary {
     margin-top: 10px;
     font-size: 14px;
@@ -290,48 +236,39 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
     color: var(--danger-color);
     font-weight: 600;
 }
-
 #daily-summary-cards {
     margin-top: 20px;
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
-
 .summary-card {
     background: var(--card-bg);
     border-radius: var(--border-radius);
     padding: 20px;
     border: 1px solid var(--border-color);
 }
-
 .summary-card.success {
     border-color: var(--success-color);
     background-color: rgba(52, 211, 153, 0.1);
 }
-
 .summary-card.fail {
     border-color: var(--danger-color);
     background-color: rgba(239, 68, 68, 0.1);
 }
-
 .summary-card h3 {
     font-size: 18px;
     font-weight: 600;
     margin-bottom: 10px;
 }
-
 .summary-card.success h3 { color: var(--success-color); }
 .summary-card.fail h3 { color: var(--danger-color); }
-
 .summary-card .item-list .list-item {
     padding: 8px 0;
     background: none;
 }
 .summary-card .item-list .list-item:hover { background-color: transparent; }
-.summary-card .item-list .item-actions { display: none !important; } /* Ocultar acciones en summaries */
-
-/* --- 8. DISEÑO ADAPTATIVO PARA ESCRITORIO --- */
+.summary-card .item-list .item-actions { display: none !important; }
 @media (min-width: 992px) {
     #app-wrapper { display: flex; }
     .sidebar-nav {
@@ -347,7 +284,7 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
         border-radius: var(--border-radius); font-size: 15px;
         color: var(--text-muted);
     }
-    .sidebar-nav .nav-button .icon { width: 24px; height: 24px; margin-right: 10px; } /* Icon size and spacing */
+    .sidebar-nav .nav-button .icon { width: 24px; height: 24px; margin-right: 10px; }
     .sidebar-nav .nav-button:hover { background-color: var(--bg-color); }
     .sidebar-nav .nav-button.active {
         background-color: var(--primary-light);
@@ -355,47 +292,35 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
         font-weight: 600;
     }
     .sidebar-footer { margin-top: auto; display: flex; gap: 10px; }
-    
     .bottom-nav, .mobile-header-actions { display: none !important; }
-
     .main-container { margin-left: 240px; width: calc(100% - 240px); }
     .main-header { padding: 30px 40px; }
     .main-content { padding: 0 40px 40px 40px; }
-
-    /* Layout en columnas para las pestañas de contenido */
     .tab-content.active {
         display: grid;
-        grid-template-columns: 1fr; /* Por defecto una columna */
+        grid-template-columns: 1fr;
         gap: 30px;
     }
-    
-    /* Dashboard específico: 2 columnas */
     #dashboard-content.active {
         grid-template-columns: 1fr;
     }
     .weekly-dashboard-grid {
-        grid-template-columns: repeat(7, 1fr); /* 7 columnas para los días de la semana */
+        grid-template-columns: repeat(7, 1fr);
     }
-
-    /* Proyectos e Ideas con dos columnas */
     #projects-content.active .grid-container,
     #inbox-content.active .grid-container {
         grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
     }
-    /* Si solo hay una tarjeta en projects, que ocupe todo el ancho */
     #projects-content.active .grid-container .card:only-child {
         grid-column: 1 / -1;
     }
-
     #finances-content.active {
         grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
     }
     #finances-content > .finance-hero-card { grid-column: 1 / -1; }
-    
     #progress-content.active {
         grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
     }
-
     .notification { left: auto; right: 20px; bottom: 20px; transform: translateY(20px); }
     .notification.show { transform: translateY(0); }
 }
