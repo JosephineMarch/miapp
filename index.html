@@ -8,10 +8,7 @@
     <meta name="theme-color" content="#1D9A8D">
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQ3JlYSBJbmZhbnRpbCIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNGRkZGRkYiLCJ0aGVtZV9jb2xvciI6IiMxRDlBOEQifQ==">
     
-    <!-- Enlace a la hoja de estilos CSS -->
     <link rel="stylesheet" href="style.css">
-
-    <!-- Librerías de terceros (se quedan aquí) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 </head>
@@ -19,13 +16,12 @@
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
         <symbol id="icon-tasks" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/><path d="m9 17-3-3 1.41-1.41L9 14.17l4.59-4.59L15 11l-6 6z"/></symbol>
         <symbol id="icon-inbox" viewBox="0 0 24 24"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 12h-4c0 1.66-1.34 3-3 3s-3-1.34-3-3H5V5h14v10z"/></symbol>
-        <symbol id="icon-activities" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14h2V7h-2v9zm1-11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" clip-rule="evenodd" fill-rule="evenodd"/></symbol>
+        <symbol id="icon-finance" viewBox="0 0 24 24"><path d="M7 18h2V6H7v12zm4 0h2V6h-2v12zm-8 4h18V4H3v18zM19 6v12h2V6h-2zM5 6v12h2V6H5z"/></symbol>
         <symbol id="icon-report" viewBox="0 0 24 24"><path d="M4 9h4v11H4zm6 3h4v8h-4zm6-6h4v14h-4z"/></symbol>
         <symbol id="icon-routine" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7v-5z"/></symbol>
         <symbol id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
         <symbol id="icon-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></symbol>
         <symbol id="icon-reset" viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></symbol>
-        <symbol id="icon-stop" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></symbol>
         <symbol id="icon-add" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
         <symbol id="icon-delete" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
         <symbol id="icon-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
@@ -35,6 +31,7 @@
         <symbol id="icon-trophy" viewBox="0 0 24 24"><path d="M19 4h-2.5l-1-2h-7l-1 2H5c-1.1 0-2 .9-2 2v13c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/><path d="M12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></symbol>
         <symbol id="icon-forward" viewBox="0 0 24 24"><path d="m12 8-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14l-6-6z"/></symbol>
         <symbol id="icon-logout" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></symbol>
+        <symbol id="icon-pomodoro" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></symbol>
     </svg>
     
     <div id="login-container" class="container">
@@ -53,7 +50,7 @@
         <header class="header">
             <div class="header-left">
                 <h1>Crea Infantil</h1>
-                <div id="focusStreak" class="focus-streak" title="Días seguidos registrando actividad"></div>
+                <div id="focusStreak" class="focus-streak" title="Días seguidos de actividad registrada"></div>
             </div>
             <div class="user-info">
                  <span id="user-display"></span>
@@ -66,9 +63,9 @@
 
         <nav class="nav-tabs">
             <button class="nav-tab active" data-tab="routines"><svg class="icon"><use href="#icon-routine"/></svg> Rutina Diaria</button>
-            <button class="nav-tab" data-tab="tasks"><svg class="icon"><use href="#icon-tasks"/></svg> Tareas de Proyecto</button>
-            <button class="nav-tab" data-tab="inbox"><svg class="icon"><use href="#icon-inbox"/></svg> Bandeja de Ideas</button>
-            <button class="nav-tab" data-tab="activities"><svg class="icon"><use href="#icon-activities"/></svg> Cronometrar</button>
+            <button class="nav-tab" data-tab="tasks"><svg class="icon"><use href="#icon-tasks"/></svg> Proyectos</button>
+            <button class="nav-tab" data-tab="inbox"><svg class="icon"><use href="#icon-inbox"/></svg> Ideas</button>
+            <button class="nav-tab" data-tab="finances"><svg class="icon"><use href="#icon-finance"/></svg> Finanzas</button>
             <button class="nav-tab" data-tab="reports"><svg class="icon"><use href="#icon-report"/></svg> Reportes y Logros</button>
         </nav>
 
@@ -79,16 +76,22 @@
                 <div class="weekly-view" id="weekly-view"></div>
             </div>
             <div class="card">
-                <h3>🎯 Obligatorias del Día</h3>
+                <div class="card-header">
+                    <h3>🎯 Obligatorias del Día</h3>
+                    <button class="btn-icon" id="addObligatoryRoutineBtn" title="Añadir rutina obligatoria"><svg class="icon"><use href="#icon-add"/></svg></button>
+                </div>
                 <div class="item-list" id="routine-obligatorias-list"></div>
             </div>
              <div class="card">
-                <h3>✨ Extras</h3>
+                <div class="card-header">
+                    <h3>✨ Extras</h3>
+                    <button class="btn-icon" id="addExtraRoutineBtn" title="Añadir rutina extra"><svg class="icon"><use href="#icon-add"/></svg></button>
+                </div>
                 <div class="item-list" id="routine-extras-list"></div>
             </div>
         </div>
 
-        <!-- Pestaña Tareas de Proyecto -->
+        <!-- Pestaña Proyectos -->
         <div class="tab-content" id="tasks">
              <div class="card">
                 <h3>📝 Tareas de Proyecto</h3>
@@ -101,9 +104,17 @@
                 <h3 id="completed-title" style="display:none; margin-top:20px;">✅ Tareas Completadas</h3>
                 <div class="item-list" id="taskListCompleted"></div>
             </div>
+             <div class="card">
+                <h3>🍅 Foco Pomodoro</h3>
+                <div id="pomodoroStatus" class="pomodoro-status">Listo para empezar.</div>
+                <div class="pomodoro-timer" id="pomodoroTimer">25:00</div>
+                <div class="pomodoro-controls" id="pomodoroControls">
+                    <!-- Los botones se generan con JS -->
+                </div>
+            </div>
         </div>
 
-        <!-- Pestaña Bandeja de Ideas -->
+        <!-- Pestaña Ideas -->
         <div class="tab-content" id="inbox">
             <div class="card">
                 <h3>💡 Bandeja de Ideas Rápidas</h3>
@@ -118,56 +129,58 @@
             </div>
         </div>
 
-        <!-- Pestaña Cronometrar -->
-        <div class="tab-content" id="activities">
-             <div class="card">
-                <h3>⏱️ Cronometrar Actividad</h3>
-                <div id="activityForm">
-                    <select id="activityType">
-                        <option value="🎨 Ilustración">🎨 Ilustración</option>
-                        <option value="📝 Escritura">📝 Escritura</option>
-                        <option value="📐 Maquetación">📐 Maquetación</option>
-                        <option value="💡 Brainstorming">💡 Brainstorming</option>
-                        <option value="📚 Investigación">📚 Investigación</option>
-                        <option value="📱 Redes Sociales">📱 Redes Sociales</option>
-                    </select>
-                    <input type="text" id="activityDescription" placeholder="¿En qué estás trabajando específicamente?">
-                    <button class="btn-primary" id="startActivityBtn" style="width:100%;"><svg class="icon"><use href="#icon-play"/></svg> Empezar</button>
-                </div>
-                <div id="currentActivity">
-                    <p id="currentActivityInfo" style="font-weight:500;"></p>
-                    <div id="activityTimer" style="font-size: 2.5em; font-weight: 700; color: var(--primary-color); margin: 10px 0;">00:00:00</div>
-                    <button class="btn-danger" id="stopActivityBtn" style="width:100%; margin-top:15px;"><svg class="icon"><use href="#icon-stop"/></svg> Detener y Registrar</button>
+        <!-- Pestaña Finanzas -->
+        <div class="tab-content" id="finances">
+            <div class="card">
+                <h3>💰 Registrar Movimiento</h3>
+                <form id="finance-form">
+                    <div class="finance-input-group">
+                        <input type="number" id="financeAmount" placeholder="Monto" required>
+                        <select id="financeType">
+                            <option value="expense">Gasto</option>
+                            <option value="income">Ganancia</option>
+                        </select>
+                    </div>
+                    <input type="text" id="financeDescription" placeholder="Descripción (Ej: Factura de luz, Venta de prints)" required>
+                    <button type="submit" class="btn-primary" style="width:100%;">
+                        <svg class="icon"><use href="#icon-add"/></svg> Registrar
+                    </button>
+                </form>
+            </div>
+            <div class="card">
+                <h3>📈 Resumen del Mes</h3>
+                <div class="finance-summary" id="financeSummary">
+                    <div class="summary-item">
+                        <span class="summary-label">Ganancias</span>
+                        <span class="summary-value income" id="summaryIncome">$0.00</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Gastos</span>
+                        <span class="summary-value expense" id="summaryExpense">$0.00</span>
+                    </div>
+                    <div class="summary-item balance">
+                        <span class="summary-label">Balance</span>
+                        <span class="summary-value" id="summaryBalance">$0.00</span>
+                    </div>
                 </div>
             </div>
             <div class="card">
-                <h3>🍅 Técnica Pomodoro</h3>
-                <div id="pomodoroStatus" style="text-align: center; margin-bottom: 15px; color: var(--secondary-color); font-weight: 500;">Listo para empezar.</div>
-                <div id="pomodoroTimer" style="font-size: 3em; font-weight: 700; color: var(--primary-color); text-align: center; margin: 10px 0;">25:00</div>
-                <div id="pomodoroControls" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                    <button class="btn-primary" id="pomodoroStartWork"><svg class="icon"><use href="#icon-play"/></svg> Iniciar Trabajo</button>
-                </div>
-            </div>
-             <div class="card">
-                <h3>📋 Actividades Registradas Hoy</h3>
-                <div class="item-list" id="activityList"></div>
+                <h3>📋 Movimientos Recientes</h3>
+                <div class="item-list" id="transactionList"></div>
             </div>
         </div>
         
-        <!-- Pestaña Reportes -->
+        <!-- Pestaña Reportes y Logros -->
         <div class="tab-content" id="reports">
             <div class="card">
-                <h3>📊 Tu Productividad</h3>
+                <h3>📊 Tu Productividad General</h3>
                 <div class="report-controls">
-                    <button class="btn-subtle active" id="report-week">Semana</button>
-                    <button class="btn-subtle" id="report-month">Mes</button>
-                    <button class="btn-subtle" id="report-year">Año</button>
+                    <button class="btn-subtle active" data-period="week">Semana</button>
+                    <button class="btn-subtle" data-period="month">Mes</button>
+                    <button class="btn-subtle" data-period="year">Año</button>
                 </div>
                 <div class="chart-container">
-                    <canvas id="dailyProgressChart"></canvas>
-                </div>
-                <div class="chart-container">
-                    <canvas id="activityDistributionChart"></canvas>
+                    <canvas id="tasksCompletedChart"></canvas>
                 </div>
                  <div class="chart-container">
                     <canvas id="routineConsistencyChart"></canvas>
@@ -185,7 +198,6 @@
     
     <div class="notification" id="notification"></div>
     
-    <!-- Enlace al archivo JavaScript -->
     <script src="script.js" type="module"></script>
 </body>
 </html>
