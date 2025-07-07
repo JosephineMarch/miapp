@@ -107,11 +107,12 @@ body {
 .btn-secondary { background-color: var(--background-color); color: var(--text-color); border: 1px solid var(--border-color); }
 .btn-secondary:hover { background-color: var(--border-color); }
 .input-group { display: flex; gap: 8px; }
-input[type="text"], textarea {
+input[type="text"], input[type="number"], select {
     width: 100%; padding: 12px; border: 1px solid var(--border-color);
     background-color: var(--background-color); border-radius: 8px; font-family: var(--font-family);
     color: var(--text-color); font-size: 1rem;
 }
+select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; padding-right: 2.5rem; }
 .btn-icon {
     background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 8px;
     border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
@@ -158,27 +159,20 @@ input[type="text"], textarea {
 .day-card.active h4 { color: rgba(255,255,255,0.8); }
 .day-card .date { font-size: 1.3rem; font-weight: 600; margin: 8px 0; }
 
-/* --- MODAL PARA COPIAR RUTINAS --- */
-.modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(0,0,0,0.5); display: flex; justify-content: center;
-    align-items: center; z-index: 1500; opacity: 0; visibility: hidden; transition: opacity 0.3s;
+/* --- ESTILOS ESPECIALES POR SECCIÓN --- */
+#finance-summary {
+    padding: 16px; background-color: var(--background-color); border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
 }
-.modal-overlay.visible { opacity: 1; visibility: visible; }
-.modal-content {
-    background-color: var(--surface-color); border-radius: var(--border-radius);
-    padding: 24px; width: 90%; max-width: 500px; display: flex;
-    flex-direction: column; gap: 16px; transform: scale(0.95); transition: transform 0.3s;
+.input-group #new-transaction-amount { width: 120px; flex-shrink: 0; }
+.input-group #new-transaction-type { width: 120px; flex-shrink: 0; }
+
+.project-item {
+    padding: 16px; background-color: var(--background-color); border-radius: 8px;
+    display: flex; justify-content: space-between; align-items: center;
 }
-.modal-overlay.visible .modal-content { transform: scale(1); }
-.modal-header { display: flex; justify-content: space-between; align-items: center; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
-.days-checkbox-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
-.day-checkbox-item {
-    display: flex; align-items: center; gap: 8px; background-color: var(--background-color);
-    padding: 10px; border-radius: 8px;
-}
-.day-checkbox-item input { width: 16px; height: 16px; }
+.project-item h4 { margin: 0; }
+.project-item p { margin: 0; color: var(--text-muted); }
 
 /* --- NOTIFICACIONES --- */
 .notification {
@@ -187,7 +181,7 @@ input[type="text"], textarea {
     box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: transform 0.4s; z-index: 2000;
 }
 .notification.show { transform: translateX(-50%) translateY(0); }
-.notification.achievement { background-color: var(--primary-color); }
+.notification.danger { background-color: var(--danger-color); }
 
 /* --- RESPONSIVE DESIGN --- */
 @media (max-width: 768px) {
@@ -202,5 +196,8 @@ input[type="text"], textarea {
     .day-card.today .date { width: 26px; height: 26px; }
     .day-card h4 { font-size: 0.75rem; }
     .notification { bottom: 80px; }
+    .input-group { flex-wrap: wrap; }
+    .input-group #new-transaction-amount, .input-group #new-transaction-type { width: 50%; }
+    .input-group #new-transaction-desc { width: 100%; }
 }
 @media (min-width: 769px) { .mobile-header-actions { display: none; } }

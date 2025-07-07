@@ -25,7 +25,6 @@
         <symbol id="icon-home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
         <symbol id="icon-add" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
         <symbol id="icon-delete" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
-        <symbol id="icon-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
         <symbol id="icon-copy" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></symbol>
         <symbol id="icon-close" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
         <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M9.37 5.51A7.35 7.35 0 0 0 9.1 7.5c0 4.08 3.32 7.4 7.4 7.4.68 0 1.35-.09 1.99-.27C17.45 18.2 14.9 20 12 20c-4.41 0-8-3.59-8-8 0-2.91 1.8-5.45 4.37-6.49z"/></symbol>
@@ -51,7 +50,7 @@
     <div id="app-wrapper">
         <nav class="sidebar-nav">
             <div class="sidebar-header"><h1 class="logo">Crea</h1></div>
-            <button class="nav-button" data-tab="dashboard-content"><svg class="icon"><use href="#icon-home"/></svg> Dashboard</button>
+            <button class="nav-button active" data-tab="dashboard-content"><svg class="icon"><use href="#icon-home"/></svg> Dashboard</button>
             <button class="nav-button" data-tab="projects-content"><svg class="icon"><use href="#icon-tasks"/></svg> Proyectos</button>
             <button class="nav-button" data-tab="finances-content"><svg class="icon"><use href="#icon-finance"/></svg> Finanzas</button>
             <button class="nav-button" data-tab="progress-content"><svg class="icon"><use href="#icon-progress"/></svg> Progreso</button>
@@ -83,7 +82,6 @@
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title" id="routines-title">Rutinas para Hoy</h3>
-                            <button class="btn-secondary" id="copy-routines-btn"><svg class="icon"><use href="#icon-copy"/></svg> Copiar</button>
                         </div>
                         <div class="item-list" id="routines-list"></div>
                         <div class="input-group">
@@ -93,41 +91,16 @@
                     </div>
                 </div>
 
-                <div class="tab-content" id="projects-content">
-                    <!-- Contenido de Proyectos sin cambios -->
-                </div>
-                <div class="tab-content" id="inbox-content">
-                    <!-- Contenido de Ideas sin cambios -->
-                </div>
-                <div class="tab-content" id="finances-content">
-                    <!-- Contenido de Finanzas sin cambios -->
-                </div>
-                <div class="tab-content" id="progress-content">
-                    <!-- Contenido de Progreso sin cambios -->
-                </div>
+                <div class="tab-content" id="projects-content"></div>
+                <div class="tab-content" id="inbox-content"></div>
+                <div class="tab-content" id="finances-content"></div>
+                <div class="tab-content" id="progress-content"></div>
             </main>
         </div>
     </div>
     
-    <div id="copy-routines-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4>Copiar Rutinas</h4>
-                <button id="close-copy-modal-btn" class="btn-icon"><svg class="icon"><use href="#icon-close"/></svg></button>
-            </div>
-            <p>Selecciona las rutinas que quieres copiar:</p>
-            <div id="copy-source-routines-list" class="item-list"></div>
-            <p>Selecciona los días de destino:</p>
-            <div id="copy-target-days-list" class="days-checkbox-grid"></div>
-            <div class="modal-actions">
-                <button id="cancel-copy-btn" class="btn-secondary">Cancelar</button>
-                <button id="confirm-copy-btn" class="btn-primary">Copiar</button>
-            </div>
-        </div>
-    </div>
-
     <nav class="bottom-nav">
-        <button class="nav-button" data-tab="dashboard-content"><svg class="icon"><use href="#icon-home"/></svg><span>Dashboard</span></button>
+        <button class="nav-button active" data-tab="dashboard-content"><svg class="icon"><use href="#icon-home"/></svg><span>Dashboard</span></button>
         <button class="nav-button" data-tab="projects-content"><svg class="icon"><use href="#icon-tasks"/></svg><span>Proyectos</span></button>
         <button class="nav-button" data-tab="finances-content"><svg class="icon"><use href="#icon-finance"/></svg><span>Finanzas</span></button>
         <button class="nav-button" data-tab="progress-content"><svg class="icon"><use href="#icon-progress"/></svg><span>Progreso</span></button>
