@@ -81,26 +81,9 @@
             <main class="main-content">
                 <!-- Pestaña Dashboard -->
                 <div class="tab-content" id="dashboard-content">
-                    <div class="card">
-                        <h2 class="card-title">Resumen Semanal de Rutinas</h2>
-                        <div class="chart-container" style="height: 180px;">
-                            <canvas id="weekly-routine-chart"></canvas>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">🎯 Obligatorias del Día</h3>
-                            <button class="btn-icon" id="addObligatoryRoutineBtn" title="Añadir rutina"><svg class="icon"><use href="#icon-add"/></svg></button>
-                        </div>
-                        <div class="item-list" id="obligatory-routines-list"></div>
-                    </div>
-                     <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">✨ Extras</h3>
-                            <button class="btn-icon" id="addExtraRoutineBtn" title="Añadir rutina"><svg class="icon"><use href="#icon-add"/></svg></button>
-                        </div>
-                        <div class="item-list" id="extra-routines-list"></div>
-                    </div>
+                    <h2 class="month-title" id="dashboardMonthTitle"></h2>
+                    <div id="weekly-dashboard-grid" class="weekly-dashboard-grid"></div>
+                    <div id="daily-summary-cards"></div>
                 </div>
 
                 <!-- Pestaña Proyectos -->
