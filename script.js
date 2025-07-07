@@ -19,24 +19,26 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // --- ESTADO GLOBAL ---
-let tasks = [], inboxItems = [], achievements = {}, routineCompletions = {}, transactions = [], dailySummaries = {};
-let obligatoryRoutines = [], extraRoutines = [];
-let lastSummaryDate = null;
-let currentTheme = 'light', userId = null;
-let tasksChart = null; // weeklyRoutineChart no longer used
+let tasks = [], inboxItems = [], achievements = {}, routineCompletions = {}, transactions = [];
+let routines = []; 
+let currentTheme = 'light', userId = null, selectedDate = getTodayString();
+let tasksChart = null;
 let unsubscribers = [];
 
 // --- DEFINICIONES ---
-const DEFAULT_OBLIGATORY_ROUTINES = [
-    { id: 'take_pill', text: 'Tomar la pastilla' }, { id: 'litter_morning', text: 'Limpiar areneros (mañana)' },
-    { id: 'water_up', text: 'Cambiar el agua arriba' }, { id: 'water_down', text: 'Cambiar el agua abajo' },
+const DEFAULT_ROUTINES = [
+    { id: 'take_pill', text: 'Tomar la pastilla' },
+    { id: 'litter_morning', text: 'Limpiar areneros (mañana)' },
+    { id: 'water_up', text: 'Cambiar el agua arriba' },
+    { id: 'water_down', text: 'Cambiar el agua abajo' },
+    { id: 'meditate', text: 'Meditar 5 minutos' },
+    { id: 'read_book', text: 'Leer un capítulo' }
 ];
-const DEFAULT_EXTRA_ROUTINES = [ { id: 'meditate', text: 'Meditar 5 minutos' }, { id: 'read_book', text: 'Leer un capítulo' } ];
 const ACHIEVEMENT_LIST = {
     firstTask: { title: '¡Primer Proyecto!', icon: '📝', description: 'Completa tu primera tarea de proyecto.', condition: () => tasks.some(t => t.completed) },
     tenTasks: { title: 'Maestra de Proyectos', icon: '✍️', description: 'Completa 10 tareas de proyecto.', condition: () => tasks.filter(t => t.completed).length >= 10 },
     inboxZero: { title: 'Mente Clara', icon: '🧘‍♀️', description: 'Vacía tu bandeja de ideas.', condition: (args) => args?.justDeleted && inboxItems.length === 0 },
-    routinePerfectDay: { title: 'Día Perfecto', icon: '🌟', description: 'Completa todas las rutinas obligatorias en un día.', condition: (args) => args?.perfectDay },
+    routinePerfectDay: { title: 'Día Perfecto', icon: '🌟', description: 'Completa todas las rutinas en un día.', condition: (args) => args?.perfectDay },
     streak3: { title: 'Constancia', icon: '🔥', description: 'Mantén una racha de 3 días completando rutinas.', condition: (args) => args?.streak >= 3 },
     firstIncome: { title: '¡Primer Ingreso!', icon: '💰', description: 'Registra tu primera ganancia.', condition: () => transactions.some(t => t.type === 'income') },
 };
@@ -51,7 +53,7 @@ const getTodayString = (date = new Date()) => {
 const getStartOfWeek = (date = new Date()) => {
     const d = new Date(date);
     const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
     return new Date(d.setDate(diff));
 };
 
@@ -59,37 +61,41 @@ const getStartOfWeek = (date = new Date()) => {
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     onAuthStateChanged(auth, user => {
-        const loginContainer = document.getElementById('login-container');
-        const appWrapper = document.getElementById('app-wrapper');
-        const bottomNav = document.querySelector('.bottom-nav');
-
-        if (user) {
-            if (userId !== user.uid) { 
-                userId = user.uid;
-                
-                document.getElementById('user-display-name').textContent = user.displayName.split(' ')[0];
-                document.getElementById('user-avatar').src = user.photoURL || 'https://i.pravatar.cc/40';
-
-                loginContainer.classList.remove('visible');
-                appWrapper.classList.add('visible');
-                bottomNav.classList.add('visible');
-                
-                setupRealtimeListeners();
-                switchTab('dashboard-content');
-            }
-        } else {
-            userId = null;
-            
-            loginContainer.classList.add('visible');
-            appWrapper.classList.remove('visible');
-            bottomNav.classList.remove('visible');
-            
-            unsubscribers.forEach(unsub => unsub());
-            unsubscribers = [];
-            clearLocalData();
-        }
+        handleAuthStateChange(user);
     });
 });
+
+function handleAuthStateChange(user) {
+    const loginContainer = document.getElementById('login-container');
+    const appWrapper = document.getElementById('app-wrapper');
+    const bottomNav = document.querySelector('.bottom-nav');
+
+    if (user) {
+        if (userId !== user.uid) { 
+            userId = user.uid;
+            
+            document.getElementById('user-display-name').textContent = user.displayName.split(' ')[0];
+            document.getElementById('user-avatar').src = user.photoURL || 'https://i.pravatar.cc/40';
+
+            loginContainer.classList.remove('visible');
+            appWrapper.classList.add('visible');
+            bottomNav.classList.add('visible');
+            
+            setupRealtimeListeners();
+            switchTab('dashboard-content');
+        }
+    } else {
+        userId = null;
+        
+        loginContainer.classList.add('visible');
+        appWrapper.classList.remove('visible');
+        bottomNav.classList.remove('visible');
+        
+        unsubscribers.forEach(unsub => unsub());
+        unsubscribers = [];
+        clearLocalData();
+    }
+}
 
 function setupEventListeners() {
     document.getElementById('loginBtn').addEventListener('click', () => signInWithPopup(auth, provider).catch(error => console.error("Error en login:", error)));
@@ -106,6 +112,10 @@ function setupEventListeners() {
     document.getElementById('taskInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
     document.getElementById('addInboxBtn').addEventListener('click', addInboxItem);
     document.getElementById('finance-form').addEventListener('submit', addTransaction);
+    
+    // Listeners para nuevas rutinas
+    document.getElementById('add-routine-btn').addEventListener('click', addRoutine);
+    document.getElementById('new-routine-input').addEventListener('keydown', e => { if (e.key === 'Enter') addRoutine(); });
 }
 
 function setupRealtimeListeners() {
@@ -117,32 +127,24 @@ function setupRealtimeListeners() {
             const data = docSnap.data();
             achievements = data.achievements || {};
             currentTheme = data.theme || 'light';
-            lastSummaryDate = data.lastSummaryDate || null;
-            obligatoryRoutines = data.obligatoryRoutines || DEFAULT_OBLIGATORY_ROUTINES;
-            extraRoutines = data.extraRoutines || DEFAULT_EXTRA_ROUTINES;
-            checkAndGenerateDailySummary(); // Check if a new day has passed
+            routines = data.routines || DEFAULT_ROUTINES;
         } else {
-            setDoc(userDocRef, { achievements: {}, theme: 'light', obligatoryRoutines: DEFAULT_OBLIGATORY_ROUTINES, extraRoutines: DEFAULT_EXTRA_ROUTINES, lastSummaryDate: null });
+            setDoc(userDocRef, { achievements: {}, theme: 'light', routines: DEFAULT_ROUTINES });
         }
         applyTheme(currentTheme);
         renderAchievements();
+        renderDailyRoutines(); // Renderizar rutinas con los datos actualizados
     }));
     
-    unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'dailySummaries'), orderBy('date', 'desc')), (snapshot) => {
-        dailySummaries = {};
-        snapshot.docs.forEach(d => { dailySummaries[d.id] = d.data(); });
-        renderDailySummaryCards();
-    }));
-
     unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'routineCompletions')), (snapshot) => {
         routineCompletions = {};
-        snapshot.forEach(doc => { routineCompletions[doc.id] = doc.data().completedIds; });
+        snapshot.docs.forEach(d => { routineCompletions[d.id] = d.data().completedIds; });
         if (document.getElementById('dashboard-content').classList.contains('active')) {
             renderWeeklyDashboard();
+            renderDailyRoutines();
         }
     }));
     
-    // The other listeners remain the same
     unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'tasks'), orderBy('createdAt', 'desc')), (snapshot) => {
         tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         loadTasks();
@@ -172,10 +174,10 @@ function switchTab(tabId) {
         el.classList.toggle('active', el.id === tabId);
     });
     
-    // --- THIS IS THE CRITICAL CORRECTION ---
     if (tabId === 'dashboard-content') {
+        selectedDate = getTodayString(); // Reset a hoy al cambiar a la pestaña
         renderWeeklyDashboard();
-        renderDailySummaryCards();
+        renderDailyRoutines();
     } else if (tabId === 'progress-content') {
         renderReport('week');
     }
@@ -207,19 +209,18 @@ function showNotification(message, duration = 3000, isAchievement = false) {
 }
 
 function clearLocalData() {
-    tasks = []; inboxItems = []; achievements = {}; routineCompletions = {}; transactions = []; dailySummaries = {};
-    obligatoryRoutines = DEFAULT_OBLIGATORY_ROUTINES; extraRoutines = DEFAULT_EXTRA_ROUTINES;
+    tasks = []; inboxItems = []; achievements = {}; routineCompletions = {}; transactions = [];
+    routines = DEFAULT_ROUTINES;
+    selectedDate = getTodayString();
 }
 
-// --- NUEVO DASHBOARD ---
+// --- DASHBOARD DE RUTINAS ---
 function renderWeeklyDashboard() {
     const grid = document.getElementById('weekly-dashboard-grid');
     const title = document.getElementById('dashboardMonthTitle');
     if (!grid || !title) return;
 
-    const today = new Date();
-    const startOfWeek = getStartOfWeek(today);
-
+    const startOfWeek = getStartOfWeek(new Date(selectedDate.replace(/-/g, '/'))); // Usar fecha seleccionada
     title.textContent = startOfWeek.toLocaleString('es-ES', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase());
     grid.innerHTML = '';
 
@@ -230,109 +231,147 @@ function renderWeeklyDashboard() {
 
         const card = document.createElement('div');
         card.className = 'day-card';
+        card.dataset.date = dayStr;
+        if (dayStr === selectedDate) {
+            card.classList.add('active');
+        }
         if (dayStr === getTodayString()) {
             card.classList.add('today');
         }
 
         const completedToday = routineCompletions[dayStr] || [];
-        const allRoutines = [...obligatoryRoutines, ...extraRoutines];
-        const completedRoutines = allRoutines.filter(r => completedToday.includes(r.id)).length;
+        const completedCount = completedToday.length;
         
         let summaryText = 'Pendiente';
-        let summaryClass = 'pending';
-        if (completedRoutines > 0 && completedRoutines === allRoutines.length) {
+        if (completedCount > 0 && completedCount === routines.length) {
             summaryText = 'Completado';
-            summaryClass = 'completed';
-        } else if (completedRoutines > 0) {
-            summaryText = `${completedRoutines}/${allRoutines.length} Completadas`;
+        } else if (completedCount > 0) {
+            summaryText = `${completedCount}/${routines.length}`;
         }
 
         card.innerHTML = `
             <h4>${day.toLocaleString('es-ES', { weekday: 'long' })}</h4>
             <p class="date">${day.getDate()}</p>
-            <p class="routine-summary ${summaryClass}">${summaryText}</p>
+            <p class="routine-summary">${summaryText}</p>
         `;
+        card.addEventListener('click', () => {
+            selectedDate = dayStr;
+            renderWeeklyDashboard(); // Re-render para mostrar la selección
+            renderDailyRoutines();
+        });
         grid.appendChild(card);
     }
 }
 
-async function checkAndGenerateDailySummary() {
-    if (!userId) return;
-    const todayStr = getTodayString();
+function renderDailyRoutines() {
+    const container = document.getElementById('routines-list');
+    const titleEl = document.getElementById('routines-title');
+    if (!container || !titleEl) return;
     
-    // Check if the last summary was for yesterday or older
-    if (!lastSummaryDate || lastSummaryDate < todayStr) {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = getTodayString(yesterday);
-
-        // Only generate if we haven't already processed yesterday
-        if (lastSummaryDate !== yesterdayStr) {
-            const completedYesterday = routineCompletions[yesterdayStr] || [];
-            
-            const allRoutines = [...obligatoryRoutines, ...extraRoutines];
-            const completed = allRoutines.filter(r => completedYesterday.includes(r.id));
-            const missed = allRoutines.filter(r => !completedYesterday.includes(r.id));
-
-            if (completed.length > 0 || missed.length > 0) {
-                 await setDoc(doc(db, 'users', userId, 'dailySummaries', yesterdayStr), {
-                    date: yesterdayStr,
-                    completed: completed.map(r => ({ id: r.id, text: r.text })),
-                    missed: missed.map(r => ({ id: r.id, text: r.text }))
-                });
-            }
-        }
-        await updateDoc(doc(db, 'users', userId), { lastSummaryDate: todayStr });
-    }
-}
-
-function renderDailySummaryCards() {
-    const container = document.getElementById('daily-summary-cards');
-    if (!container) return;
+    const date = new Date(selectedDate.replace(/-/g, '/'));
+    const isToday = selectedDate === getTodayString();
+    titleEl.textContent = `Rutinas para ${isToday ? 'Hoy' : date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric' })}`;
+    
     container.innerHTML = '';
+    const completedOnDate = routineCompletions[selectedDate] || [];
 
-    const sortedDates = Object.keys(dailySummaries).sort().reverse();
-    if (sortedDates.length === 0) return;
-
-    const latestSummaryKey = sortedDates[0];
-    const summary = dailySummaries[latestSummaryKey];
-
-    if (summary.completed.length > 0) {
-        const successCard = document.createElement('div');
-        successCard.className = 'summary-card success';
-        let listItems = '';
-        summary.completed.forEach(item => {
-            listItems += `<div class="list-item"><span class="icon-placeholder">✅</span><span class="item-text">${item.text}</span></div>`;
+    routines.forEach(routine => {
+        const isCompleted = completedOnDate.includes(routine.id);
+        const item = document.createElement('div');
+        item.className = `list-item routine-item ${isCompleted ? 'completed' : ''}`;
+        item.innerHTML = `
+            <input type="checkbox" data-routine-id="${routine.id}" ${isCompleted ? 'checked' : ''}>
+            <div class="item-text-content">
+                <input type="text" class="item-text-input" value="${routine.text}" ${isCompleted ? 'readonly' : ''} data-routine-id="${routine.id}">
+            </div>
+            <div class="item-actions">
+                <button class="btn-icon" data-action="delete-routine" data-id="${routine.id}"><svg class="icon" title="Eliminar"><use href="#icon-delete"/></svg></button>
+            </div>`;
+        
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        const textInput = item.querySelector('input[type="text"]');
+        
+        checkbox.addEventListener('change', (e) => {
+            toggleRoutineCompletion(e.target.dataset.routineId);
+            textInput.readOnly = e.target.checked; // Hacer no editable si está chequeado
         });
-        successCard.innerHTML = `<h3>¡Felicidades! Esto es lo que completaste:</h3><div class="item-list">${listItems}</div>`;
-        container.appendChild(successCard);
-    }
-
-    if (summary.missed.length > 0) {
-        const failCard = document.createElement('div');
-        failCard.className = 'summary-card fail';
-        let listItems = '';
-        summary.missed.forEach(item => {
-            listItems += `<div class="list-item"><span class="icon-placeholder">❌</span><span class="item-text">${item.text}</span></div>`;
+        
+        textInput.addEventListener('change', (e) => {
+            updateRoutineText(e.target.dataset.routineId, e.target.value);
         });
-        failCard.innerHTML = `<h3>Actividades pendientes del día anterior:</h3><div class="item-list">${listItems}</div>`;
-        container.appendChild(failCard);
+
+        item.querySelector('[data-action="delete-routine"]').addEventListener('click', (e) => deleteRoutine(e.currentTarget.dataset.id));
+        
+        container.appendChild(item);
+    });
+}
+
+
+// --- CRUD DE RUTINAS ---
+async function addRoutine() {
+    const input = document.getElementById('new-routine-input');
+    const text = input.value.trim();
+    if (!text || !userId) return;
+
+    const newRoutine = {
+        id: 'r' + new Date().getTime(), // ID simple basado en timestamp
+        text: text
+    };
+    
+    const updatedRoutines = [...routines, newRoutine];
+    
+    try {
+        await updateDoc(doc(db, 'users', userId), { routines: updatedRoutines });
+        input.value = '';
+    } catch(e) {
+        showNotification("Error al añadir la rutina.");
+        console.error(e);
     }
 }
 
-// --- RUTINAS (AHORA SOLO PARA DATOS, NO RENDERIZADO DIRECTO EN DASHBOARD) ---
-async function toggleRoutine(routineId, dateStr = getTodayString()) {
+async function updateRoutineText(id, newText) {
     if (!userId) return;
-    const todayDocRef = doc(db, 'users', userId, 'routineCompletions', dateStr);
-    const completedToday = routineCompletions[dateStr] || [];
-    const isCompleted = completedToday.includes(routineId);
+    const updatedRoutines = routines.map(r => r.id === id ? { ...r, text: newText } : r);
+    try {
+        await updateDoc(doc(db, 'users', userId), { routines: updatedRoutines });
+        showNotification("Rutina actualizada.");
+    } catch (e) {
+        showNotification("Error al actualizar la rutina.");
+    }
+}
+
+async function deleteRoutine(id) {
+    if (!userId) return;
+    const updatedRoutines = routines.filter(r => r.id !== id);
+    try {
+        await updateDoc(doc(db, 'users', userId), { routines: updatedRoutines });
+        showNotification("Rutina eliminada.");
+    } catch(e) {
+        showNotification("Error al eliminar la rutina.");
+    }
+}
+
+async function toggleRoutineCompletion(routineId) {
+    if (!userId) return;
+    const dateDocRef = doc(db, 'users', userId, 'routineCompletions', selectedDate);
+    const completedOnDate = routineCompletions[selectedDate] || [];
+    const isCompleted = completedOnDate.includes(routineId);
+    
     try {
         if (isCompleted) {
-            await setDoc(todayDocRef, { completedIds: arrayRemove(routineId) }, { merge: true });
+            await setDoc(dateDocRef, { completedIds: arrayRemove(routineId) }, { merge: true });
         } else {
-            await setDoc(todayDocRef, { completedIds: arrayUnion(routineId) }, { merge: true });
+            await setDoc(dateDocRef, { completedIds: arrayUnion(routineId) }, { merge: true });
+            // Comprobación de logros cuando se completa una rutina
+            const allCompleted = routines.every(r => [...completedOnDate, routineId].includes(r.id));
+            if (allCompleted) {
+                checkAndUnlockAchievements({ perfectDay: true });
+            }
         }
-    } catch (e) { showNotification("Error al actualizar la rutina."); }
+    } catch (e) { 
+        showNotification("Error al actualizar la rutina.");
+        console.error(e);
+    }
 }
 
 
@@ -561,8 +600,12 @@ function renderSummaryStats() {
 async function checkAndUnlockAchievements(args = {}) {
     if (!userId) return;
     let newAchievementUnlocked = false;
+    // Streak calculation needs to be adapted if you want to keep it
+    const streak = calculateRoutineStreak(); 
+    const passedArgs = {...args, streak};
+
     for (const key in ACHIEVEMENT_LIST) {
-        if (!achievements[key] && ACHIEVEMENT_LIST[key].condition(args)) {
+        if (!achievements[key] && ACHIEVEMENT_LIST[key].condition(passedArgs)) {
             achievements[key] = true;
             newAchievementUnlocked = true;
             showNotification(`🏆 ¡Logro Desbloqueado: ${ACHIEVEMENT_LIST[key].title}!`, 4000, true);
@@ -589,24 +632,34 @@ function renderAchievements() {
     }
 }
 function calculateRoutineStreak() {
-    if (!obligatoryRoutines || obligatoryRoutines.length === 0) return 0;
+    if (!routines || routines.length === 0) return 0;
     const completionDates = Object.keys(routineCompletions).filter(date => {
         const completedIds = routineCompletions[date] || [];
-        return obligatoryRoutines.every(r => completedIds.includes(r.id));
+        return routines.every(r => completedIds.includes(r.id));
     }).sort((a, b) => new Date(b) - new Date(a));
+
     if (completionDates.length === 0) return 0;
+
     let streak = 0;
-    let today = new Date(getTodayString());
+    const today = new Date(getTodayString());
     let lastCompletion = new Date(completionDates[0]);
+    
     let diffDays = Math.round((today - lastCompletion) / (1000 * 3600 * 24));
+
     if (diffDays > 1) return 0;
-    streak = (diffDays <= 1) ? 1 : 0;
+    
+    streak = (diffDays === 0 || diffDays === 1) ? 1 : 0;
     if (streak === 0) return 0;
+
     for (let i = 0; i < completionDates.length - 1; i++) {
         const current = new Date(completionDates[i]);
         const previous = new Date(completionDates[i + 1]);
         const diff = Math.round((current - previous) / (1000 * 3600 * 24));
-        if (diff === 1) streak++; else break;
+        if (diff === 1) {
+            streak++;
+        } else {
+            break;
+        }
     }
     return streak;
 }
