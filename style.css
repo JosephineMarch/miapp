@@ -201,3 +201,4 @@ select { -webkit-appearance: none; appearance: none; background-image: url("data
     .input-group #new-transaction-desc { width: 100%; }
 }
 @media (min-width: 769px) { .mobile-header-actions { display: none; } }
+/* Forced update for GitHub sync. */
