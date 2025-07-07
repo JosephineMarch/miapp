@@ -19,10 +19,11 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // --- ESTADO GLOBAL ---
-let tasks = [], inboxItems = [], achievements = {}, routineCompletions = {}, transactions = [];
+let tasks = [], inboxItems = [], achievements = {}, routineCompletions = {}, transactions = [], dailySummaries = {};
 let obligatoryRoutines = [], extraRoutines = [];
+let lastSummaryDate = null;
 let currentTheme = 'light', userId = null;
-let weeklyRoutineChart = null, tasksChart = null;
+let tasksChart = null; // weeklyRoutineChart no longer used
 let unsubscribers = [];
 
 // --- DEFINICIONES ---
@@ -40,12 +41,18 @@ const ACHIEVEMENT_LIST = {
     firstIncome: { title: '¡Primer Ingreso!', icon: '💰', description: 'Registra tu primera ganancia.', condition: () => transactions.some(t => t.type === 'income') },
 };
 
-// --- HELPERS ---
+// --- HELPERS DE FECHA ---
 const getTodayString = (date = new Date()) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+};
+const getStartOfWeek = (date = new Date()) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+    return new Date(d.setDate(diff));
 };
 
 // --- ARRANQUE DE LA APLICACIÓN ---
@@ -68,7 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 bottomNav.classList.add('visible');
                 
                 setupRealtimeListeners();
-                // CORRECCIÓN CLAVE: Establecer la pestaña inicial
                 switchTab('dashboard-content');
             }
         } else {
@@ -99,8 +105,6 @@ function setupEventListeners() {
     document.getElementById('addTaskBtn').addEventListener('click', addTask);
     document.getElementById('taskInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
     document.getElementById('addInboxBtn').addEventListener('click', addInboxItem);
-    document.getElementById('addObligatoryRoutineBtn').addEventListener('click', () => addRoutine('obligatory'));
-    document.getElementById('addExtraRoutineBtn').addEventListener('click', () => addRoutine('extra'));
     document.getElementById('finance-form').addEventListener('submit', addTransaction);
 }
 
@@ -113,52 +117,43 @@ function setupRealtimeListeners() {
             const data = docSnap.data();
             achievements = data.achievements || {};
             currentTheme = data.theme || 'light';
+            lastSummaryDate = data.lastSummaryDate || null;
             obligatoryRoutines = data.obligatoryRoutines || DEFAULT_OBLIGATORY_ROUTINES;
             extraRoutines = data.extraRoutines || DEFAULT_EXTRA_ROUTINES;
+            checkAndGenerateDailySummary(); // Check if a new day has passed
         } else {
-            setDoc(userDocRef, { achievements: {}, theme: 'light', obligatoryRoutines: DEFAULT_OBLIGATORY_ROUTINES, extraRoutines: DEFAULT_EXTRA_ROUTINES });
+            setDoc(userDocRef, { achievements: {}, theme: 'light', obligatoryRoutines: DEFAULT_OBLIGATORY_ROUTINES, extraRoutines: DEFAULT_EXTRA_ROUTINES, lastSummaryDate: null });
         }
         applyTheme(currentTheme);
         renderAchievements();
-        renderRoutines();
+    }));
+    
+    unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'dailySummaries'), orderBy('date', 'desc')), (snapshot) => {
+        dailySummaries = {};
+        snapshot.docs.forEach(d => { dailySummaries[d.id] = d.data(); });
+        renderDailySummaryCards();
     }));
 
+    unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'routineCompletions')), (snapshot) => {
+        routineCompletions = {};
+        snapshot.forEach(doc => { routineCompletions[doc.id] = doc.data().completedIds; });
+        if (document.getElementById('dashboard-content').classList.contains('active')) {
+            renderWeeklyDashboard();
+        }
+    }));
+    
+    // The other listeners remain the same
     unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'tasks'), orderBy('createdAt', 'desc')), (snapshot) => {
         tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         loadTasks();
         checkAndUnlockAchievements();
         renderSummaryStats();
     }));
-    
-    unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'routineCompletions')), (snapshot) => {
-        const oldCompletions = { ...routineCompletions };
-        routineCompletions = {};
-        snapshot.forEach(doc => { routineCompletions[doc.id] = doc.data().completedIds; });
-        
-        const todayStr = getTodayString();
-        const oldTodayCompletions = oldCompletions[todayStr] || [];
-        const newTodayCompletions = routineCompletions[todayStr] || [];
-        if (newTodayCompletions.length > oldTodayCompletions.length) {
-            const allObligatoryDone = obligatoryRoutines.every(r => newTodayCompletions.includes(r.id));
-            if (allObligatoryDone) {
-                showNotification("¡Misión Cumplida! Completaste tus rutinas. 🎉", 4000, true);
-                checkAndUnlockAchievements({ perfectDay: true });
-            }
-        }
-        
-        const currentStreak = calculateRoutineStreak();
-        checkAndUnlockAchievements({ streak: currentStreak });
-        
-        renderRoutines();
-        renderSummaryStats();
-    }));
-
     unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'inboxItems'), orderBy('createdAt', 'desc')), (snapshot) => {
         inboxItems = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         loadInboxItems();
         renderSummaryStats();
     }));
-
     unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'transactions'), orderBy('date', 'desc')), (snapshot) => {
         transactions = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         renderTransactions();
@@ -169,7 +164,6 @@ function setupRealtimeListeners() {
 
 // --- LÓGICA DE UI ---
 function switchTab(tabId) {
-    // CORRECCIÓN CLAVE: Activar/desactivar clases en botones y contenido
     document.querySelectorAll('.nav-button').forEach(el => {
         el.classList.toggle('active', el.dataset.tab === tabId);
     });
@@ -178,9 +172,10 @@ function switchTab(tabId) {
         el.classList.toggle('active', el.id === tabId);
     });
     
-    // CORRECCIÓN CLAVE: Re-renderizar gráficos solo cuando su pestaña está activa
+    // --- THIS IS THE CRITICAL CORRECTION ---
     if (tabId === 'dashboard-content') {
-        renderWeeklyRoutineChart();
+        renderWeeklyDashboard();
+        renderDailySummaryCards();
     } else if (tabId === 'progress-content') {
         renderReport('week');
     }
@@ -212,78 +207,124 @@ function showNotification(message, duration = 3000, isAchievement = false) {
 }
 
 function clearLocalData() {
-    tasks = []; inboxItems = []; achievements = {}; routineCompletions = {}; transactions = [];
+    tasks = []; inboxItems = []; achievements = {}; routineCompletions = {}; transactions = []; dailySummaries = {};
     obligatoryRoutines = DEFAULT_OBLIGATORY_ROUTINES; extraRoutines = DEFAULT_EXTRA_ROUTINES;
 }
-// --- DASHBOARD (RUTINAS) ---
-function renderRoutines() {
-    const todayStr = getTodayString();
-    const completedToday = routineCompletions[todayStr] || [];
-    
-    const obligatoryList = document.getElementById('obligatory-routines-list');
-    obligatoryList.innerHTML = obligatoryRoutines.length > 0 ? '' : '<p style="text-align:center; opacity:0.7; padding: 20px 0;">Añade rutinas obligatorias.</p>';
-    obligatoryRoutines.forEach(r => obligatoryList.appendChild(createRoutineElement(r, completedToday, 'obligatory')));
 
-    const extraList = document.getElementById('extra-routines-list');
-    extraList.innerHTML = extraRoutines.length > 0 ? '' : '<p style="text-align:center; opacity:0.7; padding: 20px 0;">Añade rutinas extra.</p>';
-    extraRoutines.forEach(r => extraList.appendChild(createRoutineElement(r, completedToday, 'extra')));
-}
-function createRoutineElement(routine, completedToday, type) {
-    const item = document.createElement('div');
-    const isCompleted = completedToday.includes(routine.id);
-    item.className = `list-item ${isCompleted ? 'completed' : ''}`;
-    item.innerHTML = `
-        <input type="checkbox" data-routine-id="${routine.id}" ${isCompleted ? 'checked' : ''}>
-        <div class="item-text-content"><span class="item-text">${routine.text}</span></div>
-        <div class="item-actions">
-            <button class="btn-icon" data-action="edit-routine" data-type="${type}" data-id="${routine.id}" title="Editar"><svg class="icon"><use href="#icon-edit"/></svg></button>
-            <button class="btn-icon" data-action="delete-routine" data-type="${type}" data-id="${routine.id}" title="Eliminar"><svg class="icon"><use href="#icon-delete"/></svg></button>
-        </div>`;
-    item.querySelector('input').addEventListener('change', (e) => toggleRoutine(e.target.dataset.routineId));
-    item.querySelector('[data-action="edit-routine"]').addEventListener('click', (e) => editRoutine(e.currentTarget.dataset.type, e.currentTarget.dataset.id));
-    item.querySelector('[data-action="delete-routine"]').addEventListener('click', (e) => deleteRoutine(e.currentTarget.dataset.type, e.currentTarget.dataset.id));
-    return item;
-}
+// --- NUEVO DASHBOARD ---
+function renderWeeklyDashboard() {
+    const grid = document.getElementById('weekly-dashboard-grid');
+    const title = document.getElementById('dashboardMonthTitle');
+    if (!grid || !title) return;
 
-async function addRoutine(type) {
-    const newText = prompt(`Añadir nueva rutina ${type === 'obligatory' ? 'obligatoria' : 'extra'}:`);
-    if (!newText || !newText.trim() || !userId) return;
-    const newId = `custom_${Date.now()}`;
-    const newRoutine = { id: newId, text: newText.trim() };
-    const field = type === 'obligatory' ? 'obligatoryRoutines' : 'extraRoutines';
-    try {
-        await updateDoc(doc(db, 'users', userId), { [field]: arrayUnion(newRoutine) });
-    } catch (e) { showNotification("Error al añadir la rutina."); }
-}
-async function editRoutine(type, id) {
-    if (!userId) return;
-    const list = type === 'obligatory' ? obligatoryRoutines : extraRoutines;
-    const routine = list.find(r => r.id === id);
-    if (!routine) return;
-    const newText = prompt("Editar rutina:", routine.text);
-    if (newText && newText.trim() !== routine.text) {
-        const newList = list.map(r => r.id === id ? { ...r, text: newText.trim() } : r);
-        const field = type === 'obligatory' ? 'obligatoryRoutines' : 'extraRoutines';
-        try {
-            await updateDoc(doc(db, 'users', userId), { [field]: newList });
-        } catch (e) { showNotification("Error al editar la rutina."); }
+    const today = new Date();
+    const startOfWeek = getStartOfWeek(today);
+
+    title.textContent = startOfWeek.toLocaleString('es-ES', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase());
+    grid.innerHTML = '';
+
+    for (let i = 0; i < 7; i++) {
+        const day = new Date(startOfWeek);
+        day.setDate(startOfWeek.getDate() + i);
+        const dayStr = getTodayString(day);
+
+        const card = document.createElement('div');
+        card.className = 'day-card';
+        if (dayStr === getTodayString()) {
+            card.classList.add('today');
+        }
+
+        const completedToday = routineCompletions[dayStr] || [];
+        const allRoutines = [...obligatoryRoutines, ...extraRoutines];
+        const completedRoutines = allRoutines.filter(r => completedToday.includes(r.id)).length;
+        
+        let summaryText = 'Pendiente';
+        let summaryClass = 'pending';
+        if (completedRoutines > 0 && completedRoutines === allRoutines.length) {
+            summaryText = 'Completado';
+            summaryClass = 'completed';
+        } else if (completedRoutines > 0) {
+            summaryText = `${completedRoutines}/${allRoutines.length} Completadas`;
+        }
+
+        card.innerHTML = `
+            <h4>${day.toLocaleString('es-ES', { weekday: 'long' })}</h4>
+            <p class="date">${day.getDate()}</p>
+            <p class="routine-summary ${summaryClass}">${summaryText}</p>
+        `;
+        grid.appendChild(card);
     }
 }
-async function deleteRoutine(type, id) {
-    if (!confirm("¿Estás segura de que quieres eliminar esta rutina?") || !userId) return;
-    const list = type === 'obligatory' ? obligatoryRoutines : extraRoutines;
-    const newList = list.filter(r => r.id !== id);
-    const field = type === 'obligatory' ? 'obligatoryRoutines' : 'extraRoutines';
-    try {
-        await updateDoc(doc(db, 'users', userId), { [field]: newList });
-    } catch (e) { showNotification("Error al eliminar la rutina."); }
-}
 
-async function toggleRoutine(routineId) {
+async function checkAndGenerateDailySummary() {
     if (!userId) return;
     const todayStr = getTodayString();
-    const todayDocRef = doc(db, 'users', userId, 'routineCompletions', todayStr);
-    const completedToday = routineCompletions[todayStr] || [];
+    
+    // Check if the last summary was for yesterday or older
+    if (!lastSummaryDate || lastSummaryDate < todayStr) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = getTodayString(yesterday);
+
+        // Only generate if we haven't already processed yesterday
+        if (lastSummaryDate !== yesterdayStr) {
+            const completedYesterday = routineCompletions[yesterdayStr] || [];
+            
+            const allRoutines = [...obligatoryRoutines, ...extraRoutines];
+            const completed = allRoutines.filter(r => completedYesterday.includes(r.id));
+            const missed = allRoutines.filter(r => !completedYesterday.includes(r.id));
+
+            if (completed.length > 0 || missed.length > 0) {
+                 await setDoc(doc(db, 'users', userId, 'dailySummaries', yesterdayStr), {
+                    date: yesterdayStr,
+                    completed: completed.map(r => ({ id: r.id, text: r.text })),
+                    missed: missed.map(r => ({ id: r.id, text: r.text }))
+                });
+            }
+        }
+        await updateDoc(doc(db, 'users', userId), { lastSummaryDate: todayStr });
+    }
+}
+
+function renderDailySummaryCards() {
+    const container = document.getElementById('daily-summary-cards');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const sortedDates = Object.keys(dailySummaries).sort().reverse();
+    if (sortedDates.length === 0) return;
+
+    const latestSummaryKey = sortedDates[0];
+    const summary = dailySummaries[latestSummaryKey];
+
+    if (summary.completed.length > 0) {
+        const successCard = document.createElement('div');
+        successCard.className = 'summary-card success';
+        let listItems = '';
+        summary.completed.forEach(item => {
+            listItems += `<div class="list-item"><span class="icon-placeholder">✅</span><span class="item-text">${item.text}</span></div>`;
+        });
+        successCard.innerHTML = `<h3>¡Felicidades! Esto es lo que completaste:</h3><div class="item-list">${listItems}</div>`;
+        container.appendChild(successCard);
+    }
+
+    if (summary.missed.length > 0) {
+        const failCard = document.createElement('div');
+        failCard.className = 'summary-card fail';
+        let listItems = '';
+        summary.missed.forEach(item => {
+            listItems += `<div class="list-item"><span class="icon-placeholder">❌</span><span class="item-text">${item.text}</span></div>`;
+        });
+        failCard.innerHTML = `<h3>Actividades pendientes del día anterior:</h3><div class="item-list">${listItems}</div>`;
+        container.appendChild(failCard);
+    }
+}
+
+// --- RUTINAS (AHORA SOLO PARA DATOS, NO RENDERIZADO DIRECTO EN DASHBOARD) ---
+async function toggleRoutine(routineId, dateStr = getTodayString()) {
+    if (!userId) return;
+    const todayDocRef = doc(db, 'users', userId, 'routineCompletions', dateStr);
+    const completedToday = routineCompletions[dateStr] || [];
     const isCompleted = completedToday.includes(routineId);
     try {
         if (isCompleted) {
@@ -293,6 +334,7 @@ async function toggleRoutine(routineId) {
         }
     } catch (e) { showNotification("Error al actualizar la rutina."); }
 }
+
 
 // --- PROYECTOS ---
 async function addTask() {
@@ -367,6 +409,7 @@ function createInboxElement(item) {
     const el = document.createElement('div');
     el.className = 'list-item';
     el.innerHTML = `
+        <div class="icon-placeholder">💡</div>
         <div class="item-text-content">
             <p class="item-text">${item.text}</p>
             ${item.url ? `<a href="${item.url.startsWith('http') ? '' : '//'}${item.url}" target="_blank" class="item-details">${item.url}</a>` : ''}
@@ -436,47 +479,8 @@ function renderTransactions() {
     balanceEl.textContent = `$${balance.toFixed(2)}`;
     balanceEl.className = balance >= 0 ? 'finance-hero-balance income' : 'finance-hero-balance expense';
 }
-// --- GRÁFICOS Y PROGRESO ---
-function renderWeeklyRoutineChart() {
-    const canvas = document.getElementById('weekly-routine-chart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const labels = [];
-    const data = [];
-    const today = new Date();
-    for (let i = 6; i >= 0; i--) {
-        const day = new Date(today);
-        day.setDate(today.getDate() - i);
-        labels.push(day.toLocaleDateString('es-ES', { weekday: 'short' }));
-        const dayStr = getTodayString(day);
-        const completed = routineCompletions[dayStr] || [];
-        const completedObligatory = obligatoryRoutines.filter(r => completed.includes(r.id)).length;
-        const percentage = obligatoryRoutines.length > 0 ? (completedObligatory / obligatoryRoutines.length) * 100 : 0;
-        data.push(percentage);
-    }
-    if (weeklyRoutineChart) weeklyRoutineChart.destroy();
-    weeklyRoutineChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: '% Completado', data: data,
-                backgroundColor: 'rgba(34, 211, 238, 0.6)', // Cyan
-                borderColor: 'rgba(34, 211, 238, 1)',
-                borderWidth: 2, borderRadius: 8, barThickness: 15,
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: {
-                y: { display: false, beginAtZero: true, max: 100 },
-                x: { grid: { display: false }, ticks: { color: getComputedStyle(document.body).getPropertyValue('--text-muted') } }
-            },
-            plugins: { legend: { display: false }, title: { display: false } }
-        }
-    });
-}
 
+// --- GRÁFICOS Y PROGRESO ---
 function renderReport(period) {
     const canvas = document.getElementById('tasksCompletedChart');
     if (!canvas) return;
@@ -520,7 +524,7 @@ function renderReport(period) {
             datasets: [{ 
                 label: 'Tareas Completadas', 
                 data: chartData, 
-                backgroundColor: 'rgba(34, 211, 238, 0.6)', // Cyan
+                backgroundColor: 'rgba(34, 211, 238, 0.6)',
                 borderColor: 'rgba(34, 211, 238, 1)',
                 borderWidth: 2, borderRadius: 8, barThickness: 20,
             }] 
@@ -552,7 +556,6 @@ function renderSummaryStats() {
     document.getElementById('stat-routines').textContent = routinesToday;
     document.getElementById('stat-finances').textContent = financesMonth;
 }
-
 
 // --- LOGROS Y RACHA ---
 async function checkAndUnlockAchievements(args = {}) {
