@@ -13,34 +13,31 @@ const firebaseConfig = {
     appId: "1:815058398646:web:15d8a49b50ac5c660de517",
     measurementId: "G-ZG1T9MZ8MD"
 };
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // --- ESTADO GLOBAL ---
-let tasks = [], inboxItems = [], achievements = {}, routineCompletions = {}, transactions = [];
-let userRoutines = []; // Lista única de rutinas del usuario
-let currentTheme = 'light', userId = null, selectedDate = getTodayString();
-let tasksChart = null;
+let tasks = [], inboxItems = [], achievements = {}, routineCompletions = {}, transactions = [], dailySummaries = {};
+let obligatoryRoutines = [], extraRoutines = [];
+let lastSummaryDate = null;
+let currentTheme = 'light', userId = null;
+let tasksChart = null; // weeklyRoutineChart no longer used
 let unsubscribers = [];
 
 // --- DEFINICIONES ---
-const DEFAULT_ROUTINES = [
-    { id: 'take_pill', text: 'Tomar la pastilla', isDefault: true },
-    { id: 'litter_morning', text: 'Limpiar areneros (mañana)', isDefault: true },
-    { id: 'water_up', text: 'Cambiar el agua arriba', isDefault: true },
-    { id: 'water_down', text: 'Cambiar el agua abajo', isDefault: true },
-    { id: 'meditate', text: 'Meditar 5 minutos', isDefault: false },
-    { id: 'read_book', text: 'Leer un capítulo', isDefault: false }
+const DEFAULT_OBLIGATORY_ROUTINES = [
+    { id: 'take_pill', text: 'Tomar la pastilla' }, { id: 'litter_morning', text: 'Limpiar areneros (mañana)' },
+    { id: 'water_up', text: 'Cambiar el agua arriba' }, { id: 'water_down', text: 'Cambiar el agua abajo' },
 ];
+const DEFAULT_EXTRA_ROUTINES = [ { id: 'meditate', text: 'Meditar 5 minutos' }, { id: 'read_book', text: 'Leer un capítulo' } ];
 const ACHIEVEMENT_LIST = {
     firstTask: { title: '¡Primer Proyecto!', icon: '📝', description: 'Completa tu primera tarea de proyecto.', condition: () => tasks.some(t => t.completed) },
     tenTasks: { title: 'Maestra de Proyectos', icon: '✍️', description: 'Completa 10 tareas de proyecto.', condition: () => tasks.filter(t => t.completed).length >= 10 },
     inboxZero: { title: 'Mente Clara', icon: '🧘‍♀️', description: 'Vacía tu bandeja de ideas.', condition: (args) => args?.justDeleted && inboxItems.length === 0 },
-    routinePerfectDay: { title: 'Día Perfecto', icon: '🌟', description: 'Completa todas las rutinas en un día.', condition: (args) => args?.perfectDay },
-    streak3: { title: 'Constancia', icon: '🔥', description: 'Mantén una racha de 3 días completando todas las rutinas.', condition: (args) => args?.streak >= 3 },
+    routinePerfectDay: { title: 'Día Perfecto', icon: '🌟', description: 'Completa todas las rutinas obligatorias en un día.', condition: (args) => args?.perfectDay },
+    streak3: { title: 'Constancia', icon: '🔥', description: 'Mantén una racha de 3 días completando rutinas.', condition: (args) => args?.streak >= 3 },
     firstIncome: { title: '¡Primer Ingreso!', icon: '💰', description: 'Registra tu primera ganancia.', condition: () => transactions.some(t => t.type === 'income') },
 };
 
@@ -54,7 +51,7 @@ const getTodayString = (date = new Date()) => {
 const getStartOfWeek = (date = new Date()) => {
     const d = new Date(date);
     const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
     return new Date(d.setDate(diff));
 };
 
@@ -67,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const bottomNav = document.querySelector('.bottom-nav');
 
         if (user) {
-            if (userId !== user.uid) {
+            if (userId !== user.uid) { 
                 userId = user.uid;
                 
                 document.getElementById('user-display-name').textContent = user.displayName.split(' ')[0];
@@ -78,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 bottomNav.classList.add('visible');
                 
                 setupRealtimeListeners();
-                switchTab('dashboard-content'); 
+                switchTab('dashboard-content');
             }
         } else {
             userId = null;
@@ -104,9 +101,6 @@ function setupEventListeners() {
     document.querySelectorAll('.nav-button').forEach(tab => {
         tab.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab));
     });
-    
-    document.getElementById('add-routine-btn').addEventListener('click', addRoutine);
-    document.getElementById('new-routine-input').addEventListener('keydown', e => { if (e.key === 'Enter') addRoutine(e); });
 
     document.getElementById('addTaskBtn').addEventListener('click', addTask);
     document.getElementById('taskInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
@@ -123,25 +117,32 @@ function setupRealtimeListeners() {
             const data = docSnap.data();
             achievements = data.achievements || {};
             currentTheme = data.theme || 'light';
-            userRoutines = data.routines || DEFAULT_ROUTINES;
+            lastSummaryDate = data.lastSummaryDate || null;
+            obligatoryRoutines = data.obligatoryRoutines || DEFAULT_OBLIGATORY_ROUTINES;
+            extraRoutines = data.extraRoutines || DEFAULT_EXTRA_ROUTINES;
+            checkAndGenerateDailySummary(); // Check if a new day has passed
         } else {
-            setDoc(userDocRef, { achievements: {}, theme: 'light', routines: DEFAULT_ROUTINES });
+            setDoc(userDocRef, { achievements: {}, theme: 'light', obligatoryRoutines: DEFAULT_OBLIGATORY_ROUTINES, extraRoutines: DEFAULT_EXTRA_ROUTINES, lastSummaryDate: null });
         }
         applyTheme(currentTheme);
         renderAchievements();
-        renderRoutinesForSelectedDay(); // Render routines when they are loaded
     }));
     
+    unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'dailySummaries'), orderBy('date', 'desc')), (snapshot) => {
+        dailySummaries = {};
+        snapshot.docs.forEach(d => { dailySummaries[d.id] = d.data(); });
+        renderDailySummaryCards();
+    }));
+
     unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'routineCompletions')), (snapshot) => {
         routineCompletions = {};
-        snapshot.docs.forEach(d => { routineCompletions[d.id] = d.data().completedIds; });
+        snapshot.forEach(doc => { routineCompletions[doc.id] = doc.data().completedIds; });
         if (document.getElementById('dashboard-content').classList.contains('active')) {
             renderWeeklyDashboard();
-            renderRoutinesForSelectedDay();
         }
     }));
     
-    // Listeners for other collections remain unchanged
+    // The other listeners remain the same
     unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'tasks'), orderBy('createdAt', 'desc')), (snapshot) => {
         tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         loadTasks();
@@ -170,11 +171,11 @@ function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => {
         el.classList.toggle('active', el.id === tabId);
     });
-
+    
+    // --- THIS IS THE CRITICAL CORRECTION ---
     if (tabId === 'dashboard-content') {
-        selectedDate = getTodayString(); // Reset to today when switching to dashboard
         renderWeeklyDashboard();
-        renderRoutinesForSelectedDay();
+        renderDailySummaryCards();
     } else if (tabId === 'progress-content') {
         renderReport('week');
     }
@@ -206,19 +207,19 @@ function showNotification(message, duration = 3000, isAchievement = false) {
 }
 
 function clearLocalData() {
-    tasks = []; inboxItems = []; achievements = {}; routineCompletions = {}; transactions = [];
-    userRoutines = [];
-    selectedDate = getTodayString();
+    tasks = []; inboxItems = []; achievements = {}; routineCompletions = {}; transactions = []; dailySummaries = {};
+    obligatoryRoutines = DEFAULT_OBLIGATORY_ROUTINES; extraRoutines = DEFAULT_EXTRA_ROUTINES;
 }
 
-// --- DASHBOARD ---
+// --- NUEVO DASHBOARD ---
 function renderWeeklyDashboard() {
     const grid = document.getElementById('weekly-dashboard-grid');
     const title = document.getElementById('dashboardMonthTitle');
     if (!grid || !title) return;
 
-    const startOfWeek = getStartOfWeek(new Date(selectedDate.replace(/-/g, '/'))); // Use selectedDate
-    
+    const today = new Date();
+    const startOfWeek = getStartOfWeek(today);
+
     title.textContent = startOfWeek.toLocaleString('es-ES', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase());
     grid.innerHTML = '';
 
@@ -229,145 +230,111 @@ function renderWeeklyDashboard() {
 
         const card = document.createElement('div');
         card.className = 'day-card';
-        card.dataset.date = dayStr;
-
-        if (dayStr === selectedDate) card.classList.add('active');
-        if (dayStr === getTodayString()) card.classList.add('today');
+        if (dayStr === getTodayString()) {
+            card.classList.add('today');
+        }
 
         const completedToday = routineCompletions[dayStr] || [];
-        let summaryText = 'Pendiente';
-        if (completedToday.length === userRoutines.length && userRoutines.length > 0) {
-            summaryText = 'Completado';
-        } else if (completedToday.length > 0) {
-            summaryText = `${completedToday.length}/${userRoutines.length}`;
-        }
+        const allRoutines = [...obligatoryRoutines, ...extraRoutines];
+        const completedRoutines = allRoutines.filter(r => completedToday.includes(r.id)).length;
         
+        let summaryText = 'Pendiente';
+        let summaryClass = 'pending';
+        if (completedRoutines > 0 && completedRoutines === allRoutines.length) {
+            summaryText = 'Completado';
+            summaryClass = 'completed';
+        } else if (completedRoutines > 0) {
+            summaryText = `${completedRoutines}/${allRoutines.length} Completadas`;
+        }
+
         card.innerHTML = `
-            <h4>${day.toLocaleString('es-ES', { weekday: 'short' })}</h4>
+            <h4>${day.toLocaleString('es-ES', { weekday: 'long' })}</h4>
             <p class="date">${day.getDate()}</p>
-            <p class="routine-summary">${summaryText}</p>`;
-        card.addEventListener('click', () => {
-            selectedDate = dayStr;
-            renderWeeklyDashboard(); // Re-render to update active state
-            renderRoutinesForSelectedDay();
-        });
+            <p class="routine-summary ${summaryClass}">${summaryText}</p>
+        `;
         grid.appendChild(card);
     }
 }
 
-// --- RUTINAS ---
-function renderRoutinesForSelectedDay() {
-    const container = document.getElementById('routines-list');
-    const title = document.getElementById('routines-title');
-    if (!container || !title) return;
-
+async function checkAndGenerateDailySummary() {
+    if (!userId) return;
     const todayStr = getTodayString();
-    if (selectedDate === todayStr) {
-        title.textContent = 'Rutinas para Hoy';
-    } else {
-        const dateObj = new Date(selectedDate.replace(/-/g, '/'));
-        title.textContent = `Rutinas para ${dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric' })}`;
-    }
+    
+    // Check if the last summary was for yesterday or older
+    if (!lastSummaryDate || lastSummaryDate < todayStr) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = getTodayString(yesterday);
 
+        // Only generate if we haven't already processed yesterday
+        if (lastSummaryDate !== yesterdayStr) {
+            const completedYesterday = routineCompletions[yesterdayStr] || [];
+            
+            const allRoutines = [...obligatoryRoutines, ...extraRoutines];
+            const completed = allRoutines.filter(r => completedYesterday.includes(r.id));
+            const missed = allRoutines.filter(r => !completedYesterday.includes(r.id));
+
+            if (completed.length > 0 || missed.length > 0) {
+                 await setDoc(doc(db, 'users', userId, 'dailySummaries', yesterdayStr), {
+                    date: yesterdayStr,
+                    completed: completed.map(r => ({ id: r.id, text: r.text })),
+                    missed: missed.map(r => ({ id: r.id, text: r.text }))
+                });
+            }
+        }
+        await updateDoc(doc(db, 'users', userId), { lastSummaryDate: todayStr });
+    }
+}
+
+function renderDailySummaryCards() {
+    const container = document.getElementById('daily-summary-cards');
+    if (!container) return;
     container.innerHTML = '';
-    const completedOnSelectedDate = routineCompletions[selectedDate] || [];
 
-    userRoutines.forEach(routine => {
-        const isCompleted = completedOnSelectedDate.includes(routine.id);
-        const item = document.createElement('div');
-        item.className = `list-item ${isCompleted ? 'completed' : ''}`;
-        
-        item.innerHTML = `
-            <input type="checkbox" data-routine-id="${routine.id}" ${isCompleted ? 'checked' : ''}>
-            <div class="item-text-content">
-                <input type="text" class="item-text-input" value="${routine.text}" ${isCompleted ? 'readonly' : ''} data-routine-id="${routine.id}">
-            </div>
-            <div class="item-actions">
-                <button class="btn-icon" data-action="delete-routine" data-id="${routine.id}"><svg class="icon" title="Eliminar"><use href="#icon-delete"/></svg></button>
-            </div>`;
-        
-        container.appendChild(item);
-    });
+    const sortedDates = Object.keys(dailySummaries).sort().reverse();
+    if (sortedDates.length === 0) return;
 
-    // Add event listeners after elements are in the DOM
-    container.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => toggleRoutine(e.target.dataset.routineId));
-    });
-    container.querySelectorAll('.item-text-input').forEach(input => {
-        input.addEventListener('blur', (e) => updateRoutineText(e.target.dataset.routineId, e.target.value));
-    });
-    container.querySelectorAll('[data-action="delete-routine"]').forEach(button => {
-        button.addEventListener('click', (e) => deleteRoutine(e.currentTarget.dataset.id));
-    });
-}
+    const latestSummaryKey = sortedDates[0];
+    const summary = dailySummaries[latestSummaryKey];
 
-async function addRoutine() {
-    const input = document.getElementById('new-routine-input');
-    if (!input.value.trim() || !userId) return;
+    if (summary.completed.length > 0) {
+        const successCard = document.createElement('div');
+        successCard.className = 'summary-card success';
+        let listItems = '';
+        summary.completed.forEach(item => {
+            listItems += `<div class="list-item"><span class="icon-placeholder">✅</span><span class="item-text">${item.text}</span></div>`;
+        });
+        successCard.innerHTML = `<h3>¡Felicidades! Esto es lo que completaste:</h3><div class="item-list">${listItems}</div>`;
+        container.appendChild(successCard);
+    }
 
-    const newRoutine = {
-        id: 'r' + new Date().getTime(), // Simple unique ID
-        text: input.value.trim(),
-        isDefault: false
-    };
-
-    const updatedRoutines = [...userRoutines, newRoutine];
-
-    try {
-        await updateDoc(doc(db, 'users', userId), { routines: updatedRoutines });
-        input.value = '';
-    } catch (e) {
-        showNotification("Error al añadir la rutina.");
-        console.error("Error adding routine: ", e);
+    if (summary.missed.length > 0) {
+        const failCard = document.createElement('div');
+        failCard.className = 'summary-card fail';
+        let listItems = '';
+        summary.missed.forEach(item => {
+            listItems += `<div class="list-item"><span class="icon-placeholder">❌</span><span class="item-text">${item.text}</span></div>`;
+        });
+        failCard.innerHTML = `<h3>Actividades pendientes del día anterior:</h3><div class="item-list">${listItems}</div>`;
+        container.appendChild(failCard);
     }
 }
 
-async function updateRoutineText(routineId, newText) {
+// --- RUTINAS (AHORA SOLO PARA DATOS, NO RENDERIZADO DIRECTO EN DASHBOARD) ---
+async function toggleRoutine(routineId, dateStr = getTodayString()) {
     if (!userId) return;
-    const updatedRoutines = userRoutines.map(r => r.id === routineId ? { ...r, text: newText } : r);
-    try {
-        await updateDoc(doc(db, 'users', userId), { routines: updatedRoutines });
-    } catch (e) {
-        showNotification("Error al actualizar la rutina.");
-    }
-}
-
-async function deleteRoutine(routineId) {
-    if (!userId) return;
-    const updatedRoutines = userRoutines.filter(r => r.id !== routineId);
-    try {
-        await updateDoc(doc(db, 'users', userId), { routines: updatedRoutines });
-    } catch (e) {
-        showNotification("Error al eliminar la rutina.");
-    }
-}
-
-async function toggleRoutine(routineId) {
-    if (!userId) return;
-    const dateDocRef = doc(db, 'users', userId, 'routineCompletions', selectedDate);
-    const completedOnSelectedDate = routineCompletions[selectedDate] || [];
-    const isCompleted = completedOnSelectedDate.includes(routineId);
-
+    const todayDocRef = doc(db, 'users', userId, 'routineCompletions', dateStr);
+    const completedToday = routineCompletions[dateStr] || [];
+    const isCompleted = completedToday.includes(routineId);
     try {
         if (isCompleted) {
-            await setDoc(dateDocRef, { completedIds: arrayRemove(routineId) }, { merge: true });
+            await setDoc(todayDocRef, { completedIds: arrayRemove(routineId) }, { merge: true });
         } else {
-            await setDoc(dateDocRef, { completedIds: arrayUnion(routineId) }, { merge: true });
+            await setDoc(todayDocRef, { completedIds: arrayUnion(routineId) }, { merge: true });
         }
-        // Check for achievements after toggling
-        const updatedCompletions = isCompleted 
-            ? completedOnSelectedDate.filter(id => id !== routineId)
-            : [...completedOnSelectedDate, routineId];
-
-        if (updatedCompletions.length === userRoutines.length) {
-            const streak = calculateRoutineStreak();
-            checkAndUnlockAchievements({ perfectDay: true, streak: streak });
-        }
-    } catch (e) { 
-        showNotification("Error al actualizar la rutina.");
-        console.error("Error toggling routine:", e);
-    }
+    } catch (e) { showNotification("Error al actualizar la rutina."); }
 }
+
 
 // --- PROYECTOS ---
 async function addTask() {
@@ -484,7 +451,7 @@ function renderTransactions() {
     const today = new Date();
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    const monthTransactions = transactions.filter(t => (t.date?.toDate() || new Date()) >= firstDayOfMonth);
+    const monthTransactions = transactions.filter(t => (t.date?.toDate() || new Date(t.date)) >= firstDayOfMonth);
     
     let totalIncome = 0, totalExpense = 0;
 
@@ -497,7 +464,7 @@ function renderTransactions() {
         item.innerHTML = `
             <div class="item-text-content">
                 <span class="item-text">${trans.description}</span>
-                <span class="item-details">${(trans.date?.toDate() || new Date()).toLocaleDateString()}</span>
+                <span class="item-details">${(trans.date?.toDate() || new Date(trans.date)).toLocaleDateString()}</span>
             </div>
             <span class="transaction-amount ${trans.type === 'income' ? 'income' : 'expense'}">
                 ${trans.type === 'income' ? '+' : '-'}$${trans.amount.toFixed(2)}
@@ -534,6 +501,19 @@ function renderReport(period) {
             const tasksOnDay = tasks.filter(t => t.completedAt && getTodayString(t.completedAt.toDate()) === dayStr).length;
             chartData.push(tasksOnDay);
         }
+    } else { // 'month'
+        for (let i = 3; i >= 0; i--) { // Últimas 4 semanas
+            const endOfWeek = new Date(now);
+            endOfWeek.setDate(now.getDate() - (i * 7));
+            const startOfWeek = new Date(endOfWeek);
+            startOfWeek.setDate(endOfWeek.getDate() - 6);
+            chartLabels.push(`Sem ${startOfWeek.getDate()}/${startOfWeek.getMonth()+1}`);
+            const tasksInWeek = tasks.filter(t => {
+                const completedDate = t.completedAt?.toDate();
+                return completedDate && completedDate >= startOfWeek && completedDate <= endOfWeek;
+            }).length;
+            chartData.push(tasksInWeek);
+        }
     }
 
     if (tasksChart) tasksChart.destroy();
@@ -569,7 +549,7 @@ function renderSummaryStats() {
     
     const today = new Date();
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const financesMonth = transactions.filter(t => (t.date?.toDate() || new Date()) >= firstDayOfMonth).length;
+    const financesMonth = transactions.filter(t => (t.date?.toDate() || new Date(t.date)) >= firstDayOfMonth).length;
 
     document.getElementById('stat-tasks').textContent = tasksCompleted;
     document.getElementById('stat-inbox').textContent = ideasCount;
@@ -609,33 +589,24 @@ function renderAchievements() {
     }
 }
 function calculateRoutineStreak() {
-    if (!userRoutines || userRoutines.length === 0) return 0;
-    
+    if (!obligatoryRoutines || obligatoryRoutines.length === 0) return 0;
     const completionDates = Object.keys(routineCompletions).filter(date => {
         const completedIds = routineCompletions[date] || [];
-        return userRoutines.every(r => completedIds.includes(r.id));
+        return obligatoryRoutines.every(r => completedIds.includes(r.id));
     }).sort((a, b) => new Date(b) - new Date(a));
-
     if (completionDates.length === 0) return 0;
-
     let streak = 0;
     let today = new Date(getTodayString());
     let lastCompletion = new Date(completionDates[0]);
-
-    // Check if the last perfect day was today or yesterday
     let diffDays = Math.round((today - lastCompletion) / (1000 * 3600 * 24));
     if (diffDays > 1) return 0;
-    
-    streak = 1;
+    streak = (diffDays <= 1) ? 1 : 0;
+    if (streak === 0) return 0;
     for (let i = 0; i < completionDates.length - 1; i++) {
         const current = new Date(completionDates[i]);
         const previous = new Date(completionDates[i + 1]);
         const diff = Math.round((current - previous) / (1000 * 3600 * 24));
-        if (diff === 1) {
-            streak++;
-        } else {
-            break;
-        }
+        if (diff === 1) streak++; else break;
     }
     return streak;
 }
