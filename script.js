@@ -1,35 +1,22 @@
-// --- MODO DE DESARROLLO ---
-// Cambia a 'true' para trabajar sin login (usando localStorage).
-// Cambia a 'false' para activar Firebase y el login de Google para producción.
-const DEVELOPMENT_MODE = false;
-
 // --- 1. IMPORTAR FUNCIONES DE FIREBASE ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, serverTimestamp, arrayUnion, arrayRemove, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 // --- 2. INICIALIZACIÓN DE FIREBASE Y SERVICIOS ---
-let app, auth, db, provider;
-try {
-  if (!DEVELOPMENT_MODE) {
-      const firebaseConfig = {
-        apiKey: "AIzaSyD0gGVvxwFxEnfbOYIhwVDExSR9HZy1YG4", // REEMPLAZA CON TU API KEY
-        authDomain: "miapp-e4dc6.firebaseapp.com",
-        projectId: "miapp-e4dc6",
-        storageBucket: "miapp-e4dc6.appspot.com",
-        messagingSenderId: "815058398646",
-        appId: "1:815058398646:web:15d8a49b50ac5c660de517",
-        measurementId: "G-ZG1T9MZ8MD"
-      };
-      app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-      db = getFirestore(app);
-      provider = new GoogleAuthProvider();
-  }
-} catch (e) {
-  console.error("Error inicializando Firebase. Revisa tu configuración.", e);
-  if (!DEVELOPMENT_MODE) alert("Error de configuración de Firebase. La app no funcionará online.");
-}
+const firebaseConfig = {
+    apiKey: "AIzaSyD0gGVvxwFxEnfbOYIhwVDExSR9HZy1YG4",
+    authDomain: "miapp-e4dc6.firebaseapp.com",
+    projectId: "miapp-e4dc6",
+    storageBucket: "miapp-e4dc6.appspot.com",
+    messagingSenderId: "815058398646",
+    appId: "1:815058398646:web:15d8a49b50ac5c660de517",
+    measurementId: "G-ZG1T9MZ8MD"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
 
 // --- ESTADO GLOBAL ---
 let tasks = [], inboxItems = [], achievements = {}, routineCompletions = {}, transactions = [];
@@ -61,59 +48,36 @@ const ACHIEVEMENT_LIST = {
     streak3: { title: 'Constancia', icon: '🔥', description: 'Mantén una racha de 3 días completando rutinas.', condition: () => calculateRoutineStreak() >= 3 },
     firstIncome: { title: '¡Primer Ingreso!', icon: '💰', description: 'Registra tu primera ganancia.', condition: () => transactions.some(t => t.type === 'income') },
 };
-const LOCAL_STORAGE_PREFIX = 'creaInfantilApp_v3_';
 
 // --- ARRANQUE DE LA APLICACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
-    if (DEVELOPMENT_MODE) {
-        console.warn("MODO DE DESARROLLO ACTIVO. Los datos se guardan en localStorage.");
-        document.getElementById('login-container').style.display = 'none';
-        document.getElementById('app-container').style.display = 'block';
-        document.getElementById('user-display').textContent = 'Modo Local';
-        loadStateFromLocalStorage();
-        renderAllComponents();
-    } else {
-        onAuthStateChanged(auth, user => {
-            const loginContainer = document.getElementById('login-container');
-            const appContainer = document.getElementById('app-container');
-            if (user) {
+    onAuthStateChanged(auth, user => {
+        const loginContainer = document.getElementById('login-container');
+        const appContainer = document.getElementById('app-container');
+        if (user) {
+            if (userId !== user.uid) { // Prevenir re-ejecución innecesaria
                 userId = user.uid;
                 loginContainer.style.display = 'none';
                 appContainer.style.display = 'block';
                 document.getElementById('user-display').textContent = `Hola, ${user.displayName.split(' ')[0]}`;
                 setupRealtimeListeners();
-            } else {
-                userId = null;
-                loginContainer.style.display = 'flex';
-                appContainer.style.display = 'none';
-                unsubscribers.forEach(unsub => unsub());
-                unsubscribers = [];
-                clearLocalData();
-                renderAllComponents();
             }
-        });
-    }
+        } else {
+            userId = null;
+            loginContainer.style.display = 'flex';
+            appContainer.style.display = 'none';
+            unsubscribers.forEach(unsub => unsub());
+            unsubscribers = [];
+            clearLocalData();
+            renderEmptyState();
+        }
+    });
 });
 
-function loadStateFromLocalStorage() {
-    tasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_PREFIX + 'tasks')) || [];
-    inboxItems = JSON.parse(localStorage.getItem(LOCAL_STORAGE_PREFIX + 'inboxItems')) || [];
-    transactions = JSON.parse(localStorage.getItem(LOCAL_STORAGE_PREFIX + 'transactions')) || [];
-    routineCompletions = JSON.parse(localStorage.getItem(LOCAL_STORAGE_PREFIX + 'routines')) || {};
-    const profile = JSON.parse(localStorage.getItem(LOCAL_STORAGE_PREFIX + 'profile')) || {};
-    achievements = profile.achievements || {};
-    currentTheme = profile.theme || 'light';
-    obligatoryRoutines = profile.obligatoryRoutines || DEFAULT_OBLIGATORY_ROUTINES;
-    extraRoutines = profile.extraRoutines || DEFAULT_EXTRA_ROUTINES;
-    applyTheme(currentTheme);
-}
-
 function setupEventListeners() {
-    if (!DEVELOPMENT_MODE) {
-        document.getElementById('loginBtn').addEventListener('click', () => signInWithPopup(auth, provider).catch(error => console.error("Error en login:", error)));
-        document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
-    }
+    document.getElementById('loginBtn').addEventListener('click', () => signInWithPopup(auth, provider).catch(error => console.error("Error en login:", error)));
+    document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
     document.querySelectorAll('.nav-tab').forEach(tab => tab.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab)));
     document.getElementById('addTaskBtn').addEventListener('click', addTask);
@@ -141,7 +105,7 @@ function setupRealtimeListeners() {
     if (!userId) return;
     const userDocRef = doc(db, 'users', userId);
 
-    const unsubProfile = onSnapshot(userDocRef, (docSnap) => {
+    unsubscribers.push(onSnapshot(userDocRef, (docSnap) => {
         if (docSnap.exists()) {
             const data = docSnap.data();
             achievements = data.achievements || {};
@@ -154,50 +118,37 @@ function setupRealtimeListeners() {
         applyTheme(currentTheme);
         renderAchievements();
         renderRoutines();
-    });
+    }));
 
-    const tasksQuery = query(collection(db, 'users', userId, 'tasks'), orderBy('createdAt', 'desc'));
-    const unsubTasks = onSnapshot(tasksQuery, (snapshot) => {
-        tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data(), createdAt: d.data().createdAt?.toDate(), completedAt: d.data().completedAt?.toDate() }));
+    unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'tasks'), orderBy('createdAt', 'desc')), (snapshot) => {
+        tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         loadTasks();
         checkAndUnlockAchievements();
         updateReportsIfVisible();
-    });
+    }));
     
-    const routinesQuery = query(collection(db, 'users', userId, 'routineCompletions'));
-    const unsubRoutines = onSnapshot(routinesQuery, (snapshot) => {
+    unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'routineCompletions')), (snapshot) => {
         routineCompletions = {};
         snapshot.forEach(doc => { routineCompletions[doc.id] = doc.data().completedIds; });
         renderRoutines();
         updateReportsIfVisible();
         updateFocusStreak();
-    });
+    }));
 
-    const inboxQuery = query(collection(db, 'users', userId, 'inboxItems'), orderBy('createdAt', 'desc'));
-    const unsubInbox = onSnapshot(inboxQuery, (snapshot) => {
-        inboxItems = snapshot.docs.map(d => ({ id: d.id, ...d.data(), createdAt: d.data().createdAt?.toDate() }));
+    unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'inboxItems'), orderBy('createdAt', 'desc')), (snapshot) => {
+        inboxItems = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         loadInboxItems();
-    });
+    }));
 
-    const financeQuery = query(collection(db, 'users', userId, 'transactions'), orderBy('date', 'desc'));
-    const unsubFinances = onSnapshot(financeQuery, (snapshot) => {
-        transactions = snapshot.docs.map(d => ({ id: d.id, ...d.data(), date: d.data().date?.toDate() }));
+    unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'transactions'), orderBy('date', 'desc')), (snapshot) => {
+        transactions = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         renderTransactions();
-    });
-
-    unsubscribers = [unsubProfile, unsubTasks, unsubInbox, unsubRoutines, unsubFinances];
+    }));
 }
 
-function saveData() {
-    if(DEVELOPMENT_MODE) {
-        localStorage.setItem(LOCAL_STORAGE_PREFIX + 'tasks', JSON.stringify(tasks));
-        localStorage.setItem(LOCAL_STORAGE_PREFIX + 'inboxItems', JSON.stringify(inboxItems));
-        localStorage.setItem(LOCAL_STORAGE_PREFIX + 'transactions', JSON.stringify(transactions));
-        localStorage.setItem(LOCAL_STORAGE_PREFIX + 'routines', JSON.stringify(routineCompletions));
-        const profile = { achievements, theme: currentTheme, obligatoryRoutines, extraRoutines };
-        localStorage.setItem(LOCAL_STORAGE_PREFIX + 'profile', JSON.stringify(profile));
-        renderAllComponents();
-    }
+function renderEmptyState() {
+    clearLocalData();
+    renderAllComponents();
 }
 
 function renderAllComponents() {
@@ -207,14 +158,12 @@ function renderAllComponents() {
     renderTransactions();
     renderAchievements();
     updateFocusStreak();
-    updateReportsIfVisible();
     updatePomodoroUI();
+    updateReportsIfVisible();
 }
 function clearLocalData() {
-    Object.keys(localStorage).forEach(k => {
-        if (k.startsWith('creaInfantilApp_')) localStorage.removeItem(k);
-    });
     tasks = []; inboxItems = []; achievements = {}; routineCompletions = {}; transactions = [];
+    obligatoryRoutines = DEFAULT_OBLIGATORY_ROUTINES; extraRoutines = DEFAULT_EXTRA_ROUTINES;
 }
 function updateReportsIfVisible(){
     if (document.getElementById('reports').classList.contains('active')) {
@@ -223,8 +172,7 @@ function updateReportsIfVisible(){
     }
 }
 function switchTab(tabName) {
-    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.nav-tab, .tab-content').forEach(el => el.classList.remove('active'));
     document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
     document.getElementById(tabName).classList.add('active');
     if (tabName === 'reports') renderReport('week');
@@ -232,7 +180,7 @@ function switchTab(tabName) {
 async function toggleTheme() {
     currentTheme = (currentTheme === 'light') ? 'dark' : 'light';
     applyTheme(currentTheme);
-    await saveProfileData();
+    if (userId) await setDoc(doc(db, 'users', userId), { theme: currentTheme }, { merge: true });
     updateReportsIfVisible();
 }
 function applyTheme(theme) {
@@ -244,9 +192,7 @@ function showNotification(message, duration = 3000, isAchievement = false) {
     el.textContent = message;
     el.className = 'notification show';
     if(isAchievement) el.classList.add('achievement');
-    setTimeout(() => {
-        el.classList.remove('show', 'achievement');
-    }, duration);
+    setTimeout(() => { el.classList.remove('show', 'achievement'); }, duration);
 }
 
 // --- RUTINAS DIARIAS ---
@@ -281,7 +227,7 @@ function createRoutineElement(routine, completedToday, type) {
 }
 async function addRoutine(type) {
     const newText = prompt(`Añadir nueva rutina ${type === 'obligatory' ? 'obligatoria' : 'extra'}:`);
-    if (!newText || !newText.trim()) return;
+    if (!newText || !newText.trim() || !userId) return;
     const newId = `custom_${Date.now()}`;
     const newRoutine = { id: newId, text: newText.trim() };
 
@@ -290,6 +236,7 @@ async function addRoutine(type) {
     await saveProfileData();
 }
 async function editRoutine(type, id) {
+    if (!userId) return;
     const list = type === 'obligatory' ? obligatoryRoutines : extraRoutines;
     const routine = list.find(r => r.id === id);
     if (!routine) return;
@@ -300,7 +247,7 @@ async function editRoutine(type, id) {
     }
 }
 async function deleteRoutine(type, id) {
-    if (!confirm("¿Estás segura de que quieres eliminar esta rutina?")) return;
+    if (!confirm("¿Estás segura de que quieres eliminar esta rutina?") || !userId) return;
     if (type === 'obligatory') {
         obligatoryRoutines = obligatoryRoutines.filter(r => r.id !== id);
     } else {
@@ -309,40 +256,29 @@ async function deleteRoutine(type, id) {
     await saveProfileData();
 }
 async function saveProfileData() {
+    if (!userId) return;
     const profileData = { theme: currentTheme, achievements, obligatoryRoutines, extraRoutines };
-    if (!DEVELOPMENT_MODE && userId) {
-        await setDoc(doc(db, 'users', userId), profileData, { merge: true });
-    } else {
-        localStorage.setItem(LOCAL_STORAGE_PREFIX + 'profile', JSON.stringify(profileData));
-        renderRoutines();
-    }
+    await setDoc(doc(db, 'users', userId), profileData, { merge: true });
 }
 async function toggleRoutine(routineId) {
+    if (!userId) return;
     const todayStr = new Date().toISOString().split('T')[0];
-    const completedToday = [...(routineCompletions[todayStr] || [])];
+    const todayDocRef = doc(db, 'users', userId, 'routineCompletions', todayStr);
+    const completedToday = routineCompletions[todayStr] || [];
     const isCompleted = completedToday.includes(routineId);
-    
-    if (isCompleted) {
-        const index = completedToday.indexOf(routineId);
-        completedToday.splice(index, 1);
-    } else {
-        completedToday.push(routineId);
-    }
-    routineCompletions[todayStr] = completedToday;
-    
-    if (!DEVELOPMENT_MODE && userId) {
-        const todayDocRef = doc(db, 'users', userId, 'routineCompletions', todayStr);
-        await setDoc(todayDocRef, { completedIds: routineCompletions[todayStr] });
-    }
-    
-    const allObligatoryDone = obligatoryRoutines.every(r => routineCompletions[todayStr].includes(r.id));
-    if (!isCompleted && allObligatoryDone) {
-        showNotification("¡Misión Cumplida! Has completado tus rutinas obligatorias. 🎉", 4000, true);
-        await checkAndUnlockAchievements({ perfectDay: true });
-    }
-    
-    if (DEVELOPMENT_MODE) saveData(); 
-    else renderRoutines();
+
+    try {
+        if (isCompleted) await setDoc(todayDocRef, { completedIds: arrayRemove(routineId) }, { merge: true });
+        else await setDoc(todayDocRef, { completedIds: arrayUnion(routineId) }, { merge: true });
+        
+        // Check for achievement *after* successful update
+        const newCompletedList = isCompleted ? completedToday.filter(id => id !== routineId) : [...completedToday, routineId];
+        const allObligatoryDone = obligatoryRoutines.every(r => newCompletedList.includes(r.id));
+        if(!isCompleted && allObligatoryDone){
+            showNotification("¡Misión Cumplida! Has completado tus rutinas obligatorias. 🎉", 4000, true);
+            checkAndUnlockAchievements({ perfectDay: true });
+        }
+    } catch (e) { console.error("Error updating routine: ", e); }
 }
 function renderWeeklyView() {
     const container = document.getElementById('weekly-view');
@@ -373,58 +309,35 @@ function renderWeeklyView() {
         container.appendChild(dayEl);
     }
 }
+
 // --- TAREAS DE PROYECTO ---
 async function addTask() {
     const input = document.getElementById('taskInput');
-    if (!input.value.trim()) return;
-    const newTask = { text: input.value, completed: false, createdAt: new Date().toISOString() };
-
-    if (!DEVELOPMENT_MODE && userId) {
-        await addDoc(collection(db, 'users', userId, 'tasks'), { ...newTask, createdAt: serverTimestamp() });
-    } else {
-        tasks.unshift({ ...newTask, id: Date.now() });
-        saveData();
-    }
+    if (!input.value.trim() || !userId) return;
+    await addDoc(collection(db, 'users', userId, 'tasks'), { text: input.value, completed: false, createdAt: serverTimestamp() });
     input.value = '';
     showNotification('Tarea de proyecto agregada ✅');
 }
-
 async function editTask(id) {
+    if (!userId) return;
     const task = tasks.find(t => t.id == id);
     if (!task) return;
     const newText = prompt("Edita tu tarea:", task.text);
     if (newText && newText.trim() !== task.text) {
-        if (!DEVELOPMENT_MODE && userId) {
-            await updateDoc(doc(db, 'users', userId, 'tasks', String(id)), { text: newText.trim() });
-        } else {
-            task.text = newText.trim();
-            saveData();
-        }
+        await updateDoc(doc(db, 'users', userId, 'tasks', id), { text: newText.trim() });
     }
 }
-
 async function toggleTask(id) {
+    if (!userId) return;
     const task = tasks.find(t => t.id == id);
     if (task) {
-        if (!DEVELOPMENT_MODE && userId) {
-            await updateDoc(doc(db, 'users', userId, 'tasks', String(id)), { completed: !task.completed, completedAt: !task.completed ? serverTimestamp() : null });
-        } else {
-            task.completed = !task.completed;
-            task.completedAt = task.completed ? new Date().toISOString() : null;
-            saveData();
-        }
+        await updateDoc(doc(db, 'users', userId, 'tasks', id), { completed: !task.completed, completedAt: !task.completed ? serverTimestamp() : null });
     }
 }
-
 async function deleteTask(id) {
-    if (!DEVELOPMENT_MODE && userId) {
-        await deleteDoc(doc(db, 'users', userId, 'tasks', String(id)));
-    } else {
-        tasks = tasks.filter(t => t.id != id);
-        saveData();
-    }
+    if (!userId) return;
+    await deleteDoc(doc(db, 'users', userId, 'tasks', id));
 }
-
 function loadTasks() {
     const pendingList = document.getElementById('taskListPending');
     const completedList = document.getElementById('taskListCompleted');
@@ -441,7 +354,6 @@ function loadTasks() {
     document.getElementById('completed-title').style.display = showCompleted ? 'block' : 'none';
     if(showCompleted) completedTasks.forEach(task => completedList.appendChild(createTaskElement(task)));
 }
-
 function createTaskElement(task) {
     const item = document.createElement('div');
     item.className = `list-item ${task.completed ? 'completed' : ''}`;
@@ -462,30 +374,22 @@ function createTaskElement(task) {
 async function addInboxItem() {
     const textEl = document.getElementById('inboxText');
     const urlEl = document.getElementById('inboxUrl');
-    if (!textEl.value.trim() && !urlEl.value.trim()) return;
-    const newItem = { text: textEl.value.trim(), url: urlEl.value.trim(), createdAt: new Date().toISOString() };
+    if ((!textEl.value.trim() && !urlEl.value.trim()) || !userId) return;
     
-    if (!DEVELOPMENT_MODE && userId) {
-        await addDoc(collection(db, 'users', userId, 'inboxItems'), { ...newItem, createdAt: serverTimestamp() });
-    } else {
-        inboxItems.unshift({ ...newItem, id: Date.now() });
-        saveData();
-    }
+    await addDoc(collection(db, 'users', userId, 'inboxItems'), { text: textEl.value.trim(), url: urlEl.value.trim(), createdAt: serverTimestamp() });
     
     textEl.value = ''; urlEl.value = '';
     showNotification('Idea guardada ✨');
 }
-
 function loadInboxItems() {
     const list = document.getElementById('inboxList');
     list.innerHTML = inboxItems.length > 0 ? '' : '<p style="text-align:center; opacity:0.7; padding: 20px 0;">Tu bandeja de ideas está vacía.</p>';
     inboxItems.forEach(item => list.appendChild(createInboxElement(item)));
 }
-
 function createInboxElement(item) {
     const el = document.createElement('div');
     el.className = 'list-item';
-    const createdAtDate = item.createdAt ? new Date(item.createdAt.seconds ? item.createdAt.seconds * 1000 : item.createdAt).toLocaleDateString() : 'Ahora';
+    const createdAtDate = item.createdAt ? item.createdAt.toDate().toLocaleDateString() : 'Ahora';
     el.innerHTML = `
         <div class="item-text-content">
             <p class="inbox-text">${item.text}</p>
@@ -503,81 +407,51 @@ function createInboxElement(item) {
     return el;
 }
 async function editInboxItem(id) {
+    if (!userId) return;
     const item = inboxItems.find(i => i.id == id);
     if (!item) return;
     const newText = prompt("Edita tu idea:", item.text);
     if (newText && newText.trim() !== item.text) {
-        if (!DEVELOPMENT_MODE && userId) {
-            await updateDoc(doc(db, 'users', userId, 'inboxItems', String(id)), { text: newText.trim() });
-        } else {
-            item.text = newText.trim();
-            saveData();
-        }
+        await updateDoc(doc(db, 'users', userId, 'inboxItems', id), { text: newText.trim() });
     }
 }
 async function deleteInboxItem(id) {
-    if (!DEVELOPMENT_MODE && userId) {
-        await deleteDoc(doc(db, 'users', userId, 'inboxItems', String(id)));
-    } else {
-        inboxItems = inboxItems.filter(i => i.id != id);
-        saveData();
-    }
+    if (!userId) return;
+    await deleteDoc(doc(db, 'users', userId, 'inboxItems', id));
     await checkAndUnlockAchievements({ justDeleted: true });
 }
 async function convertInboxToTask(id) {
+    if (!userId) return;
     const item = inboxItems.find(i => i.id == id);
     if (item) {
         let taskText = item.text;
         if (item.url) taskText += ` (ver: ${item.url})`;
         
-        await addTaskFromText(taskText);
-        await deleteInboxItem(id);
+        await addDoc(collection(db, 'users', userId, 'tasks'), { text: taskText, completed: false, createdAt: serverTimestamp() });
+        await deleteDoc(doc(db, 'users', userId, 'inboxItems', id));
 
         showNotification('Idea convertida en tarea de proyecto 👍');
         switchTab('tasks');
-    }
-}
-async function addTaskFromText(text) {
-    const newTask = { text: text, completed: false, createdAt: new Date().toISOString() };
-    if (!DEVELOPMENT_MODE && userId) {
-        await addDoc(collection(db, 'users', userId, 'tasks'), { ...newTask, createdAt: serverTimestamp() });
-    } else {
-        tasks.unshift({ ...newTask, id: Date.now() });
-        // No llamamos a saveData aquí, se llama desde convertInboxToTask
     }
 }
 
 // --- FINANZAS ---
 async function addTransaction(event) {
     event.preventDefault();
+    if (!userId) return;
     const amountEl = document.getElementById('financeAmount');
     const descEl = document.getElementById('financeDescription');
     const typeEl = document.getElementById('financeType');
 
     const amount = parseFloat(amountEl.value);
     const description = descEl.value.trim();
-    if (!amount || !description) {
-        showNotification("Completa todos los campos de finanzas.");
-        return;
-    }
+    if (!amount || !description) return showNotification("Completa todos los campos.");
     
-    const newTransaction = { 
-        amount, 
-        description, 
-        type: typeEl.value, 
-        date: new Date().toISOString()
-    };
-
-    if (!DEVELOPMENT_MODE && userId) {
-        await addDoc(collection(db, 'users', userId, 'transactions'), {...newTransaction, date: serverTimestamp() });
-    } else {
-        transactions.unshift({ ...newTransaction, id: Date.now() });
-        saveData();
-    }
+    await addDoc(collection(db, 'users', userId, 'transactions'), { amount, description, type: typeEl.value, date: serverTimestamp() });
     
     amountEl.value = '';
     descEl.value = '';
-    showNotification(`Movimiento de ${newTransaction.type} registrado.`);
+    showNotification(`Movimiento registrado.`);
     await checkAndUnlockAchievements();
 }
 
@@ -587,10 +461,9 @@ function renderTransactions() {
     const today = new Date();
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    const monthTransactions = transactions.filter(t => new Date(t.date?.seconds ? t.date.seconds * 1000 : t.date) >= firstDayOfMonth);
+    const monthTransactions = transactions.filter(t => (t.date?.toDate() || new Date(t.date)) >= firstDayOfMonth);
     
-    let totalIncome = 0;
-    let totalExpense = 0;
+    let totalIncome = 0, totalExpense = 0;
 
     if (monthTransactions.length === 0) {
         list.innerHTML = '<p style="text-align:center; opacity:0.7; padding: 20px 0;">No hay movimientos este mes.</p>';
@@ -598,10 +471,9 @@ function renderTransactions() {
         monthTransactions.forEach(trans => {
             if (trans.type === 'income') totalIncome += trans.amount;
             else totalExpense += trans.amount;
-
             const item = document.createElement('div');
             item.className = 'list-item';
-            const transDate = new Date(trans.date?.seconds ? trans.date.seconds * 1000 : trans.date).toLocaleDateString();
+            const transDate = (trans.date?.toDate() || new Date(trans.date)).toLocaleDateString();
             item.innerHTML = `
                 <div class="item-text-content">
                     <span class="item-text">${trans.description}</span>
@@ -622,7 +494,6 @@ function renderTransactions() {
     balanceEl.classList.toggle('income', balance >= 0);
     balanceEl.classList.toggle('expense', balance < 0);
 }
-
 
 // --- POMODORO ---
 function startPomodoro(type, resetTime = true) {
@@ -671,7 +542,7 @@ function updatePomodoroUI() {
             break;
         case 'break':
             statusText = 'Toma un respiro... ☕';
-            controlsHtml = `<button class="btn-danger" id="pomodoroReset"><svg class="icon"><use href="#icon-reset"/></svg> Omitir</button>`;
+            controlsHtml = `<button class="btn-primary" id="pomodoroStartWork"><svg class="icon"><use href="#icon-play"/></svg> Iniciar otro</button> <button class="btn-danger" id="pomodoroReset"><svg class="icon"><use href="#icon-reset"/></svg> Omitir</button>`;
             break;
         case 'paused':
             statusText = 'En pausa.';
@@ -696,14 +567,12 @@ function renderReport(period) {
     const textColor = getComputedStyle(document.body).getPropertyValue('--text-color');
     const gridColor = getComputedStyle(document.body).getPropertyValue('--border-color');
 
-    // Gráfico de Tareas Completadas
     const tasksData = labels.map(labelDate => {
         const labelKey = formatLabel(labelDate);
-        return periodTasksCompleted.filter(t => t.completedAt && formatLabel(new Date(t.completedAt)) === labelKey).length;
+        return periodTasksCompleted.filter(t => t.completedAt && formatLabel(t.completedAt.toDate ? t.completedAt.toDate() : new Date(t.completedAt)) === labelKey).length;
     });
     renderBarChart(document.getElementById('tasksCompletedChart'), labels.map(d => formatLabel(d)), tasksData, `Tareas de Proyecto Completadas (${timeUnit})`, textColor, gridColor);
     
-    // Gráfico de consistencia de rutinas
     const routineData = getRoutineConsistency(7);
     renderRoutineChart(document.getElementById('routineConsistencyChart'), routineData, 'Consistencia de Rutinas (Últ. 7 Días)', textColor, gridColor);
     
@@ -715,7 +584,7 @@ function getPeriodData(period) {
     let startDate = new Date(); startDate.setHours(0, 0, 0, 0);
     let labels = [], timeUnit = '', formatLabel;
     
-    const parseDate = (d) => d?.seconds ? new Date(d.seconds * 1000) : new Date(d);
+    const parseDate = (d) => d?.toDate ? d.toDate() : new Date(d);
 
     switch(period) {
         case 'week':
@@ -738,6 +607,7 @@ function getPeriodData(period) {
             formatLabel = (d) => d.toLocaleDateString('es-ES', { month: 'short' });
             break;
     }
+    
     const periodTasksCompleted = tasks.filter(t => t.completed && t.completedAt && parseDate(t.completedAt) >= startDate && parseDate(t.completedAt) <= now);
     return { periodTasksCompleted, labels, timeUnit, formatLabel };
 }
@@ -750,7 +620,7 @@ function getRoutineConsistency(days) {
         const dayLabel = day.toLocaleDateString('es-ES', {weekday: 'short'});
         const completed = routineCompletions[dayStr] || [];
         const completedObligatory = obligatoryRoutines.filter(r => completed.includes(r.id)).length;
-        const percentage = obligatoryRoutines.length > 0 ? (completedObligatory / obligatoryRoutines.length) * 100 : 0;
+        const percentage = obligatoryRoutines.length > 0 ? (completedObligatory / OBLIGATORY_ROUTINES.length) * 100 : 0;
         data.labels.push(dayLabel);
         data.percentages.push(percentage);
     }
@@ -789,17 +659,19 @@ function renderRoutineChart(canvas, data, title, textColor, gridColor) {
 
 // --- LOGROS Y RACHA ---
 async function checkAndUnlockAchievements(args = {}) {
+    if (!userId) return;
+    const docRef = doc(db, 'users', userId);
     let newAchievementUnlocked = false;
+
     for (const key in ACHIEVEMENT_LIST) {
-        const ach = ACHIEVEMENT_LIST[key];
-        if (!achievements[key] && ach.condition(args)) {
+        if (!achievements[key] && ACHIEVEMENT_LIST[key].condition(args)) {
             achievements[key] = true;
             newAchievementUnlocked = true;
-            showNotification(`🏆 ¡Logro Desbloqueado: ${ach.title}!`, 4000, true);
+            showNotification(`🏆 ¡Logro Desbloqueado: ${ACHIEVEMENT_LIST[key].title}!`, 4000, true);
         }
     }
     if (newAchievementUnlocked) {
-        await saveProfileData(); // Guarda los nuevos logros en el perfil
+        await saveProfileData();
         renderAchievements();
     }
 }
@@ -826,7 +698,6 @@ function calculateRoutineStreak() {
     
     let streak = 0;
     let checkDate = new Date(); checkDate.setHours(0,0,0,0);
-    
     let lastCompletionDate = new Date(completionDates[0]); lastCompletionDate.setHours(0,0,0,0);
     const diffToday = (checkDate.getTime() - lastCompletionDate.getTime()) / (1000 * 3600 * 24);
 
@@ -839,136 +710,6 @@ function calculateRoutineStreak() {
         const previous = new Date(completionDates[i+1]);
         const diffDays = Math.round((current.getTime() - previous.getTime()) / (1000 * 3600 * 24));
         if (diffDays === 1) streak++; else break;
-    }
-    return streak;
-}
-function updateFocusStreak() {
-    const streak = calculateRoutineStreak();
-    document.getElementById('focusStreak').innerHTML = `🌟 Racha de ${streak} día${streak === 1 ? '' : 's'}`;
-}
-function renderBarChart(canvas, labels, data, title, textColor, gridColor) {
-    if (tasksChart) tasksChart.destroy();
-    tasksChart = new Chart(canvas.getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{ 
-                label: 'Tareas Completadas', 
-                data, 
-                backgroundColor: '#e9c46a' 
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: {
-                x: { ticks: { color: textColor }, grid: { color: gridColor } },
-                y: { beginAtZero: true, ticks: { color: textColor, stepSize: 1 }, grid: { color: gridColor } }
-            },
-            plugins: { 
-                title: { display: true, text: title, color: textColor }, 
-                legend: { display: false } 
-            }
-        }
-    });
-}
-function renderRoutineChart(canvas, data, title, textColor, gridColor) {
-    if (routineChart) routineChart.destroy();
-    routineChart = new Chart(canvas.getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: data.labels,
-            datasets: [{
-                label: '% de Rutinas Obligatorias',
-                data: data.percentages,
-                backgroundColor: '#f4a261'
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: {
-                x: { ticks: { color: textColor }, grid: { color: gridColor } },
-                y: { beginAtZero: true, max: 100, ticks: { color: textColor, callback: (v) => v + '%' } }
-            },
-            plugins: { 
-                title: { display: true, text: title, color: textColor }, 
-                legend: { display: false } 
-            }
-        }
-    });
-}
-
-// --- LOGROS Y RACHA ---
-async function checkAndUnlockAchievements(args = {}) {
-    let newAchievementUnlocked = false;
-    let currentAchievements = achievements;
-
-    // Si estamos en modo producción, obtenemos la versión más fresca de los logros
-    if (!DEVELOPMENT_MODE && userId) {
-        const docRef = doc(db, 'users', userId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            currentAchievements = docSnap.data().achievements || {};
-        }
-    }
-
-    for (const key in ACHIEVEMENT_LIST) {
-        const ach = ACHIEVEMENT_LIST[key];
-        if (!currentAchievements[key] && ach.condition(args)) {
-            achievements[key] = true; // Actualiza el estado local
-            newAchievementUnlocked = true;
-            showNotification(`🏆 ¡Logro Desbloqueado: ${ach.title}!`, 4000, true);
-        }
-    }
-
-    if (newAchievementUnlocked) {
-        await saveProfileData(); // Guarda el perfil actualizado (que incluye los logros)
-        renderAchievements();
-    }
-}
-function renderAchievements() {
-    const grid = document.getElementById('achievementsGrid');
-    grid.innerHTML = '';
-    for (const key in ACHIEVEMENT_LIST) {
-        const ach = ACHIEVEMENT_LIST[key];
-        const unlocked = achievements[key];
-        const card = document.createElement('div');
-        card.className = `achievement-card ${unlocked ? 'unlocked' : 'locked'}`;
-        card.title = unlocked ? ach.description : `Bloqueado: ${ach.description}`;
-        card.innerHTML = `<span class="icon" style="font-size: 3em;">${ach.icon}</span><p>${ach.title}</p>`;
-        grid.appendChild(card);
-    }
-}
-function calculateRoutineStreak() {
-    const completionDates = Object.keys(routineCompletions).filter(date => {
-        const completedIds = routineCompletions[date] || [];
-        // Considera un día completo solo si todas las rutinas OBLIGATORIAS están hechas
-        return obligatoryRoutines.every(r => completedIds.includes(r.id));
-    }).sort((a,b) => new Date(b) - new Date(a));
-
-    if (completionDates.length === 0) return 0;
-    
-    let streak = 0;
-    let checkDate = new Date(); 
-    checkDate.setHours(0,0,0,0);
-    
-    let lastCompletionDate = new Date(completionDates[0]); 
-    lastCompletionDate.setHours(0,0,0,0);
-    
-    const diffToday = (checkDate.getTime() - lastCompletionDate.getTime()) / (1000 * 3600 * 24);
-
-    if (diffToday > 1) return 0;
-    streak = (diffToday <= 1) ? 1 : 0;
-    if (streak === 0) return 0;
-
-    for (let i = 0; i < completionDates.length - 1; i++) {
-        const current = new Date(completionDates[i]);
-        const previous = new Date(completionDates[i+1]);
-        const diffDays = Math.round((current.getTime() - previous.getTime()) / (1000 * 3600 * 24));
-        if (diffDays === 1) {
-            streak++;
-        } else {
-            break;
-        }
     }
     return streak;
 }
