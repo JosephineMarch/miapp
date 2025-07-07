@@ -79,28 +79,128 @@
         </nav>
 
         <main class="main-content">
-            <!-- El contenido de las pestañas no cambia, solo su contenedor principal -->
-            <!-- Pestaña Dashboard -->
-            <div class="tab-content active" id="dashboard-content">
-                <!-- ... contenido ... -->
+    <!-- Pestaña Dashboard (antes Rutinas) -->
+    <div class="tab-content active" id="dashboard-content">
+        <div class="card">
+            <h2 class="card-title">Resumen Semanal de Rutinas</h2>
+            <div class="chart-container" style="height: 180px;">
+                <canvas id="weekly-routine-chart"></canvas>
             </div>
-            <!-- Pestaña Proyectos -->
-            <div class="tab-content" id="projects-content">
-                <!-- ... contenido ... -->
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🎯 Obligatorias del Día</h3>
+                <button class="btn-icon" id="addObligatoryRoutineBtn" title="Añadir rutina"><svg class="icon"><use href="#icon-add"/></svg></button>
             </div>
-            <!-- Pestaña Ideas -->
-            <div class="tab-content" id="inbox-content">
-                <!-- ... contenido ... -->
+            <div class="item-list" id="obligatory-routines-list"></div>
+        </div>
+         <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">✨ Extras</h3>
+                <button class="btn-icon" id="addExtraRoutineBtn" title="Añadir rutina"><svg class="icon"><use href="#icon-add"/></svg></button>
             </div>
-            <!-- Pestaña Finanzas -->
-            <div class="tab-content" id="finances-content">
-                <!-- ... contenido ... -->
+            <div class="item-list" id="extra-routines-list"></div>
+        </div>
+    </div>
+
+    <!-- Pestaña Proyectos (antes Tareas) -->
+    <div class="tab-content" id="projects-content">
+         <div class="card">
+            <h2 class="card-title">Proyectos y Tareas</h2>
+            <div class="input-group">
+                <input type="text" id="taskInput" placeholder="Ej: Bocetar personajes principales...">
+                <button class="btn-primary" id="addTaskBtn" title="Añadir Tarea"><svg class="icon"><use href="#icon-add"/></svg></button>
             </div>
-            <!-- Pestaña Progreso -->
-            <div class="tab-content" id="progress-content">
-                <!-- ... contenido ... -->
+            <div class="item-list" id="taskListPending"></div>
+            <h3 id="completed-title" class="section-subtitle">✅ Completadas</h3>
+            <div class="item-list" id="taskListCompleted"></div>
+        </div>
+         <div class="card pomodoro-card">
+            <h3 class="card-title">🍅 Foco Pomodoro</h3>
+            <div class="pomodoro-visual">
+                 <div id="pomodoroTimer" class="pomodoro-timer">25:00</div>
             </div>
-        </main>
+            <div id="pomodoroStatus" class="pomodoro-status">Listo para empezar.</div>
+            <div class="pomodoro-controls" id="pomodoroControls"></div>
+        </div>
+    </div>
+
+    <!-- Pestaña Ideas -->
+    <div class="tab-content" id="inbox-content">
+        <div class="card">
+            <h2 class="card-title">💡 Bandeja de Ideas</h2>
+            <p class="card-subtitle">Captura aquí todo lo que se te cruce por la mente. ¡Libérala!</p>
+            <textarea id="inboxText" rows="3" placeholder="Escribe tu idea, un fragmento..."></textarea>
+            <input type="text" id="inboxUrl" placeholder="Pega un enlace (opcional)">
+            <button class="btn-primary btn-full-width" id="addInboxBtn"><svg class="icon"><use href="#icon-add"/></svg> Guardar Idea</button>
+        </div>
+        <div class="card">
+            <h3 class="card-title">📦 Ideas Guardadas</h3>
+            <div class="item-list" id="inboxList"></div>
+        </div>
+    </div>
+
+    <!-- Pestaña Finanzas -->
+    <div class="tab-content" id="finances-content">
+        <div class="card finance-hero-card">
+            <p class="finance-hero-label">Balance Total</p>
+            <h2 id="summaryBalance" class="finance-hero-balance">$0.00</h2>
+            <div class="finance-hero-details">
+                <div class="detail-item">
+                    <div class="detail-icon income-bg"><svg class="icon" viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg></div>
+                    <div>
+                        <p class="detail-label">Ganancias</p>
+                        <p id="summaryIncome" class="detail-value">$0.00</p>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-icon expense-bg"><svg class="icon" viewBox="0 0 24 24"><path d="M12 20l1.41-1.41L7.83 13H20v-2H7.83l5.58-5.59L12 4l-8 8z"/></svg></div>
+                    <div>
+                        <p class="detail-label">Gastos</p>
+                        <p id="summaryExpense" class="detail-value">$0.00</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <h3 class="card-title">💰 Registrar Movimiento</h3>
+            <form id="finance-form">
+                <input type="number" id="financeAmount" placeholder="Monto" required step="0.01">
+                <input type="text" id="financeDescription" placeholder="Descripción (Ej: Venta de prints)" required>
+                <select id="financeType">
+                    <option value="income">Ganancia</option>
+                    <option value="expense">Gasto</option>
+                </select>
+                <button type="submit" class="btn-primary btn-full-width">
+                    <svg class="icon"><use href="#icon-add"/></svg> Registrar
+                </button>
+            </form>
+        </div>
+        <div class="card">
+            <h3 class="card-title">📋 Movimientos del Mes</h3>
+            <div class="item-list" id="transactionList"></div>
+        </div>
+    </div>
+    
+    <!-- Pestaña Progreso (Reportes y Logros combinados) -->
+    <div class="tab-content" id="progress-content">
+        <div class="card">
+            <h2 class="card-title">📊 Tu Productividad</h2>
+            <div class="report-controls">
+                <button class="btn-subtle active" data-period="week">Semana</button>
+                <button class="btn-subtle" data-period="month">Mes</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="tasksCompletedChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <h2 class="card-title">🏆 ¡Mis Logros!</h2>
+            <p class="card-subtitle">Completa objetivos para desbloquear premios y mantener la motivación.</p>
+            <div class="achievements-grid" id="achievementsGrid"></div>
+        </div>
+    </div>
+</main>
     </div>
 
     <!-- Barra de navegación para móvil -->
