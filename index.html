@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crea Infantil - Centro Creativo</title>
+    <title>Mi app productiva</title>
     <meta name="description" content="Tu centro de productividad y creatividad, sincronizado en la nube.">
     <meta name="theme-color" content="#7B61FF">
 
@@ -105,30 +105,34 @@
 
                 <!-- Pestaña Proyectos -->
                 <div class="tab-content" id="projects-content">
-                     <div class="card">
-                        <h2 class="card-title">Proyectos y Tareas</h2>
-                        <div class="input-group">
-                            <input type="text" id="taskInput" placeholder="Ej: Bocetar personajes principales...">
-                            <button class="btn-icon btn-primary" id="addTaskBtn" title="Añadir Tarea"><svg class="icon"><use href="#icon-add"/></svg></button>
+                    <div class="grid-container">
+                        <div class="card">
+                            <h2 class="card-title">Proyectos y Tareas</h2>
+                            <div class="input-group">
+                                <input type="text" id="taskInput" placeholder="Ej: Bocetar personajes principales...">
+                                <button class="btn-icon btn-primary" id="addTaskBtn" title="Añadir Tarea"><svg class="icon"><use href="#icon-add"/></svg></button>
+                            </div>
+                            <div class="item-list" id="taskListPending"></div>
+                            <h3 id="completed-title" class="section-subtitle">✅ Completadas</h3>
+                            <div class="item-list" id="taskListCompleted"></div>
                         </div>
-                        <div class="item-list" id="taskListPending"></div>
-                        <h3 id="completed-title" class="section-subtitle">✅ Completadas</h3>
-                        <div class="item-list" id="taskListCompleted"></div>
                     </div>
                 </div>
 
                 <!-- Pestaña Ideas -->
                 <div class="tab-content" id="inbox-content">
-                    <div class="card">
-                        <h2 class="card-title">💡 Bandeja de Ideas</h2>
-                        <p class="card-subtitle">Captura aquí todo lo que se te cruce por la mente. ¡Libérala!</p>
-                        <textarea id="inboxText" rows="3" placeholder="Escribe tu idea, un fragmento..."></textarea>
-                        <input type="text" id="inboxUrl" placeholder="Pega un enlace (opcional)">
-                        <button class="btn-primary" id="addInboxBtn"><svg class="icon"><use href="#icon-add"/></svg> Guardar Idea</button>
-                    </div>
-                    <div class="card">
-                        <h3 class="card-title">📦 Ideas Guardadas</h3>
-                        <div class="item-list" id="inboxList"></div>
+                    <div class="grid-container">
+                        <div class="card">
+                            <h2 class="card-title">💡 Bandeja de Ideas</h2>
+                            <p class="card-subtitle">Captura aquí todo lo que se te cruce por la mente. ¡Libérala!</p>
+                            <textarea id="inboxText" rows="3" placeholder="Escribe tu idea, un fragmento..."></textarea>
+                            <input type="text" id="inboxUrl" placeholder="Pega un enlace (opcional)">
+                            <button class="btn-primary" id="addInboxBtn"><svg class="icon"><use href="#icon-add"/></svg> Guardar Idea</button>
+                        </div>
+                        <div class="card">
+                            <h3 class="card-title">📦 Ideas Guardadas</h3>
+                            <div class="item-list" id="inboxList"></div>
+                        </div>
                     </div>
                 </div>
 
