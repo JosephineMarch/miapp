@@ -442,78 +442,6 @@ function renderTransactions() {
     balanceEl.className = balance >= 0 ? 'finance-hero-balance income' : 'finance-hero-balance expense';
 }
 
-// --- POMODORO ---
-function startPomodoro(type) {
-    clearInterval(pomodoro.interval);
-    pomodoro.state = type;
-    const duration = type === 'work' ? (25 * 60) : (5 * 60);
-    pomodoro.timeLeft = duration;
-    pomodoro.targetTime = Date.now() + duration * 1000;
-    pomodoro.interval = setInterval(tickPomodoro, 500);
-    updatePomodoroUI();
-}
-function resumePomodoro() {
-    if (pomodoro.state !== 'paused') return;
-    pomodoro.state = pomodoro.timeLeft > (5 * 60) ? 'work' : 'break';
-    pomodoro.targetTime = Date.now() + pomodoro.timeLeft * 1000;
-    pomodoro.interval = setInterval(tickPomodoro, 500);
-    updatePomodoroUI();
-}
-function tickPomodoro() {
-    pomodoro.timeLeft = Math.round((pomodoro.targetTime - Date.now()) / 1000);
-    if (pomodoro.timeLeft <= 0) {
-        pomodoro.timeLeft = 0;
-        clearInterval(pomodoro.interval);
-        const completedType = pomodoro.state;
-        if (completedType === 'work') {
-            pomodoro.state = 'break';
-            showNotification('¡Pomodoro completado! Toma un descanso ☕', 5000, true);
-            checkAndUnlockAchievements({pomodoro_completed: true});
-            pomodoro.timeLeft = 5 * 60;
-        } else {
-            pomodoro.state = 'idle';
-            pomodoro.timeLeft = 25 * 60;
-            showNotification('¡Descanso terminado! A seguir creando 💪', 5000);
-        }
-    }
-    updatePomodoroUI();
-}
-function pausePomodoro() {
-    clearInterval(pomodoro.interval);
-    pomodoro.state = 'paused';
-    updatePomodoroUI();
-}
-function updatePomodoroUI() {
-    const timerEl = document.getElementById('pomodoroTimer');
-    const statusEl = document.getElementById('pomodoroStatus');
-    const controlsEl = document.getElementById('pomodoroControls');
-    if(!timerEl) return;
-
-    const minutes = Math.floor(pomodoro.timeLeft / 60).toString().padStart(2, '0');
-    const seconds = (pomodoro.timeLeft % 60).toString().padStart(2, '0');
-    timerEl.textContent = `${minutes}:${seconds}`;
-    
-    let statusText, controlsHtml;
-    switch (pomodoro.state) {
-        case 'work':
-            statusText = 'Enfócate...';
-            controlsHtml = `<button class="btn-primary" id="pomodoroPause"><svg class="icon"><use href="#icon-pause"/></svg> Pausar</button>`;
-            break;
-        case 'paused':
-            statusText = 'En pausa.';
-             controlsHtml = `<button class="btn-primary" id="pomodoroResume"><svg class="icon"><use href="#icon-play"/></svg> Reanudar</button>`;
-            break;
-        case 'break':
-             statusText = 'Toma un respiro...';
-             controlsHtml = `<button class="btn-primary" id="pomodoroStartWork"><svg class="icon"><use href="#icon-play"/></svg> Empezar otro</button>`;
-             break;
-        default:
-            statusText = 'Listo para empezar.';
-            controlsHtml = `<button class="btn-primary" id="pomodoroStartWork"><svg class="icon"><use href="#icon-play"/></svg> Iniciar Trabajo</button>`;
-    }
-    statusEl.textContent = statusText;
-    controlsEl.innerHTML = controlsHtml;
-}
 
 // --- GRÁFICOS Y PROGRESO ---
 function renderWeeklyRoutineChart() {
@@ -552,58 +480,6 @@ function renderWeeklyRoutineChart() {
                 x: { grid: { display: false }, ticks: { color: '#718096' } }
             },
             plugins: { legend: { display: false }, title: { display: false } }
-        }
-    });
-}
-function renderReport(period) {
-    document.querySelectorAll('.report-controls button').forEach(b => b.classList.remove('active'));
-    document.querySelector(`.report-controls [data-period="${period}"]`).classList.add('active');
-    const canvas = document.getElementById('tasksCompletedChart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const textColor = getComputedStyle(document.body).getPropertyValue('--text-muted');
-    const gridColor = getComputedStyle(document.body).getPropertyValue('--border-color');
-    const now = new Date();
-    const chartLabels = [];
-    const chartData = [];
-    if (period === 'week') {
-        for (let i = 6; i >= 0; i--) {
-            const day = new Date(now);
-            day.setDate(now.getDate() - i);
-            chartLabels.push(day.toLocaleDateString('es-ES', { weekday: 'short' }));
-            const dayStr = getTodayString(day);
-            const tasksOnDay = tasks.filter(t => t.completedAt && getTodayString(t.completedAt.toDate()) === dayStr).length;
-            chartData.push(tasksOnDay);
-        }
-    } else {
-        for (let i = 3; i >= 0; i--) {
-            const endOfWeek = new Date(now);
-            endOfWeek.setDate(now.getDate() - (i * 7));
-            const startOfWeek = new Date(endOfWeek);
-            startOfWeek.setDate(endOfWeek.getDate() - 6);
-            chartLabels.push(`Sem ${startOfWeek.getDate()}/${startOfWeek.getMonth()+1}`);
-            const tasksInWeek = tasks.filter(t => {
-                const completedDate = t.completedAt?.toDate();
-                return completedDate && completedDate >= startOfWeek && completedDate <= endOfWeek;
-            }).length;
-            chartData.push(tasksInWeek);
-        }
-    }
-    if (tasksChart) tasksChart.destroy();
-    tasksChart = new Chart(ctx, {
-        type: 'bar',
-        data: { labels: chartLabels, datasets: [{
-            label: 'Tareas Completadas', data: chartData,
-            backgroundColor: 'rgba(255, 141, 133, 0.6)', borderColor: 'rgba(255, 141, 133, 1)',
-            borderWidth: 2, borderRadius: 8, barThickness: 20,
-        }] },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: {
-                y: { grid: { color: gridColor }, ticks: { color: textColor, stepSize: 1 }, beginAtZero: true },
-                x: { grid: { display: false }, ticks: { color: textColor } }
-            },
-            plugins: { legend: { display: false } }
         }
     });
 }
@@ -661,19 +537,4 @@ function calculateRoutineStreak() {
     }
     return streak;
 }
-function updateFocusStreak() {
-    // Esta función no está en el código original, pero es necesaria para mostrar la racha
-    // La llamaremos desde el listener de 'routineCompletions'
-    // Por ahora, la dejamos vacía ya que no hay un elemento en el nuevo HTML para la racha.
-    // Si quieres añadirla, crea un <div id="focusStreak"></div> en el header y descomenta esto.
-    /*
-    const streak = calculateRoutineStreak();
-    const streakEl = document.getElementById('focusStreak');
-    if (streak > 0) {
-        streakEl.innerHTML = `🌟 Racha de ${streak} día${streak === 1 ? '' : 's'}`;
-        streakEl.style.display = 'block';
-    } else {
-        streakEl.style.display = 'none';
-    }
-    */
-}
+
