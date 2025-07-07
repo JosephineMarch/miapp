@@ -1,7 +1,7 @@
 // --- MODO DE DESARROLLO ---
 // Cambia a 'true' para trabajar sin login (usando localStorage).
 // Cambia a 'false' para activar Firebase y el login de Google para producción.
-const DEVELOPMENT_MODE = true;
+const DEVELOPMENT_MODE = false;
 
 // --- 1. IMPORTAR FUNCIONES DE FIREBASE ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
