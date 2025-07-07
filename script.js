@@ -92,7 +92,7 @@ function setupEventListeners() {
     document.getElementById('loginBtn').addEventListener('click', () => signInWithPopup(auth, provider).catch(error => console.error("Error en login:", error)));
     document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-    document.querySelectorAll('.bottom-nav-item').forEach(tab => tab.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab)));
+    document.querySelectorAll('.nav-button').forEach(tab => tab.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab)));
 
     document.getElementById('addTaskBtn').addEventListener('click', addTask);
     document.getElementById('taskInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
