@@ -564,3 +564,116 @@ function renderAchievements() {
         grid.appendChild(card);
     }
 }
+// --- POMODORO (Implementación completa) ---
+function startPomodoro(type) {
+    clearInterval(pomodoro.interval);
+    pomodoro.state = type;
+    // Para simplificar, el descanso siempre es de 5 minutos
+    const duration = type === 'work' ? (25 * 60) : (5 * 60);
+    pomodoro.timeLeft = duration;
+    // Se usa targetTime para que el timer sea preciso incluso si la pestaña está inactiva
+    pomodoro.targetTime = Date.now() + duration * 1000;
+    pomodoro.interval = setInterval(tickPomodoro, 500);
+    updatePomodoroUI();
+}
+
+function resumePomodoro() {
+    if (pomodoro.state !== 'paused') return;
+    // Reanuda el estado correcto (trabajo o descanso)
+    pomodoro.state = pomodoro.timeLeft > (5 * 60) ? 'work' : 'break';
+    pomodoro.targetTime = Date.now() + pomodoro.timeLeft * 1000;
+    pomodoro.interval = setInterval(tickPomodoro, 500);
+    updatePomodoroUI();
+}
+
+function tickPomodoro() {
+    pomodoro.timeLeft = Math.round((pomodoro.targetTime - Date.now()) / 1000);
+    
+    if (pomodoro.timeLeft <= 0) {
+        pomodoro.timeLeft = 0;
+        clearInterval(pomodoro.interval);
+        const completedType = pomodoro.state;
+        
+        if (completedType === 'work') {
+            pomodoro.state = 'break';
+            showNotification('¡Pomodoro completado! Toma un descanso ☕', 5000, true);
+            checkAndUnlockAchievements({pomodoro_completed: true});
+            // Prepara para el descanso, pero no lo inicia automáticamente
+            pomodoro.timeLeft = 5 * 60;
+        } else { // El descanso terminó
+            pomodoro.state = 'idle';
+            pomodoro.timeLeft = 25 * 60;
+            showNotification('¡Descanso terminado! A seguir creando 💪', 5000);
+        }
+    }
+    updatePomodoroUI();
+}
+
+// --- GRÁFICOS Y PROGRESO (Implementación completa de renderReport) ---
+function renderReport(period) {
+    document.querySelectorAll('.report-controls button').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.report-controls [data-period="${period}"]`).classList.add('active');
+
+    const canvas = document.getElementById('tasksCompletedChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const textColor = getComputedStyle(document.body).getPropertyValue('--text-muted');
+    const gridColor = getComputedStyle(document.body).getPropertyValue('--border-color');
+    
+    const now = new Date();
+    const chartLabels = [];
+    const chartData = [];
+
+    if (period === 'week') {
+        for (let i = 6; i >= 0; i--) {
+            const day = new Date(now);
+            day.setDate(now.getDate() - i);
+            chartLabels.push(day.toLocaleDateString('es-ES', { weekday: 'short' }));
+            const dayStr = getTodayString(day);
+            const tasksOnDay = tasks.filter(t => t.completedAt && getTodayString(t.completedAt.toDate()) === dayStr).length;
+            chartData.push(tasksOnDay);
+        }
+    } else { // 'month'
+        for (let i = 3; i >= 0; i--) { // Últimas 4 semanas
+            const endOfWeek = new Date(now);
+            endOfWeek.setDate(now.getDate() - (i * 7));
+            endOfWeek.setHours(23, 59, 59, 999);
+
+            const startOfWeek = new Date(endOfWeek);
+            startOfWeek.setDate(endOfWeek.getDate() - 6);
+            startOfWeek.setHours(0, 0, 0, 0);
+            
+            chartLabels.push(`Sem ${startOfWeek.getDate()}/${startOfWeek.getMonth()+1}`);
+            const tasksInWeek = tasks.filter(t => {
+                const completedDate = t.completedAt?.toDate();
+                return completedDate && completedDate >= startOfWeek && completedDate <= endOfWeek;
+            }).length;
+            chartData.push(tasksInWeek);
+        }
+    }
+
+    if (tasksChart) tasksChart.destroy();
+    tasksChart = new Chart(ctx, {
+        type: 'bar',
+        data: { 
+            labels: chartLabels, 
+            datasets: [{ 
+                label: 'Tareas Completadas', 
+                data: chartData, 
+                backgroundColor: 'rgba(255, 141, 133, 0.6)', // Color secundario
+                borderColor: 'rgba(255, 141, 133, 1)',
+                borderWidth: 2,
+                borderRadius: 8,
+                barThickness: 20,
+            }] 
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: { grid: { color: gridColor }, ticks: { color: textColor, stepSize: 1 }, beginAtZero: true },
+                x: { grid: { display: false }, ticks: { color: textColor } }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+}
