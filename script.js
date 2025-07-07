@@ -54,32 +54,38 @@ const getTodayString = (date = new Date()) => {
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     onAuthStateChanged(auth, user => {
-        const loginContainer = document.getElementById('login-container');
-        const appContainer = document.getElementById('app-container');
-        const bottomNav = document.querySelector('.bottom-nav');
+    const loginContainer = document.getElementById('login-container');
+    const appContainer = document.getElementById('app-container');
+    const bottomNav = document.querySelector('.bottom-nav');
 
-        if (user) {
-            if (userId !== user.uid) { 
-                userId = user.uid;
-                loginContainer.style.display = 'none';
-                appContainer.style.display = 'flex';
-                bottomNav.style.display = 'flex';
+    if (user) {
+        if (userId !== user.uid) { 
+            userId = user.uid;
+            
+            // Poblar el header
+            document.getElementById('user-display-name').textContent = user.displayName.split(' ')[0];
+            document.getElementById('user-avatar').src = user.photoURL || 'https://i.pravatar.cc/40';
 
-                document.getElementById('user-display-name').textContent = user.displayName.split(' ')[0];
-                document.getElementById('user-avatar').src = user.photoURL || 'https://i.pravatar.cc/40';
-
-                setupRealtimeListeners();
-            }
-        } else {
-            userId = null;
-            loginContainer.style.display = 'flex';
-            appContainer.style.display = 'none';
-            bottomNav.style.display = 'none';
-            unsubscribers.forEach(unsub => unsub());
-            unsubscribers = [];
-            clearLocalData();
+            // Mostrar la app
+            loginContainer.classList.remove('visible');
+            appContainer.classList.add('visible');
+            bottomNav.classList.add('visible');
+            
+            setupRealtimeListeners();
         }
-    });
+    } else {
+        userId = null;
+        
+        // Mostrar el login
+        loginContainer.classList.add('visible');
+        appContainer.classList.remove('visible');
+        bottomNav.classList.remove('visible');
+        
+        unsubscribers.forEach(unsub => unsub());
+        unsubscribers = [];
+        clearLocalData();
+    }
+});
 });
 
 function setupEventListeners() {
@@ -175,13 +181,22 @@ function setupRealtimeListeners() {
 
 // --- LÓGICA DE UI (NAVEGACIÓN, TEMA, NOTIFICACIONES) ---
 function switchTab(tabId) {
-    document.querySelectorAll('.bottom-nav-item').forEach(el => el.classList.remove('active'));
-    document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+    // Actualiza ambos menús de navegación
+    document.querySelectorAll('.nav-button').forEach(el => {
+        el.classList.remove('active');
+        if (el.dataset.tab === tabId) {
+            el.classList.add('active');
+        }
+    });
     
+    // Muestra el contenido de la pestaña correcta
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     
-    if (tabId === 'progress-content') renderReport('week');
+    // Si la pestaña es de progreso, renderiza el reporte
+    if (tabId === 'progress-content') {
+        renderReport('week');
+    }
 }
 
 async function toggleTheme() {
