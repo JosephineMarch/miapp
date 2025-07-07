@@ -23,7 +23,7 @@ let tasks = [], inboxItems = [], achievements = {}, routineCompletions = {}, tra
 let obligatoryRoutines = [], extraRoutines = [];
 let currentTheme = 'light', userId = null;
 let tasksChart = null, routineChart = null;
-let pomodoro = { interval: null, state: 'idle', timeLeft: 25 * 60 };
+let pomodoro = { interval: null, state: 'idle', timeLeft: 25 * 60, targetTime: 0 };
 let unsubscribers = [];
 
 // --- DEFINICIONES ---
@@ -49,6 +49,14 @@ const ACHIEVEMENT_LIST = {
     firstIncome: { title: '¡Primer Ingreso!', icon: '💰', description: 'Registra tu primera ganancia.', condition: () => transactions.some(t => t.type === 'income') },
 };
 
+// --- HELPERS ---
+const getTodayString = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 // --- ARRANQUE DE LA APLICACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
@@ -56,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const loginContainer = document.getElementById('login-container');
         const appContainer = document.getElementById('app-container');
         if (user) {
-            if (userId !== user.uid) { // Prevenir re-ejecución innecesaria
+            if (userId !== user.uid) { 
                 userId = user.uid;
                 loginContainer.style.display = 'none';
                 appContainer.style.display = 'block';
@@ -92,7 +100,7 @@ function setupEventListeners() {
         if (!button) return;
         if (button.id.includes('StartWork')) startPomodoro('work');
         if (button.id.includes('Pause')) pausePomodoro();
-        if (button.id.includes('Resume')) startPomodoro(pomodoro.state, false);
+        if (button.id.includes('Resume')) resumePomodoro();
         if (button.id.includes('Reset')) resetPomodoro();
     });
 
@@ -118,6 +126,7 @@ function setupRealtimeListeners() {
         applyTheme(currentTheme);
         renderAchievements();
         renderRoutines();
+        updateFocusStreak();
     }));
 
     unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'tasks'), orderBy('createdAt', 'desc')), (snapshot) => {
@@ -128,8 +137,22 @@ function setupRealtimeListeners() {
     }));
     
     unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'routineCompletions')), (snapshot) => {
+        const oldCompletions = { ...routineCompletions };
         routineCompletions = {};
         snapshot.forEach(doc => { routineCompletions[doc.id] = doc.data().completedIds; });
+        
+        // Logic to check for perfect day achievement
+        const todayStr = getTodayString();
+        const oldTodayCompletions = oldCompletions[todayStr] || [];
+        const newTodayCompletions = routineCompletions[todayStr] || [];
+        if (newTodayCompletions.length > oldTodayCompletions.length) {
+            const allObligatoryDone = obligatoryRoutines.every(r => newTodayCompletions.includes(r.id));
+            if (allObligatoryDone) {
+                showNotification("¡Misión Cumplida! Has completado tus rutinas obligatorias. 🎉", 4000, true);
+                checkAndUnlockAchievements({ perfectDay: true });
+            }
+        }
+        
         renderRoutines();
         updateReportsIfVisible();
         updateFocusStreak();
@@ -143,6 +166,7 @@ function setupRealtimeListeners() {
     unsubscribers.push(onSnapshot(query(collection(db, 'users', userId, 'transactions'), orderBy('date', 'desc')), (snapshot) => {
         transactions = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         renderTransactions();
+        checkAndUnlockAchievements();
     }));
 }
 
@@ -180,7 +204,14 @@ function switchTab(tabName) {
 async function toggleTheme() {
     currentTheme = (currentTheme === 'light') ? 'dark' : 'light';
     applyTheme(currentTheme);
-    if (userId) await setDoc(doc(db, 'users', userId), { theme: currentTheme }, { merge: true });
+    if (userId) {
+        try {
+            await updateDoc(doc(db, 'users', userId), { theme: currentTheme });
+        } catch (error) {
+            console.error("Error updating theme: ", error);
+            showNotification("Error al guardar el tema.");
+        }
+    }
     updateReportsIfVisible();
 }
 function applyTheme(theme) {
@@ -198,15 +229,15 @@ function showNotification(message, duration = 3000, isAchievement = false) {
 // --- RUTINAS DIARIAS ---
 function renderRoutines() {
     renderWeeklyView();
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayString();
     const completedToday = routineCompletions[todayStr] || [];
     
     const obligatoryList = document.getElementById('routine-obligatorias-list');
-    obligatoryList.innerHTML = '';
+    obligatoryList.innerHTML = obligatoryRoutines.length > 0 ? '' : '<p style="text-align:center; opacity:0.7; padding: 20px 0;">Añade rutinas obligatorias.</p>';
     obligatoryRoutines.forEach(r => obligatoryList.appendChild(createRoutineElement(r, completedToday, 'obligatory')));
 
     const extraList = document.getElementById('routine-extras-list');
-    extraList.innerHTML = '';
+    extraList.innerHTML = extraRoutines.length > 0 ? '' : '<p style="text-align:center; opacity:0.7; padding: 20px 0;">Añade rutinas extra.</p>';
     extraRoutines.forEach(r => extraList.appendChild(createRoutineElement(r, completedToday, 'extra')));
 }
 function createRoutineElement(routine, completedToday, type) {
@@ -230,10 +261,13 @@ async function addRoutine(type) {
     if (!newText || !newText.trim() || !userId) return;
     const newId = `custom_${Date.now()}`;
     const newRoutine = { id: newId, text: newText.trim() };
-
-    if (type === 'obligatory') obligatoryRoutines.push(newRoutine);
-    else extraRoutines.push(newRoutine);
-    await saveProfileData();
+    const field = type === 'obligatory' ? 'obligatoryRoutines' : 'extraRoutines';
+    try {
+        await updateDoc(doc(db, 'users', userId), { [field]: arrayUnion(newRoutine) });
+    } catch (e) {
+        console.error("Error adding routine: ", e);
+        showNotification("Error al añadir la rutina.");
+    }
 }
 async function editRoutine(type, id) {
     if (!userId) return;
@@ -242,43 +276,45 @@ async function editRoutine(type, id) {
     if (!routine) return;
     const newText = prompt("Editar rutina:", routine.text);
     if (newText && newText.trim() !== routine.text) {
-        routine.text = newText.trim();
-        await saveProfileData();
+        const newList = list.map(r => r.id === id ? { ...r, text: newText.trim() } : r);
+        const field = type === 'obligatory' ? 'obligatoryRoutines' : 'extraRoutines';
+        try {
+            await updateDoc(doc(db, 'users', userId), { [field]: newList });
+        } catch (e) {
+            console.error("Error editing routine: ", e);
+            showNotification("Error al editar la rutina.");
+        }
     }
 }
 async function deleteRoutine(type, id) {
     if (!confirm("¿Estás segura de que quieres eliminar esta rutina?") || !userId) return;
-    if (type === 'obligatory') {
-        obligatoryRoutines = obligatoryRoutines.filter(r => r.id !== id);
-    } else {
-        extraRoutines = extraRoutines.filter(r => r.id !== id);
+    const list = type === 'obligatory' ? obligatoryRoutines : extraRoutines;
+    const newList = list.filter(r => r.id !== id);
+    const field = type === 'obligatory' ? 'obligatoryRoutines' : 'extraRoutines';
+    try {
+        await updateDoc(doc(db, 'users', userId), { [field]: newList });
+    } catch (e) {
+        console.error("Error deleting routine: ", e);
+        showNotification("Error al eliminar la rutina.");
     }
-    await saveProfileData();
-}
-async function saveProfileData() {
-    if (!userId) return;
-    const profileData = { theme: currentTheme, achievements, obligatoryRoutines, extraRoutines };
-    await setDoc(doc(db, 'users', userId), profileData, { merge: true });
 }
 async function toggleRoutine(routineId) {
     if (!userId) return;
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayString();
     const todayDocRef = doc(db, 'users', userId, 'routineCompletions', todayStr);
     const completedToday = routineCompletions[todayStr] || [];
     const isCompleted = completedToday.includes(routineId);
 
     try {
-        if (isCompleted) await setDoc(todayDocRef, { completedIds: arrayRemove(routineId) }, { merge: true });
-        else await setDoc(todayDocRef, { completedIds: arrayUnion(routineId) }, { merge: true });
-        
-        // Check for achievement *after* successful update
-        const newCompletedList = isCompleted ? completedToday.filter(id => id !== routineId) : [...completedToday, routineId];
-        const allObligatoryDone = obligatoryRoutines.every(r => newCompletedList.includes(r.id));
-        if(!isCompleted && allObligatoryDone){
-            showNotification("¡Misión Cumplida! Has completado tus rutinas obligatorias. 🎉", 4000, true);
-            checkAndUnlockAchievements({ perfectDay: true });
+        if (isCompleted) {
+            await setDoc(todayDocRef, { completedIds: arrayRemove(routineId) }, { merge: true });
+        } else {
+            await setDoc(todayDocRef, { completedIds: arrayUnion(routineId) }, { merge: true });
         }
-    } catch (e) { console.error("Error updating routine: ", e); }
+    } catch (e) {
+        console.error("Error updating routine: ", e);
+        showNotification("Error al actualizar la rutina.");
+    }
 }
 function renderWeeklyView() {
     const container = document.getElementById('weekly-view');
@@ -291,7 +327,7 @@ function renderWeeklyView() {
     for (let i = 0; i < 7; i++) {
         const day = new Date(weekStart);
         day.setDate(weekStart.getDate() + i);
-        const dayStr = day.toISOString().split('T')[0];
+        const dayStr = getTodayString(day);
         const dayName = day.toLocaleDateString('es-ES', { weekday: 'short' });
         const dayNum = day.getDate();
         
@@ -304,7 +340,7 @@ function renderWeeklyView() {
         else if (completionRatio > 0) completionClass = 'completed-partial';
 
         const dayEl = document.createElement('div');
-        dayEl.className = `day-of-week ${dayStr === today.toISOString().split('T')[0] ? 'today' : ''} ${completionClass}`;
+        dayEl.className = `day-of-week ${dayStr === getTodayString() ? 'today' : ''} ${completionClass}`;
         dayEl.innerHTML = `<span class="day-name">${dayName}</span><span class="day-circle">${dayNum}</span>`;
         container.appendChild(dayEl);
     }
@@ -314,9 +350,11 @@ function renderWeeklyView() {
 async function addTask() {
     const input = document.getElementById('taskInput');
     if (!input.value.trim() || !userId) return;
-    await addDoc(collection(db, 'users', userId, 'tasks'), { text: input.value, completed: false, createdAt: serverTimestamp() });
-    input.value = '';
-    showNotification('Tarea de proyecto agregada ✅');
+    try {
+        await addDoc(collection(db, 'users', userId, 'tasks'), { text: input.value, completed: false, createdAt: serverTimestamp() });
+        input.value = '';
+        showNotification('Tarea de proyecto agregada ✅');
+    } catch(e) { showNotification("Error al añadir tarea."); console.error(e); }
 }
 async function editTask(id) {
     if (!userId) return;
@@ -324,19 +362,25 @@ async function editTask(id) {
     if (!task) return;
     const newText = prompt("Edita tu tarea:", task.text);
     if (newText && newText.trim() !== task.text) {
-        await updateDoc(doc(db, 'users', userId, 'tasks', id), { text: newText.trim() });
+        try {
+            await updateDoc(doc(db, 'users', userId, 'tasks', id), { text: newText.trim() });
+        } catch(e) { showNotification("Error al editar tarea."); console.error(e); }
     }
 }
 async function toggleTask(id) {
     if (!userId) return;
     const task = tasks.find(t => t.id == id);
     if (task) {
-        await updateDoc(doc(db, 'users', userId, 'tasks', id), { completed: !task.completed, completedAt: !task.completed ? serverTimestamp() : null });
+        try {
+            await updateDoc(doc(db, 'users', userId, 'tasks', id), { completed: !task.completed, completedAt: !task.completed ? serverTimestamp() : null });
+        } catch(e) { showNotification("Error al actualizar tarea."); console.error(e); }
     }
 }
 async function deleteTask(id) {
     if (!userId) return;
-    await deleteDoc(doc(db, 'users', userId, 'tasks', id));
+    try {
+        await deleteDoc(doc(db, 'users', userId, 'tasks', id));
+    } catch(e) { showNotification("Error al eliminar tarea."); console.error(e); }
 }
 function loadTasks() {
     const pendingList = document.getElementById('taskListPending');
@@ -376,10 +420,11 @@ async function addInboxItem() {
     const urlEl = document.getElementById('inboxUrl');
     if ((!textEl.value.trim() && !urlEl.value.trim()) || !userId) return;
     
-    await addDoc(collection(db, 'users', userId, 'inboxItems'), { text: textEl.value.trim(), url: urlEl.value.trim(), createdAt: serverTimestamp() });
-    
-    textEl.value = ''; urlEl.value = '';
-    showNotification('Idea guardada ✨');
+    try {
+        await addDoc(collection(db, 'users', userId, 'inboxItems'), { text: textEl.value.trim(), url: urlEl.value.trim(), createdAt: serverTimestamp() });
+        textEl.value = ''; urlEl.value = '';
+        showNotification('Idea guardada ✨');
+    } catch(e) { showNotification("Error al guardar idea."); console.error(e); }
 }
 function loadInboxItems() {
     const list = document.getElementById('inboxList');
@@ -412,13 +457,17 @@ async function editInboxItem(id) {
     if (!item) return;
     const newText = prompt("Edita tu idea:", item.text);
     if (newText && newText.trim() !== item.text) {
-        await updateDoc(doc(db, 'users', userId, 'inboxItems', id), { text: newText.trim() });
+        try {
+            await updateDoc(doc(db, 'users', userId, 'inboxItems', id), { text: newText.trim() });
+        } catch(e) { showNotification("Error al editar idea."); console.error(e); }
     }
 }
 async function deleteInboxItem(id) {
     if (!userId) return;
-    await deleteDoc(doc(db, 'users', userId, 'inboxItems', id));
-    await checkAndUnlockAchievements({ justDeleted: true });
+    try {
+        await deleteDoc(doc(db, 'users', userId, 'inboxItems', id));
+        await checkAndUnlockAchievements({ justDeleted: true });
+    } catch(e) { showNotification("Error al eliminar idea."); console.error(e); }
 }
 async function convertInboxToTask(id) {
     if (!userId) return;
@@ -427,11 +476,17 @@ async function convertInboxToTask(id) {
         let taskText = item.text;
         if (item.url) taskText += ` (ver: ${item.url})`;
         
-        await addDoc(collection(db, 'users', userId, 'tasks'), { text: taskText, completed: false, createdAt: serverTimestamp() });
-        await deleteDoc(doc(db, 'users', userId, 'inboxItems', id));
+        try {
+            const batch = writeBatch(db);
+            const taskRef = doc(collection(db, 'users', userId, 'tasks'));
+            batch.set(taskRef, { text: taskText, completed: false, createdAt: serverTimestamp() });
+            const inboxRef = doc(db, 'users', userId, 'inboxItems', id);
+            batch.delete(inboxRef);
+            await batch.commit();
 
-        showNotification('Idea convertida en tarea de proyecto 👍');
-        switchTab('tasks');
+            showNotification('Idea convertida en tarea de proyecto 👍');
+            switchTab('tasks');
+        } catch(e) { showNotification("Error al convertir idea."); console.error(e); }
     }
 }
 
@@ -447,12 +502,12 @@ async function addTransaction(event) {
     const description = descEl.value.trim();
     if (!amount || !description) return showNotification("Completa todos los campos.");
     
-    await addDoc(collection(db, 'users', userId, 'transactions'), { amount, description, type: typeEl.value, date: serverTimestamp() });
-    
-    amountEl.value = '';
-    descEl.value = '';
-    showNotification(`Movimiento registrado.`);
-    await checkAndUnlockAchievements();
+    try {
+        await addDoc(collection(db, 'users', userId, 'transactions'), { amount, description, type: typeEl.value, date: serverTimestamp() });
+        amountEl.value = '';
+        descEl.value = '';
+        showNotification(`Movimiento registrado.`);
+    } catch(e) { showNotification("Error al registrar movimiento."); console.error(e); }
 }
 
 function renderTransactions() {
@@ -496,18 +551,25 @@ function renderTransactions() {
 }
 
 // --- POMODORO ---
-function startPomodoro(type, resetTime = true) {
+function startPomodoro(type) {
     clearInterval(pomodoro.interval);
     pomodoro.state = type;
-    if (resetTime) {
-      pomodoro.timeLeft = type === 'work' ? (25 * 60) : (5 * 60);
-    }
+    const duration = type === 'work' ? 25 * 60 : 5 * 60;
+    pomodoro.timeLeft = duration;
+    pomodoro.targetTime = Date.now() + duration * 1000;
+    pomodoro.interval = setInterval(tickPomodoro, 1000);
+    updatePomodoroUI();
+}
+function resumePomodoro() {
+    if (pomodoro.state !== 'paused') return;
+    pomodoro.state = pomodoro.timeLeft > (5*60) ? 'work' : 'break';
+    pomodoro.targetTime = Date.now() + pomodoro.timeLeft * 1000;
     pomodoro.interval = setInterval(tickPomodoro, 1000);
     updatePomodoroUI();
 }
 function tickPomodoro() {
-    pomodoro.timeLeft--;
-    updatePomodoroUI();
+    pomodoro.timeLeft = Math.round((pomodoro.targetTime - Date.now()) / 1000);
+    
     if (pomodoro.timeLeft < 0) {
         clearInterval(pomodoro.interval);
         const completedType = pomodoro.state;
@@ -521,8 +583,8 @@ function tickPomodoro() {
             pomodoro.timeLeft = 25 * 60;
             showNotification('¡Descanso terminado! A seguir creando 💪', 5000);
         }
-        updatePomodoroUI();
     }
+    updatePomodoroUI();
 }
 function updatePomodoroUI() {
     const timerEl = document.getElementById('pomodoroTimer');
@@ -557,6 +619,7 @@ function updatePomodoroUI() {
 }
 function pausePomodoro() { clearInterval(pomodoro.interval); pomodoro.state = 'paused'; updatePomodoroUI(); }
 function resetPomodoro() { clearInterval(pomodoro.interval); pomodoro.state = 'idle'; pomodoro.timeLeft = 25*60; updatePomodoroUI(); }
+
 
 // --- REPORTES Y GRÁFICOS ---
 function renderReport(period) {
@@ -616,11 +679,11 @@ function getRoutineConsistency(days) {
     const today = new Date();
     for(let i = days - 1; i >= 0; i--) {
         const day = new Date(today); day.setDate(today.getDate() - i);
-        const dayStr = day.toISOString().split('T')[0];
+        const dayStr = getTodayString(day);
         const dayLabel = day.toLocaleDateString('es-ES', {weekday: 'short'});
         const completed = routineCompletions[dayStr] || [];
         const completedObligatory = obligatoryRoutines.filter(r => completed.includes(r.id)).length;
-        const percentage = obligatoryRoutines.length > 0 ? (completedObligatory / OBLIGATORY_ROUTINES.length) * 100 : 0;
+        const percentage = obligatoryRoutines.length > 0 ? (completedObligatory / obligatoryRoutines.length) * 100 : 0;
         data.labels.push(dayLabel);
         data.percentages.push(percentage);
     }
@@ -660,7 +723,6 @@ function renderRoutineChart(canvas, data, title, textColor, gridColor) {
 // --- LOGROS Y RACHA ---
 async function checkAndUnlockAchievements(args = {}) {
     if (!userId) return;
-    const docRef = doc(db, 'users', userId);
     let newAchievementUnlocked = false;
 
     for (const key in ACHIEVEMENT_LIST) {
@@ -671,8 +733,10 @@ async function checkAndUnlockAchievements(args = {}) {
         }
     }
     if (newAchievementUnlocked) {
-        await saveProfileData();
-        renderAchievements();
+        try {
+            await updateDoc(doc(db, 'users', userId), { achievements: achievements });
+            renderAchievements(); // Re-render only if there was a change
+        } catch(e) { console.error("Error saving achievements", e); }
     }
 }
 function renderAchievements() {
@@ -689,6 +753,8 @@ function renderAchievements() {
     }
 }
 function calculateRoutineStreak() {
+    if (obligatoryRoutines.length === 0) return 0;
+    
     const completionDates = Object.keys(routineCompletions).filter(date => {
         const completedIds = routineCompletions[date] || [];
         return obligatoryRoutines.every(r => completedIds.includes(r.id));
@@ -697,11 +763,13 @@ function calculateRoutineStreak() {
     if (completionDates.length === 0) return 0;
     
     let streak = 0;
-    let checkDate = new Date(); checkDate.setHours(0,0,0,0);
-    let lastCompletionDate = new Date(completionDates[0]); lastCompletionDate.setHours(0,0,0,0);
+    let today = new Date();
+    let checkDate = new Date(getTodayString(today)); // Use local date, no time
+    let lastCompletionDate = new Date(completionDates[0]);
     const diffToday = (checkDate.getTime() - lastCompletionDate.getTime()) / (1000 * 3600 * 24);
 
-    if (diffToday > 1) return 0;
+    if (diffToday > 1) return 0; // Streak broken
+    
     streak = (diffToday <= 1) ? 1 : 0;
     if (streak === 0) return 0;
 
@@ -709,11 +777,21 @@ function calculateRoutineStreak() {
         const current = new Date(completionDates[i]);
         const previous = new Date(completionDates[i+1]);
         const diffDays = Math.round((current.getTime() - previous.getTime()) / (1000 * 3600 * 24));
-        if (diffDays === 1) streak++; else break;
+        if (diffDays === 1) {
+            streak++;
+        } else {
+            break;
+        }
     }
     return streak;
 }
 function updateFocusStreak() {
     const streak = calculateRoutineStreak();
-    document.getElementById('focusStreak').innerHTML = `🌟 Racha de ${streak} día${streak === 1 ? '' : 's'}`;
+    const streakEl = document.getElementById('focusStreak');
+    if (streak > 0) {
+        streakEl.innerHTML = `🌟 Racha de ${streak} día${streak === 1 ? '' : 's'}`;
+        streakEl.style.display = 'block';
+    } else {
+        streakEl.style.display = 'none';
+    }
 }
