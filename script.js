@@ -38,6 +38,7 @@ const ACHIEVEMENT_LIST = {
     firstPomodoro: { title: 'Foco Total', icon: '🍅', description: 'Completa tu primer Pomodoro.', condition: (args) => args?.pomodoro_completed },
     inboxZero: { title: 'Mente Clara', icon: '🧘‍♀️', description: 'Vacía tu bandeja de ideas.', condition: (args) => args?.justDeleted && inboxItems.length === 0 },
     routinePerfectDay: { title: 'Día Perfecto', icon: '🌟', description: 'Completa todas las rutinas obligatorias en un día.', condition: (args) => args?.perfectDay },
+    streak3: { title: 'Constancia', icon: '🔥', description: 'Mantén una racha de 3 días completando rutinas.', condition: (args) => args?.streak >= 3 },
     firstIncome: { title: '¡Primer Ingreso!', icon: '💰', description: 'Registra tu primera ganancia.', condition: () => transactions.some(t => t.type === 'income') },
 };
 
@@ -61,10 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (userId !== user.uid) { 
                 userId = user.uid;
                 loginContainer.style.display = 'none';
-                appContainer.style.display = 'flex'; // Usamos flex para layout de escritorio
+                appContainer.style.display = 'flex';
                 bottomNav.style.display = 'flex';
 
-                // Poblar el nuevo header
                 document.getElementById('user-display-name').textContent = user.displayName.split(' ')[0];
                 document.getElementById('user-avatar').src = user.photoURL || 'https://i.pravatar.cc/40';
 
@@ -78,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
             unsubscribers.forEach(unsub => unsub());
             unsubscribers = [];
             clearLocalData();
-            renderEmptyState();
         }
     });
 });
@@ -87,8 +86,6 @@ function setupEventListeners() {
     document.getElementById('loginBtn').addEventListener('click', () => signInWithPopup(auth, provider).catch(error => console.error("Error en login:", error)));
     document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-    
-    // Nueva lógica para la navegación inferior
     document.querySelectorAll('.bottom-nav-item').forEach(tab => tab.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab)));
 
     document.getElementById('addTaskBtn').addEventListener('click', addTask);
@@ -104,7 +101,6 @@ function setupEventListeners() {
         if (button.id.includes('StartWork')) startPomodoro('work');
         if (button.id.includes('Pause')) pausePomodoro();
         if (button.id.includes('Resume')) resumePomodoro();
-        if (button.id.includes('Reset')) resetPomodoro();
     });
 
     document.querySelectorAll('.report-controls button').forEach(button => {
@@ -144,8 +140,9 @@ function setupRealtimeListeners() {
         snapshot.forEach(doc => { routineCompletions[doc.id] = doc.data().completedIds; });
         
         const todayStr = getTodayString();
-        const oldTodayCompletions = oldTodayCompletions[todayStr] || [];
+        const oldTodayCompletions = oldCompletions[todayStr] || [];
         const newTodayCompletions = routineCompletions[todayStr] || [];
+
         if (newTodayCompletions.length > oldTodayCompletions.length) {
             const allObligatoryDone = obligatoryRoutines.every(r => newTodayCompletions.includes(r.id));
             if (allObligatoryDone) {
@@ -153,6 +150,9 @@ function setupRealtimeListeners() {
                 checkAndUnlockAchievements({ perfectDay: true });
             }
         }
+        
+        const currentStreak = calculateRoutineStreak();
+        checkAndUnlockAchievements({ streak: currentStreak });
         
         renderRoutines();
         updateReportsIfVisible();
@@ -168,10 +168,12 @@ function setupRealtimeListeners() {
         renderTransactions();
         checkAndUnlockAchievements();
     }));
+
+    // CORRECCIÓN: Inicializar el Pomodoro al cargar
+    updatePomodoroUI();
 }
 
 // --- LÓGICA DE UI (NAVEGACIÓN, TEMA, NOTIFICACIONES) ---
-
 function switchTab(tabId) {
     document.querySelectorAll('.bottom-nav-item').forEach(el => el.classList.remove('active'));
     document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
@@ -206,13 +208,13 @@ function showNotification(message, duration = 3000, isAchievement = false) {
     setTimeout(() => { el.classList.remove('show', 'achievement'); }, duration);
 }
 
-function renderEmptyState() { /* Limpia y renderiza todo en blanco */ }
 function updateReportsIfVisible(){
     if (document.getElementById('progress-content').classList.contains('active')) {
         const activePeriod = document.querySelector('.report-controls .active')?.dataset.period || 'week';
         renderReport(activePeriod);
     }
 }
+
 function clearLocalData() {
     tasks = []; inboxItems = []; achievements = {}; routineCompletions = {}; transactions = [];
     obligatoryRoutines = DEFAULT_OBLIGATORY_ROUTINES; extraRoutines = DEFAULT_EXTRA_ROUTINES;
@@ -297,7 +299,6 @@ async function toggleRoutine(routineId) {
         }
     } catch (e) { showNotification("Error al actualizar la rutina."); }
 }
-
 // --- PROYECTOS ---
 async function addTask() {
     const input = document.getElementById('taskInput');
@@ -350,7 +351,6 @@ function createTaskElement(task) {
     return item;
 }
 
-
 // --- IDEAS (INBOX) ---
 async function addInboxItem() {
     const textEl = document.getElementById('inboxText');
@@ -389,7 +389,6 @@ async function deleteInboxItem(id) {
         await checkAndUnlockAchievements({ justDeleted: true });
     } catch(e) { showNotification("Error al eliminar idea."); }
 }
-
 
 // --- FINANZAS ---
 async function addTransaction(event) {
@@ -444,11 +443,46 @@ function renderTransactions() {
 }
 
 // --- POMODORO ---
-function startPomodoro(type) { /* Misma lógica de antes, adaptada */ }
-function resumePomodoro() { /* Misma lógica */ }
-function tickPomodoro() { /* Misma lógica */ }
-function pausePomodoro() { clearInterval(pomodoro.interval); pomodoro.state = 'paused'; updatePomodoroUI(); }
-function resetPomodoro() { clearInterval(pomodoro.interval); pomodoro.state = 'idle'; pomodoro.timeLeft = 25*60; updatePomodoroUI(); }
+function startPomodoro(type) {
+    clearInterval(pomodoro.interval);
+    pomodoro.state = type;
+    const duration = type === 'work' ? (25 * 60) : (5 * 60);
+    pomodoro.timeLeft = duration;
+    pomodoro.targetTime = Date.now() + duration * 1000;
+    pomodoro.interval = setInterval(tickPomodoro, 500);
+    updatePomodoroUI();
+}
+function resumePomodoro() {
+    if (pomodoro.state !== 'paused') return;
+    pomodoro.state = pomodoro.timeLeft > (5 * 60) ? 'work' : 'break';
+    pomodoro.targetTime = Date.now() + pomodoro.timeLeft * 1000;
+    pomodoro.interval = setInterval(tickPomodoro, 500);
+    updatePomodoroUI();
+}
+function tickPomodoro() {
+    pomodoro.timeLeft = Math.round((pomodoro.targetTime - Date.now()) / 1000);
+    if (pomodoro.timeLeft <= 0) {
+        pomodoro.timeLeft = 0;
+        clearInterval(pomodoro.interval);
+        const completedType = pomodoro.state;
+        if (completedType === 'work') {
+            pomodoro.state = 'break';
+            showNotification('¡Pomodoro completado! Toma un descanso ☕', 5000, true);
+            checkAndUnlockAchievements({pomodoro_completed: true});
+            pomodoro.timeLeft = 5 * 60;
+        } else {
+            pomodoro.state = 'idle';
+            pomodoro.timeLeft = 25 * 60;
+            showNotification('¡Descanso terminado! A seguir creando 💪', 5000);
+        }
+    }
+    updatePomodoroUI();
+}
+function pausePomodoro() {
+    clearInterval(pomodoro.interval);
+    pomodoro.state = 'paused';
+    updatePomodoroUI();
+}
 function updatePomodoroUI() {
     const timerEl = document.getElementById('pomodoroTimer');
     const statusEl = document.getElementById('pomodoroStatus');
@@ -463,13 +497,17 @@ function updatePomodoroUI() {
     switch (pomodoro.state) {
         case 'work':
             statusText = 'Enfócate...';
-            controlsHtml = `<button class="btn-secondary" id="pomodoroPause"><svg class="icon"><use href="#icon-pause"/></svg> Pausar</button>`;
+            controlsHtml = `<button class="btn-primary" id="pomodoroPause"><svg class="icon"><use href="#icon-pause"/></svg> Pausar</button>`;
             break;
         case 'paused':
             statusText = 'En pausa.';
              controlsHtml = `<button class="btn-primary" id="pomodoroResume"><svg class="icon"><use href="#icon-play"/></svg> Reanudar</button>`;
             break;
-        default: // idle y break
+        case 'break':
+             statusText = 'Toma un respiro...';
+             controlsHtml = `<button class="btn-primary" id="pomodoroStartWork"><svg class="icon"><use href="#icon-play"/></svg> Empezar otro</button>`;
+             break;
+        default:
             statusText = 'Listo para empezar.';
             controlsHtml = `<button class="btn-primary" id="pomodoroStartWork"><svg class="icon"><use href="#icon-play"/></svg> Iniciar Trabajo</button>`;
     }
@@ -477,50 +515,38 @@ function updatePomodoroUI() {
     controlsEl.innerHTML = controlsHtml;
 }
 
-
 // --- GRÁFICOS Y PROGRESO ---
-
 function renderWeeklyRoutineChart() {
     const canvas = document.getElementById('weekly-routine-chart');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-
     const labels = [];
     const data = [];
     const today = new Date();
-
     for (let i = 6; i >= 0; i--) {
         const day = new Date(today);
         day.setDate(today.getDate() - i);
         labels.push(day.toLocaleDateString('es-ES', { weekday: 'short' }));
-        
         const dayStr = getTodayString(day);
         const completed = routineCompletions[dayStr] || [];
         const completedObligatory = obligatoryRoutines.filter(r => completed.includes(r.id)).length;
         const percentage = obligatoryRoutines.length > 0 ? (completedObligatory / obligatoryRoutines.length) * 100 : 0;
         data.push(percentage);
     }
-    
-    const chartData = {
-        labels: labels,
-        datasets: [{
-            label: '% Completado',
-            data: data,
-            backgroundColor: 'rgba(123, 97, 255, 0.6)',
-            borderColor: 'rgba(123, 97, 255, 1)',
-            borderWidth: 2,
-            borderRadius: 8,
-            barThickness: 15,
-        }]
-    };
-
     if (weeklyRoutineChart) weeklyRoutineChart.destroy();
     weeklyRoutineChart = new Chart(ctx, {
         type: 'bar',
-        data: chartData,
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '% Completado', data: data,
+                backgroundColor: 'rgba(123, 97, 255, 0.6)',
+                borderColor: 'rgba(123, 97, 255, 1)',
+                borderWidth: 2, borderRadius: 8, barThickness: 15,
+            }]
+        },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             scales: {
                 y: { display: false, beginAtZero: true, max: 100 },
                 x: { grid: { display: false }, ticks: { color: '#718096' } }
@@ -529,14 +555,63 @@ function renderWeeklyRoutineChart() {
         }
     });
 }
+function renderReport(period) {
+    document.querySelectorAll('.report-controls button').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.report-controls [data-period="${period}"]`).classList.add('active');
+    const canvas = document.getElementById('tasksCompletedChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const textColor = getComputedStyle(document.body).getPropertyValue('--text-muted');
+    const gridColor = getComputedStyle(document.body).getPropertyValue('--border-color');
+    const now = new Date();
+    const chartLabels = [];
+    const chartData = [];
+    if (period === 'week') {
+        for (let i = 6; i >= 0; i--) {
+            const day = new Date(now);
+            day.setDate(now.getDate() - i);
+            chartLabels.push(day.toLocaleDateString('es-ES', { weekday: 'short' }));
+            const dayStr = getTodayString(day);
+            const tasksOnDay = tasks.filter(t => t.completedAt && getTodayString(t.completedAt.toDate()) === dayStr).length;
+            chartData.push(tasksOnDay);
+        }
+    } else {
+        for (let i = 3; i >= 0; i--) {
+            const endOfWeek = new Date(now);
+            endOfWeek.setDate(now.getDate() - (i * 7));
+            const startOfWeek = new Date(endOfWeek);
+            startOfWeek.setDate(endOfWeek.getDate() - 6);
+            chartLabels.push(`Sem ${startOfWeek.getDate()}/${startOfWeek.getMonth()+1}`);
+            const tasksInWeek = tasks.filter(t => {
+                const completedDate = t.completedAt?.toDate();
+                return completedDate && completedDate >= startOfWeek && completedDate <= endOfWeek;
+            }).length;
+            chartData.push(tasksInWeek);
+        }
+    }
+    if (tasksChart) tasksChart.destroy();
+    tasksChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: chartLabels, datasets: [{
+            label: 'Tareas Completadas', data: chartData,
+            backgroundColor: 'rgba(255, 141, 133, 0.6)', borderColor: 'rgba(255, 141, 133, 1)',
+            borderWidth: 2, borderRadius: 8, barThickness: 20,
+        }] },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: { grid: { color: gridColor }, ticks: { color: textColor, stepSize: 1 }, beginAtZero: true },
+                x: { grid: { display: false }, ticks: { color: textColor } }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+}
 
-function renderReport(period) { /* Similar a antes, solo ajusta los IDs y estilos si es necesario */ }
-
-// --- LOGROS ---
+// --- LOGROS Y RACHA ---
 async function checkAndUnlockAchievements(args = {}) {
     if (!userId) return;
     let newAchievementUnlocked = false;
-
     for (const key in ACHIEVEMENT_LIST) {
         if (!achievements[key] && ACHIEVEMENT_LIST[key].condition(args)) {
             achievements[key] = true;
@@ -564,116 +639,25 @@ function renderAchievements() {
         grid.appendChild(card);
     }
 }
-// --- POMODORO (Implementación completa) ---
-function startPomodoro(type) {
-    clearInterval(pomodoro.interval);
-    pomodoro.state = type;
-    // Para simplificar, el descanso siempre es de 5 minutos
-    const duration = type === 'work' ? (25 * 60) : (5 * 60);
-    pomodoro.timeLeft = duration;
-    // Se usa targetTime para que el timer sea preciso incluso si la pestaña está inactiva
-    pomodoro.targetTime = Date.now() + duration * 1000;
-    pomodoro.interval = setInterval(tickPomodoro, 500);
-    updatePomodoroUI();
-}
-
-function resumePomodoro() {
-    if (pomodoro.state !== 'paused') return;
-    // Reanuda el estado correcto (trabajo o descanso)
-    pomodoro.state = pomodoro.timeLeft > (5 * 60) ? 'work' : 'break';
-    pomodoro.targetTime = Date.now() + pomodoro.timeLeft * 1000;
-    pomodoro.interval = setInterval(tickPomodoro, 500);
-    updatePomodoroUI();
-}
-
-function tickPomodoro() {
-    pomodoro.timeLeft = Math.round((pomodoro.targetTime - Date.now()) / 1000);
-    
-    if (pomodoro.timeLeft <= 0) {
-        pomodoro.timeLeft = 0;
-        clearInterval(pomodoro.interval);
-        const completedType = pomodoro.state;
-        
-        if (completedType === 'work') {
-            pomodoro.state = 'break';
-            showNotification('¡Pomodoro completado! Toma un descanso ☕', 5000, true);
-            checkAndUnlockAchievements({pomodoro_completed: true});
-            // Prepara para el descanso, pero no lo inicia automáticamente
-            pomodoro.timeLeft = 5 * 60;
-        } else { // El descanso terminó
-            pomodoro.state = 'idle';
-            pomodoro.timeLeft = 25 * 60;
-            showNotification('¡Descanso terminado! A seguir creando 💪', 5000);
-        }
+function calculateRoutineStreak() {
+    if (!obligatoryRoutines || obligatoryRoutines.length === 0) return 0;
+    const completionDates = Object.keys(routineCompletions).filter(date => {
+        const completedIds = routineCompletions[date] || [];
+        return obligatoryRoutines.every(r => completedIds.includes(r.id));
+    }).sort((a, b) => new Date(b) - new Date(a));
+    if (completionDates.length === 0) return 0;
+    let streak = 0;
+    let today = new Date(getTodayString());
+    let lastCompletion = new Date(completionDates[0]);
+    let diffDays = Math.round((today - lastCompletion) / (1000 * 3600 * 24));
+    if (diffDays > 1) return 0;
+    streak = (diffDays <= 1) ? 1 : 0;
+    if (streak === 0) return 0;
+    for (let i = 0; i < completionDates.length - 1; i++) {
+        const current = new Date(completionDates[i]);
+        const previous = new Date(completionDates[i + 1]);
+        const diff = Math.round((current - previous) / (1000 * 3600 * 24));
+        if (diff === 1) streak++; else break;
     }
-    updatePomodoroUI();
-}
-
-// --- GRÁFICOS Y PROGRESO (Implementación completa de renderReport) ---
-function renderReport(period) {
-    document.querySelectorAll('.report-controls button').forEach(b => b.classList.remove('active'));
-    document.querySelector(`.report-controls [data-period="${period}"]`).classList.add('active');
-
-    const canvas = document.getElementById('tasksCompletedChart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const textColor = getComputedStyle(document.body).getPropertyValue('--text-muted');
-    const gridColor = getComputedStyle(document.body).getPropertyValue('--border-color');
-    
-    const now = new Date();
-    const chartLabels = [];
-    const chartData = [];
-
-    if (period === 'week') {
-        for (let i = 6; i >= 0; i--) {
-            const day = new Date(now);
-            day.setDate(now.getDate() - i);
-            chartLabels.push(day.toLocaleDateString('es-ES', { weekday: 'short' }));
-            const dayStr = getTodayString(day);
-            const tasksOnDay = tasks.filter(t => t.completedAt && getTodayString(t.completedAt.toDate()) === dayStr).length;
-            chartData.push(tasksOnDay);
-        }
-    } else { // 'month'
-        for (let i = 3; i >= 0; i--) { // Últimas 4 semanas
-            const endOfWeek = new Date(now);
-            endOfWeek.setDate(now.getDate() - (i * 7));
-            endOfWeek.setHours(23, 59, 59, 999);
-
-            const startOfWeek = new Date(endOfWeek);
-            startOfWeek.setDate(endOfWeek.getDate() - 6);
-            startOfWeek.setHours(0, 0, 0, 0);
-            
-            chartLabels.push(`Sem ${startOfWeek.getDate()}/${startOfWeek.getMonth()+1}`);
-            const tasksInWeek = tasks.filter(t => {
-                const completedDate = t.completedAt?.toDate();
-                return completedDate && completedDate >= startOfWeek && completedDate <= endOfWeek;
-            }).length;
-            chartData.push(tasksInWeek);
-        }
-    }
-
-    if (tasksChart) tasksChart.destroy();
-    tasksChart = new Chart(ctx, {
-        type: 'bar',
-        data: { 
-            labels: chartLabels, 
-            datasets: [{ 
-                label: 'Tareas Completadas', 
-                data: chartData, 
-                backgroundColor: 'rgba(255, 141, 133, 0.6)', // Color secundario
-                borderColor: 'rgba(255, 141, 133, 1)',
-                borderWidth: 2,
-                borderRadius: 8,
-                barThickness: 20,
-            }] 
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: {
-                y: { grid: { color: gridColor }, ticks: { color: textColor, stepSize: 1 }, beginAtZero: true },
-                x: { grid: { display: false }, ticks: { color: textColor } }
-            },
-            plugins: { legend: { display: false } }
-        }
-    });
+    return streak;
 }
