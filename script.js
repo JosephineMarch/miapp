@@ -661,3 +661,19 @@ function calculateRoutineStreak() {
     }
     return streak;
 }
+function updateFocusStreak() {
+    // Esta función no está en el código original, pero es necesaria para mostrar la racha
+    // La llamaremos desde el listener de 'routineCompletions'
+    // Por ahora, la dejamos vacía ya que no hay un elemento en el nuevo HTML para la racha.
+    // Si quieres añadirla, crea un <div id="focusStreak"></div> en el header y descomenta esto.
+    /*
+    const streak = calculateRoutineStreak();
+    const streakEl = document.getElementById('focusStreak');
+    if (streak > 0) {
+        streakEl.innerHTML = `🌟 Racha de ${streak} día${streak === 1 ? '' : 's'}`;
+        streakEl.style.display = 'block';
+    } else {
+        streakEl.style.display = 'none';
+    }
+    */
+}
