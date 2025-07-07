@@ -220,6 +220,12 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
     .main-content { padding: 0 40px 40px 40px; }
 
     /* Layout en columnas - CORRECCIÓN CLAVE */
+    .grid-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+    
     #dashboard-content.active {
         display: grid;
         grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
@@ -233,6 +239,10 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
         gap: 30px;
     }
     #finances-content > .finance-hero-card { grid-column: 1 / -1; }
+    
+    #projects-content.active .grid-container {
+        grid-template-columns: 1fr;
+    }
     
     .notification { left: auto; right: 20px; bottom: 20px; transform: translateY(20px); }
     .notification.show { transform: translateY(0); }
