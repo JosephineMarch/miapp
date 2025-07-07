@@ -46,6 +46,7 @@ function setupAuthListener() {
     onAuthStateChanged(auth, user => {
         const loginContainer = document.getElementById('login-container');
         const appWrapper = document.getElementById('app-wrapper');
+        const bottomNav = document.querySelector('.bottom-nav'); // <- ¡Añadido!
 
         if (user) {
             userId = user.uid;
@@ -54,6 +55,7 @@ function setupAuthListener() {
             
             loginContainer.classList.remove('visible');
             appWrapper.classList.add('visible');
+            bottomNav.classList.add('visible'); // <- ¡Añadido!
             
             cleanupListeners();
             setupRealtimeListeners();
@@ -62,6 +64,7 @@ function setupAuthListener() {
             userId = null;
             loginContainer.classList.add('visible');
             appWrapper.classList.remove('visible');
+            bottomNav.classList.remove('visible'); // <- ¡Añadido!
             cleanupListeners();
             clearLocalData();
         }
@@ -118,14 +121,16 @@ function setupRealtimeListeners() {
     });
 
     // Listener para las rutinas del día seleccionado
+    // Importante: Este listener se creará y destruirá cada vez que selectedDate cambie.
+    // No se usa una colección general, sino el documento específico del día.
     const unsubRoutines = onSnapshot(doc(db, 'users', userId, 'dailyRoutines', selectedDate), (docSnap) => {
         if (docSnap.exists()) {
             dailyRoutines[selectedDate] = docSnap.data().routines || [];
         } else {
             // Si no hay rutinas para este día, usar las plantillas
-            dailyRoutines[selectedDate] = routineTemplates;
+            dailyRoutines[selectedDate] = routineTemplates.map(rt => ({ ...rt, id: 'r' + Date.now() + Math.random() }));
             // Guardarlas para futuras modificaciones
-            setDoc(doc(db, 'users', userId, 'dailyRoutines', selectedDate), { routines: routineTemplates });
+            setDoc(doc(db, 'users', userId, 'dailyRoutines', selectedDate), { routines: dailyRoutines[selectedDate] });
         }
         renderRoutinesForSelectedDay();
     });
@@ -149,12 +154,14 @@ function switchTab(tabId) {
     document.querySelectorAll('.nav-button').forEach(el => el.classList.toggle('active', el.dataset.tab === tabId));
     document.querySelectorAll('.tab-content').forEach(el => el.classList.toggle('active', el.id === tabId));
 
+    // Asegurarse de que los listeners se configuran/limpian correctamente al cambiar de pestaña
     if (tabId === 'dashboard-content') {
-        selectedDate = getTodayString();
-        renderWeeklyDashboard();
-        setupRealtimeListeners(); // Re-conectar listeners para el día actual
+        selectedDate = getTodayString(); // Siempre volvemos al día actual al ir al dashboard
+        renderWeeklyDashboard(); // Renderiza la cuadrícula semanal
+        cleanupListeners(); // Limpia listeners anteriores antes de establecer los nuevos
+        setupRealtimeListeners(); // Establece los listeners para el día actual del dashboard
     } else {
-        cleanupListeners(); // Desconectar listeners al salir del dashboard
+        cleanupListeners(); // Limpia todos los listeners de Firestore cuando no estamos en el dashboard
     }
 }
 
@@ -212,8 +219,9 @@ function renderWeeklyDashboard() {
 
 function handleDaySelection(dateStr) {
     selectedDate = dateStr;
+    // Limpiamos y re-establecemos los listeners para el nuevo día seleccionado
     cleanupListeners();
-    setupRealtimeListeners();
+    setupRealtimeListeners(); 
     renderWeeklyDashboard(); // Re-render para actualizar el día activo
 }
 
@@ -374,8 +382,14 @@ async function handleConfirmCopy() {
         const docRef = doc(db, 'users', userId, 'dailyRoutines', date);
         const docSnap = await getDoc(docRef);
         const existingRoutines = docSnap.exists() ? docSnap.data().routines : [];
-        const newRoutines = [...existingRoutines, ...sourceRoutinesToCopy];
-        batch.set(docRef, { routines: newRoutines });
+        
+        // Filtrar rutinas duplicadas antes de añadir
+        const newRoutinesToAdd = sourceRoutinesToCopy.filter(copyRoutine => 
+            !existingRoutines.some(existingRoutine => existingRoutine.text === copyRoutine.text)
+        );
+        
+        const combinedRoutines = [...existingRoutines, ...newRoutinesToAdd];
+        batch.set(docRef, { routines: combinedRoutines });
     }
 
     try {
