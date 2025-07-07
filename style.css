@@ -104,11 +104,19 @@ body {
 .btn-primary {
     background-color: var(--primary-color); color: white; padding: 12px 20px;
     border-radius: var(--border-radius); font-size: 15px; border: none; box-shadow: none; width: 100%;
+    display: inline-flex; align-items: center; justify-content: center; /* Para alinear icono y texto */
 }
 .btn-primary:hover { background-color: #6A5ACD; }
+/* CORRECCIÓN 4: Tamaño del icono de Google */
+.btn-primary .icon {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+    margin-right: 8px;
+}
 .btn-icon {
     width: 40px; height: 40px; border-radius: 50%; color: var(--text-muted);
-    background-color: transparent;
+    background-color: transparent; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
 }
 .btn-icon:hover { background-color: var(--primary-light); color: var(--primary-color); }
 .btn-icon.btn-primary {
@@ -129,6 +137,18 @@ input:focus, select:focus, textarea:focus {
 input[type="checkbox"] {
     width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent-color);
 }
+/* CORRECCIÓN 1: Estilos para el input-group de tareas */
+.input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.input-group input {
+    margin-bottom: 0;
+}
+.input-group .btn-icon {
+    flex-shrink: 0;
+}
 
 /* Listas */
 .item-list { display: flex; flex-direction: column; gap: 8px; }
@@ -136,6 +156,7 @@ input[type="checkbox"] {
     display: flex; align-items: center; gap: 15px; padding: 10px;
     border-radius: var(--border-radius);
 }
+.list-item .item-text-content { flex-grow: 1; } /* Para que el texto ocupe el espacio */
 .item-text { font-size: 15px; font-weight: 500; }
 .list-item.completed { opacity: 0.6; }
 .list-item.completed .item-text { text-decoration: line-through; }
@@ -153,6 +174,13 @@ input[type="checkbox"] {
 .income-bg { background-color: rgba(52, 211, 153, 0.2); color: var(--success-color); }
 .expense-bg { background-color: rgba(239, 68, 68, 0.2); color: var(--danger-color); }
 .dark-mode .income-bg, .dark-mode .expense-bg { color: white; }
+/* CORRECCIÓN 3: Colores para montos de transacciones */
+.transaction-amount {
+    font-weight: 600;
+    margin-left: auto;
+}
+.transaction-amount.income { color: var(--success-color); }
+.transaction-amount.expense { color: var(--danger-color); }
 
 /* Progreso */
 .summary-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
@@ -165,6 +193,40 @@ input[type="checkbox"] {
 
 /* Gráficos */
 .chart-container { position: relative; width: 100%; height: 220px; }
+
+/* CORRECCIÓN 2: Estilos para la cuadrícula de logros */
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+}
+.achievement-card {
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: help;
+}
+.achievement-card .icon {
+    font-size: 28px;
+    display: block;
+    margin-bottom: 8px;
+}
+.achievement-card p {
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0;
+}
+.achievement-card.locked {
+    opacity: 0.5;
+    filter: grayscale(80%);
+}
+.achievement-card.unlocked {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px var(--accent-light);
+}
 
 /* Notificación */
 .notification {
@@ -187,8 +249,10 @@ input[type="checkbox"] {
     transform: translateY(-110px);
     opacity: 1;
 }
-.notification.achievement { background: linear-gradient(45deg, var(--secondary-color), var(--tertiary-color)); }
-
+/* CORRECCIÓN 5: Usar variables de color existentes */
+.notification.achievement {
+    background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+}
 
 /* --- 8. DISEÑO ADAPTATIVO PARA ESCRITORIO --- */
 @media (min-width: 992px) {
