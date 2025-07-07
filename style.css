@@ -204,6 +204,7 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
         border-radius: var(--border-radius); font-size: 15px;
         color: var(--text-muted);
     }
+    .sidebar-nav .nav-button .icon { width: 24px; height: 24px; } /* Added this line */
     .sidebar-nav .nav-button:hover { background-color: var(--bg-color); }
     .sidebar-nav .nav-button.active {
         background-color: var(--primary-light);
