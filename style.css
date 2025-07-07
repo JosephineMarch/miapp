@@ -100,9 +100,14 @@ body {
     background: var(--card-bg); border-radius: var(--border-radius);
     padding: 20px; margin-bottom: 20px; border: 1px solid var(--border-color);
 }
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px; /* Ajustado para mejor espaciado */
+}
 .card-title { font-size: 18px; font-weight: 600; margin: 0; }
-.card-subtitle { color: var(--text-muted); font-size: 14px; margin-top: 4px; margin-bottom: 15px; }
+.card-subtitle { color: var(--text-muted); font-size: 14px; margin-top: 4px; margin-bottom: 15px; line-height: 1.5; }
 
 /* Botones */
 .btn-primary {
@@ -115,6 +120,7 @@ body {
 .btn-icon {
     width: 40px; height: 40px; border-radius: 50%; color: var(--text-muted);
     background-color: transparent; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0; /* Asegura que no se achique en flex containers */
 }
 .btn-icon:hover { background-color: var(--primary-light); color: var(--primary-color); }
 .btn-icon.btn-primary { background-color: var(--primary-color); color: white; width: 44px; height: 44px; }
@@ -130,20 +136,57 @@ input:focus, select:focus, textarea:focus {
     outline: none; border-color: var(--primary-color);
     box-shadow: 0 0 0 2px var(--primary-light);
 }
-input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent-color); }
-.input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent-color); flex-shrink: 0; }
+.input-group { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
 .input-group input { margin-bottom: 0; }
-.input-group .btn-icon { flex-shrink: 0; }
 
 /* Listas */
 .item-list { display: flex; flex-direction: column; gap: 8px; }
-.list-item { display: flex; align-items: center; gap: 15px; padding: 10px; border-radius: var(--border-radius); }
-.list-item .item-text-content { flex-grow: 1; }
-.item-text { font-size: 15px; font-weight: 500; }
-.list-item.completed { opacity: 0.6; }
-.list-item.completed .item-text { text-decoration: line-through; }
+.list-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    transition: background-color 0.2s ease;
+    min-height: 48px; /* Altura mínima para mejor tacto/clic */
+}
+.list-item:hover {
+    background-color: var(--primary-light); /* Ligerísimo hover para todas las listas */
+}
+.list-item .item-text-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+.item-text { font-size: 15px; font-weight: 500; color: var(--text-color); line-height: 1.4; }
+.item-details { font-size: 13px; color: var(--text-muted); margin-top: 2px; display: block; }
+
+.list-item .item-actions {
+    display: flex; /* Siempre flex para mantener el espacio */
+    gap: 5px;
+    opacity: 0; /* Ocultar por defecto */
+    transition: opacity 0.2s ease;
+}
+.list-item:hover .item-actions { opacity: 1; } /* Mostrar en hover */
+.list-item .item-actions .btn-icon { width: 32px; height: 32px; } /* Botones más pequeños en listas */
+
+.list-item.completed {
+    opacity: 0.7;
+}
+.list-item.completed .item-text { text-decoration: line-through; color: var(--text-muted); }
+
 .section-subtitle { display: none; margin-top: 25px; margin-bottom: 15px; font-weight: 600; color: var(--text-muted); }
 #taskListCompleted:not(:empty) ~ .section-subtitle, #taskListCompleted:not(:empty) { display: block; }
+
+/* Para items sin checkbox (e.g., inbox items, summary items) */
+.list-item .icon-placeholder {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px; /* Para alinear con el checkbox */
+    font-size: 18px; /* Tamaño del icono si es un emoji/texto */
+    color: var(--text-muted); /* Color genérico para placeholders */
+}
 
 /* --- 7. COMPONENTES ESPECÍFICOS --- */
 /* Finanzas */
@@ -188,6 +231,106 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
 .notification.show { transform: translateY(-110px); opacity: 1; }
 .notification.achievement { background: linear-gradient(45deg, var(--accent-color), var(--primary-color)); }
 
+/* --- NUEVOS ESTILOS PARA DASHBOARD --- */
+.month-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.weekly-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Más grande para días */
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.day-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Empuja el contenido para usar el espacio */
+    min-height: 100px; /* Altura mínima para tarjetas de día */
+    transition: all 0.2s ease;
+}
+
+.day-card.today {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(123, 97, 255, 0.1);
+}
+
+.day-card h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--primary-color);
+}
+
+.day-card p.date {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.day-card .routine-summary {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--text-color);
+}
+.day-card .routine-summary.completed {
+    color: var(--success-color);
+    font-weight: 600;
+}
+.day-card .routine-summary.missed {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+#daily-summary-cards {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.summary-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.summary-card.success {
+    border-color: var(--success-color);
+    background-color: rgba(52, 211, 153, 0.1);
+}
+
+.summary-card.fail {
+    border-color: var(--danger-color);
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.summary-card h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.summary-card.success h3 { color: var(--success-color); }
+.summary-card.fail h3 { color: var(--danger-color); }
+
+.summary-card .item-list .list-item {
+    padding: 8px 0;
+    background: none;
+}
+.summary-card .item-list .list-item:hover { background-color: transparent; }
+.summary-card .item-list .item-actions { display: none !important; } /* Ocultar acciones en summaries */
+
 /* --- 8. DISEÑO ADAPTATIVO PARA ESCRITORIO --- */
 @media (min-width: 992px) {
     #app-wrapper { display: flex; }
@@ -204,7 +347,7 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
         border-radius: var(--border-radius); font-size: 15px;
         color: var(--text-muted);
     }
-    .sidebar-nav .nav-button .icon { width: 24px; height: 24px; } /* Added this line */
+    .sidebar-nav .nav-button .icon { width: 24px; height: 24px; margin-right: 10px; } /* Icon size and spacing */
     .sidebar-nav .nav-button:hover { background-color: var(--bg-color); }
     .sidebar-nav .nav-button.active {
         background-color: var(--primary-light);
@@ -219,31 +362,40 @@ input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-colo
     .main-header { padding: 30px 40px; }
     .main-content { padding: 0 40px 40px 40px; }
 
-    /* Layout en columnas - CORRECCIÓN CLAVE */
-    .grid-container {
+    /* Layout en columnas para las pestañas de contenido */
+    .tab-content.active {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr; /* Por defecto una columna */
         gap: 30px;
     }
     
+    /* Dashboard específico: 2 columnas */
     #dashboard-content.active {
-        display: grid;
-        grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
-        gap: 30px;
+        grid-template-columns: 1fr;
     }
-    #dashboard-content > .card:first-child { grid-column: 1 / -1; }
+    .weekly-dashboard-grid {
+        grid-template-columns: repeat(7, 1fr); /* 7 columnas para los días de la semana */
+    }
+
+    /* Proyectos e Ideas con dos columnas */
+    #projects-content.active .grid-container,
+    #inbox-content.active .grid-container {
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    }
+    /* Si solo hay una tarjeta en projects, que ocupe todo el ancho */
+    #projects-content.active .grid-container .card:only-child {
+        grid-column: 1 / -1;
+    }
 
     #finances-content.active {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 30px;
+        grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
     }
     #finances-content > .finance-hero-card { grid-column: 1 / -1; }
     
-    #projects-content.active .grid-container {
-        grid-template-columns: 1fr;
+    #progress-content.active {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
     }
-    
+
     .notification { left: auto; right: 20px; bottom: 20px; transform: translateY(20px); }
     .notification.show { transform: translateY(0); }
 }
