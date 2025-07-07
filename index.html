@@ -8,7 +8,10 @@
     <meta name="theme-color" content="#1D9A8D">
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQ3JlYSBJbmZhbnRpbCIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiNGRkZGRkYiLCJ0aGVtZV9jb2xvciI6IiMxRDlBOEQifQ==">
     
+    <!-- Enlace a la hoja de estilos CSS -->
     <link rel="stylesheet" href="style.css">
+
+    <!-- Librerías de terceros -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 </head>
@@ -50,7 +53,7 @@
         <header class="header">
             <div class="header-left">
                 <h1>Crea Infantil</h1>
-                <div id="focusStreak" class="focus-streak" title="Días seguidos de actividad registrada"></div>
+                <div id="focusStreak" class="focus-streak" title="Racha de días con rutinas obligatorias completas"></div>
             </div>
             <div class="user-info">
                  <span id="user-display"></span>
@@ -91,7 +94,7 @@
             </div>
         </div>
 
-        <!-- Pestaña Proyectos -->
+        <!-- Pestaña Proyectos (antes Tareas) -->
         <div class="tab-content" id="tasks">
              <div class="card">
                 <h3>📝 Tareas de Proyecto</h3>
@@ -114,7 +117,7 @@
             </div>
         </div>
 
-        <!-- Pestaña Ideas -->
+        <!-- Pestaña Ideas (antes Inbox) -->
         <div class="tab-content" id="inbox">
             <div class="card">
                 <h3>💡 Bandeja de Ideas Rápidas</h3>
@@ -135,7 +138,7 @@
                 <h3>💰 Registrar Movimiento</h3>
                 <form id="finance-form">
                     <div class="finance-input-group">
-                        <input type="number" id="financeAmount" placeholder="Monto" required>
+                        <input type="number" id="financeAmount" placeholder="Monto" required step="0.01">
                         <select id="financeType">
                             <option value="expense">Gasto</option>
                             <option value="income">Ganancia</option>
