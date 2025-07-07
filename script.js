@@ -109,9 +109,7 @@ function setupEventListeners() {
         if (button.id.includes('Resume')) resumePomodoro();
     });
 
-    document.querySelectorAll('.report-controls button').forEach(button => {
-        button.addEventListener('click', (e) => renderReport(e.currentTarget.dataset.period));
-    });
+
 }
 
 function setupRealtimeListeners() {
