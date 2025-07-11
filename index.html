@@ -30,7 +30,7 @@
             <i class="fas fa-cat text-6xl text-indigo-500 mb-4 floating"></i>
             <h2 class="text-2xl font-bold mb-2">Welcome to Crea-Kitty!</h2>
             <p class="text-gray-600 mb-6">Organize your life and unlock cute kittens along the way.</p>
-            <button onclick="signInWithGoogle()" class="bg-indigo-500 text-white font-bold py-2 px-4 rounded-full hover:bg-indigo-600 transition-colors flex items-center">
+            <button id="login-button" class="bg-indigo-500 text-white font-bold py-2 px-4 rounded-full hover:bg-indigo-600 transition-colors flex items-center">
                 <i class="fab fa-google mr-2"></i>
                 Sign in with Google
             </button>
@@ -38,120 +38,21 @@
 
         <!-- Main Content (will be revealed by script) -->
         <main class="flex-1 p-4 overflow-y-auto hidden" id="main-content">
-            <!-- Dashboard View -->
-            <div id="dashboard-view">
-                 <div class="mb-6">
-                    <h2 class="text-lg font-semibold mb-3">Welcome back!</h2>
-                    <div class="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl p-4 text-white shadow-md">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-sm opacity-90">Your progress</p>
-                                <h3 id="dashboard-progress-text" class="text-xl font-bold mt-1">Loading...</h3>
-                            </div>
-                            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                                <i class="fas fa-trophy text-xl"></i>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <div class="w-full bg-white bg-opacity-30 rounded-full h-2">
-                                <div id="dashboard-progress-bar" class="progress-bar bg-white h-2 rounded-full" style="width: 0%"></div>
-                            </div>
-                            <p id="dashboard-progress-subtext" class="text-xs mt-2 opacity-90">Let's get some tasks done!</p>
-                        </div>
-                    </div>
-                </div>
-                 <div class="mb-6">
-                    <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-lg font-semibold">Recent Projects</h2>
-                        <a href="#" onclick="document.querySelector('[data-view='projects-view']').click()" class="text-sm text-indigo-500">See all</a>
-                    </div>
-                    <div id="dashboard-projects-container" class="space-y-3">
-                        <p class="text-center text-gray-500">No active projects.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tasks View -->
-            <div id="tasks-view" class="hidden">
-                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-lg font-semibold">Your Tasks</h2>
-                    <button class="add-btn w-10 h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-md">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-                <div id="tasks-container" class="space-y-3"></div>
-            </div>
-
-            <!-- Projects View -->
-            <div id="projects-view" class="hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-lg font-semibold">Your Projects</h2>
-                    <button class="add-btn w-10 h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-md">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-                <div id="projects-container" class="space-y-4"></div>
-            </div>
-             <!-- Finances View -->
-            <div id="finances-view" class="hidden">
-                <p class="text-center text-gray-500 mt-8">Finance tracking coming soon!</p>
-            </div>
-
-            <!-- Kittens View -->
-            <div id="kittens-view" class="hidden">
-                 <p class="text-center text-gray-500 mt-8">Kitten collection coming soon!</p>
-            </div>
+            <!-- All views are now dynamically generated or toggled via script -->
         </main>
 
         <!-- Bottom Navigation -->
         <nav id="bottom-nav" class="bg-white border-t border-gray-200 p-2 hidden">
-            <div class="flex justify-around">
-                <button class="tab-btn p-2 text-center text-gray-600 tab-active" data-view="dashboard-view"> <i class="fas fa-home block text-xl mb-1"></i> <span class="text-xs">Home</span> </button>
-                <button class="tab-btn p-2 text-center text-gray-600" data-view="tasks-view"> <i class="fas fa-tasks block text-xl mb-1"></i> <span class="text-xs">Tasks</span> </button>
-                <button class="tab-btn p-2 text-center text-gray-600" data-view="projects-view"> <i class="fas fa-project-diagram block text-xl mb-1"></i> <span class="text-xs">Projects</span> </button>
-                <button class="tab-btn p-2 text-center text-gray-600" data-view="finances-view"> <i class="fas fa-wallet block text-xl mb-1"></i> <span class="text-xs">Finances</span> </button>
-                <button class="tab-btn p-2 text-center text-gray-600" data-view="kittens-view"> <i class="fas fa-paw block text-xl mb-1"></i> <span class="text-xs">Kittens</span> </button>
-            </div>
+            <!-- Tabs will be dynamically handled by script -->
         </nav>
 
         <!-- Project Modal -->
         <div id="project-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-lg">
-                <form id="project-form">
-                    <div class="p-4 border-b">
-                        <h3 id="project-modal-title" class="text-lg font-medium">New Project</h3>
-                    </div>
-                    <div class="p-4 max-h-96 overflow-y-auto">
-                        <input id="project-id" type="hidden">
-                        <div class="mb-4">
-                            <label for="project-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                            <input type="text" id="project-title" class="w-full border-gray-300 rounded-md shadow-sm" required>
-                        </div>
-                        <div class="mb-4">
-                            <label for="project-due-date" class="block text-sm font-medium text-gray-700 mb-1">Due Date (Optional)</label>
-                            <input type="date" id="project-due-date" class="w-full border-gray-300 rounded-md shadow-sm">
-                        </div>
-                        <div class="mb-4">
-                            <h4 class="text-sm font-medium text-gray-700 mb-2">Steps</h4>
-                            <div id="project-steps-container" class="space-y-2"></div>
-                            <button type="button" onclick="addProjectStep(event)" class="mt-2 text-sm text-indigo-600 hover:text-indigo-800">+ Add step</button>
-                        </div>
-                    </div>
-                    <div class="p-4 bg-gray-50 flex justify-end space-x-2">
-                        <button type="button" onclick="closeProjectModal()" class="px-4 py-2 bg-gray-200 rounded-md text-sm">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm">Save Project</button>
-                    </div>
-                </form>
-            </div>
+             <!-- Modal content is now fully managed by script.js -->
         </div>
     </div>
 
-    <!-- Use Firebase 8 COMPAT for simplicity with inline on-click handlers -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-    <script src="firebase-config.js"></script>
-    <script src="script.js"></script>
+    <!-- The single entry point for all our JavaScript, loaded as a module -->
+    <script type="module" src="script.js"></script>
 </body>
 </html>
