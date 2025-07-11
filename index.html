@@ -1,14 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- Cambiado a español -->
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crea-Kitty - Organize Your Life with Kittens</title>
+    <!-- Título y descripción en español -->
+    <title>Crea-Kitty - Organiza tu Vida</title>
+    <meta name="description" content="Tu espacio personal para organizar ideas, proyectos, finanzas y hábitos.">
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-50 font-sans text-gray-800">
+<body class="bg-gray-50 font-poppins text-gray-800">
     <div class="max-w-md mx-auto min-h-screen flex flex-col">
         <!-- Header -->
         <header class="bg-white p-4 shadow-sm">
@@ -25,34 +32,29 @@
             </div>
         </header>
 
-        <!-- Login View -->
+        <!-- Vista de Login en Español -->
         <div id="login-view" class="flex-1 flex flex-col items-center justify-center text-center p-8">
             <i class="fas fa-cat text-6xl text-indigo-500 mb-4 floating"></i>
-            <h2 class="text-2xl font-bold mb-2">Welcome to Crea-Kitty!</h2>
-            <p class="text-gray-600 mb-6">Organize your life and unlock cute kittens along the way.</p>
+            <h2 class="text-2xl font-bold mb-2">Bienvenido/a a Crea-Kitty</h2>
+            <p class="text-gray-600 mb-6">Organiza tu vida y desbloquea lindos gatitos en el proceso.</p>
             <button id="login-button" class="bg-indigo-500 text-white font-bold py-2 px-4 rounded-full hover:bg-indigo-600 transition-colors flex items-center">
                 <i class="fab fa-google mr-2"></i>
-                Sign in with Google
+                Iniciar sesión con Google
             </button>
         </div>
 
-        <!-- Main Content (will be revealed by script) -->
+        <!-- Contenido Principal (revelado por el script) -->
         <main class="flex-1 p-4 overflow-y-auto hidden" id="main-content">
-            <!-- All views are now dynamically generated or toggled via script -->
+            <!-- Vistas generadas dinámicamente -->
         </main>
 
-        <!-- Bottom Navigation -->
+        <!-- Navegación Inferior (revelado por el script) -->
         <nav id="bottom-nav" class="bg-white border-t border-gray-200 p-2 hidden">
-            <!-- Tabs will be dynamically handled by script -->
+            <!-- Pestañas generadas dinámicamente -->
         </nav>
-
-        <!-- Project Modal -->
-        <div id="project-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-             <!-- Modal content is now fully managed by script.js -->
-        </div>
     </div>
 
-    <!-- The single entry point for all our JavaScript, loaded as a module -->
+    <!-- Módulo JS principal -->
     <script type="module" src="script.js"></script>
 </body>
 </html>

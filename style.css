@@ -1,3 +1,30 @@
+/* --- VARIABLES Y ESTILOS GLOBALES --- */
+:root {
+    --primary-color: #6366f1; /* indigo-500 */
+    --primary-color-light: #818cf8; /* indigo-400 */
+    --background-color: #f9fafb; /* gray-50 */
+    --surface-color: #ffffff; /* white */
+    --text-color: #1f2937; /* gray-800 */
+    --text-muted: #6b7280; /* gray-500 */
+    --border-color: #e5e7eb; /* gray-200 */
+    --success-color: #10b981; /* green-500 */
+    --danger-color: #ef4444; /* red-500 */
+    --income-color: var(--success-color);
+    --expense-color: var(--danger-color);
+    --font-family: 'Poppins', sans-serif;
+    --border-radius: 0.75rem; /* 12px */
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+body {
+    background-color: var(--background-color);
+    font-family: var(--font-family);
+    color: var(--text-color);
+    /* Added for fixed bottom nav */
+    padding-bottom: 80px; 
+}
+
+/* --- ANIMACIONES Y EFECTOS --- */
 @keyframes float {
     0% { transform: translateY(0px); }
     50% { transform: translateY(-10px); }
@@ -10,50 +37,45 @@
 
 .card-hover:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-}
-
-.tab-active {
-    position: relative;
-    color: #6366f1;
-}
-
-.tab-active::after {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 6px;
-    height: 6px;
-    background-color: #6366f1;
-    border-radius: 50%;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .progress-bar {
     transition: width 0.5s ease-in-out;
 }
 
-.kitten-card:hover .kitten-img {
-    transform: scale(1.05);
-}
-
-.kitten-img {
-    transition: transform 0.3s ease;
-}
-
-/* Make the bottom navigation bar fixed */
-body {
-    padding-bottom: 70px; /* Adjust this value to match the height of your nav bar */
-}
-
-nav {
+/* --- NAVEGACIÓN INFERIOR --- */
+#bottom-nav {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    max-width: 28rem; /* Equivalent to max-w-md */
+    max-width: 28rem; /* mx-auto for a centered block of this width */
     margin-left: auto;
     margin-right: auto;
     z-index: 1000;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--surface-color);
+}
+
+.tab-btn {
+    color: var(--text-muted);
+}
+
+.tab-active {
+    position: relative;
+    color: var(--primary-color);
+}
+
+.tab-active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; /* Adjust as needed */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
 }
