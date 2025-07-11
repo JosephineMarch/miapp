@@ -1,0 +1,116 @@
+/* --- VARIABLES Y ESTILOS GLOBALES --- */
+:root {
+    --primary-color: #6366f1; /* indigo-500 */
+    --background-color: #f9fafb; /* gray-50 */
+    --surface-color: #ffffff; /* white */
+    --text-color: #1f2937; /* gray-800 */
+    --text-muted: #6b7280; /* gray-500 */
+    --border-color: #e5e7eb; /* gray-200 */
+    --font-family: 'Poppins', sans-serif;
+    --border-radius: 0.75rem; /* 12px */
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+body {
+    background-color: var(--background-color);
+    font-family: var(--font-family);
+    color: var(--text-color);
+}
+
+/* Solo añade padding cuando el usuario ha iniciado sesión y la nav está visible */
+body.logged-in {
+    padding-bottom: 80px;
+}
+
+#login-view {
+    width: 100%;
+    min-height: 100vh; /* Asegura que ocupe toda la altura de la pantalla */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Evita que el contenedor principal tenga doble padding cuando no está logueado */
+.max-w-md {
+    min-height: 100vh;
+}
+
+
+/* --- ANIMACIONES Y EFECTOS --- */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.floating {
+    animation: float 3s ease-in-out infinite;
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.progress-bar {
+    transition: width 0.5s ease-in-out;
+}
+
+/* --- NAVEGACIÓN INFERIOR --- */
+#bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 28rem; /* mx-auto for a centered block of this width */
+    margin-left: auto;
+    margin-right: auto;
+    z-index: 40; /* Menos que el modal */
+    border-top: 1px solid var(--border-color);
+    background-color: var(--surface-color);
+}
+
+.tab-btn {
+    color: var(--text-muted);
+    transition: color 0.2s;
+}
+
+.tab-active {
+    position: relative;
+    color: var(--primary-color);
+}
+
+.tab-active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; /* Adjust as needed */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+}
+
+/* --- DROPDOWN MENU PARA FINANZAS --- */
+.dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    margin-top: 0.5rem;
+    width: 10rem;
+    background-color: white;
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    z-index: 50;
+    display: none; /* Se mostrará con JS */
+}
+
+.dropdown-menu.show {
+    display: block;
+}
