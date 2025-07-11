@@ -40,19 +40,46 @@
         <main class="flex-1 p-4 overflow-y-auto hidden" id="main-content">
             <!-- Dashboard View -->
             <div id="dashboard-view">
-                <!-- ... existing dashboard content ... -->
+                <div class="mb-6">
+                    <h2 class="text-lg font-semibold mb-3">Welcome back!</h2>
+                    <div class="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl p-4 text-white shadow-md">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm opacity-90">Your progress</p>
+                                <h3 class="text-xl font-bold mt-1">0/0 Tasks Completed</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                <i class="fas fa-trophy text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="w-full bg-white bg-opacity-30 rounded-full h-2">
+                                <div class="progress-bar bg-white h-2 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <p class="text-xs mt-2 opacity-90">Complete tasks to unlock a new kitten!</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Tasks View -->
+            <!-- Tasks View (hidden by default) -->
             <div id="tasks-view" class="hidden">
-                <!-- ... existing tasks content ... -->
+                 <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold">Your Tasks</h2>
+                    <button class="add-btn w-10 h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-md">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div id="tasks-container" class="space-y-3">
+                    <!-- Tasks will be rendered here -->
+                </div>
             </div>
 
             <!-- Projects View -->
             <div id="projects-view" class="hidden">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-lg font-semibold">Your Projects</h2>
-                    <button onclick="openProjectModal()" class="w-10 h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-md">
+                    <button class="add-btn w-10 h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-md">
                         <i class="fas fa-plus"></i>
                     </button>
                 </div>
@@ -60,61 +87,84 @@
                     <!-- Projects will be rendered here -->
                 </div>
             </div>
+             <!-- Finances View (hidden by default) -->
+            <div id="finances-view" class="hidden">
+                <p class="text-center text-gray-500 mt-8">Finance tracking coming soon!</p>
+            </div>
 
-            <!-- Other Views (Finances, Kittens) -->
-            <!-- ... -->
+            <!-- Kittens View (hidden by default) -->
+            <div id="kittens-view" class="hidden">
+                 <p class="text-center text-gray-500 mt-8">Kitten collection coming soon!</p>
+            </div>
         </main>
 
         <!-- Bottom Navigation -->
         <nav id="bottom-nav" class="bg-white border-t border-gray-200 p-2 hidden">
-            <!-- ... existing nav buttons ... -->
+            <div class="flex justify-around">
+                <button class="tab-btn p-2 text-center text-gray-600 tab-active" data-view="dashboard-view">
+                    <i class="fas fa-home block text-xl mb-1"></i>
+                    <span class="text-xs">Home</span>
+                </button>
+                <button class="tab-btn p-2 text-center text-gray-600" data-view="tasks-view">
+                    <i class="fas fa-tasks block text-xl mb-1"></i>
+                    <span class="text-xs">Tasks</span>
+                </button>
+                <button class="tab-btn p-2 text-center text-gray-600" data-view="projects-view">
+                    <i class="fas fa-project-diagram block text-xl mb-1"></i>
+                    <span class="text-xs">Projects</span>
+                </button>
+                <button class="tab-btn p-2 text-center text-gray-600" data-view="finances-view">
+                    <i class="fas fa-wallet block text-xl mb-1"></i>
+                    <span class="text-xs">Finances</span>
+                </button>
+                <button class="tab-btn p-2 text-center text-gray-600" data-view="kittens-view">
+                    <i class="fas fa-paw block text-xl mb-1"></i>
+                    <span class="text-xs">Kittens</span>
+                </button>
+            </div>
         </nav>
 
-        <!-- Floating Action Button -->
-        <div id="fab" class="fixed bottom-20 right-4 hidden">
-            <!-- ... existing fab ... -->
-        </div>
-
         <!-- Project Modal -->
-        <div id="project-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden">
+        <div id="project-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
             <div class="bg-white rounded-xl shadow-xl w-full max-w-lg">
-                <div class="p-4 border-b">
-                    <h3 id="project-modal-title" class="text-lg font-medium">New Project</h3>
-                </div>
-                <div class="p-4">
-                    <input id="project-id" type="hidden">
-                    <div class="mb-4">
-                        <label for="project-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                        <input type="text" id="project-title" class="w-full border-gray-300 rounded-md shadow-sm">
+                <form id="project-form">
+                    <div class="p-4 border-b">
+                        <h3 id="project-modal-title" class="text-lg font-medium">New Project</h3>
                     </div>
-                    <div class="mb-4">
-                        <label for="project-due-date" class="block text-sm font-medium text-gray-700 mb-1">Due Date (Optional)</label>
-                        <input type="date" id="project-due-date" class="w-full border-gray-300 rounded-md shadow-sm">
-                    </div>
-                    <div class="mb-4">
-                        <h4 class="text-sm font-medium text-gray-700 mb-2">Steps</h4>
-                        <div id="project-steps-container" class="space-y-2">
-                            <!-- Steps will be rendered here -->
+                    <div class="p-4">
+                        <input id="project-id" type="hidden">
+                        <div class="mb-4">
+                            <label for="project-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                            <input type="text" id="project-title" class="w-full border-gray-300 rounded-md shadow-sm" required>
                         </div>
-                        <button onclick="addProjectStep()" class="mt-2 text-sm text-indigo-600 hover:text-indigo-800">+ Add step</button>
+                        <div class="mb-4">
+                            <label for="project-due-date" class="block text-sm font-medium text-gray-700 mb-1">Due Date (Optional)</label>
+                            <input type="date" id="project-due-date" class="w-full border-gray-300 rounded-md shadow-sm">
+                        </div>
+                        <div class="mb-4">
+                            <h4 class="text-sm font-medium text-gray-700 mb-2">Steps</h4>
+                            <div id="project-steps-container" class="space-y-2">
+                                <!-- Steps will be rendered here -->
+                            </div>
+                            <button onclick="addProjectStep(event)" class="mt-2 text-sm text-indigo-600 hover:text-indigo-800">+ Add step</button>
+                        </div>
                     </div>
-                </div>
-                <div class="p-4 bg-gray-50 flex justify-end space-x-2">
-                    <button onclick="closeProjectModal()" class="px-4 py-2 bg-gray-200 rounded-md text-sm">Cancel</button>
-                    <button onclick="saveProject()" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm">Save Project</button>
-                </div>
+                    <div class="p-4 bg-gray-50 flex justify-end space-x-2">
+                        <button type="button" onclick="closeProjectModal()" class="px-4 py-2 bg-gray-200 rounded-md text-sm">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm">Save Project</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
     <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <!-- Firebase Configuration -->
     <script src="firebase-config.js"></script>
-
     <script src="script.js"></script>
 </body>
 </html>

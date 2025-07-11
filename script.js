@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tasksContainer: document.getElementById('tasks-container'),
         projectsContainer: document.getElementById('projects-container'),
         projectModal: document.getElementById('project-modal'),
+        projectForm: document.getElementById('project-form'),
         projectModalTitle: document.getElementById('project-modal-title'),
         projectId: document.getElementById('project-id'),
         projectTitle: document.getElementById('project-title'),
@@ -86,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     window.openProjectModal = (project = {}) => {
+        elements.projectForm.reset();
         elements.projectModalTitle.textContent = project.id ? 'Edit Project' : 'New Project';
         elements.projectId.value = project.id || '';
         elements.projectTitle.value = project.title || '';
@@ -103,36 +105,40 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderProjectSteps(steps = []) {
         elements.projectStepsContainer.innerHTML = '';
         steps.forEach((step, index) => {
-            const stepEl = document.createElement('div');
-            stepEl.className = 'flex items-center';
-            stepEl.innerHTML = `
-                <input type="checkbox" ${step.completed ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300 text-indigo-600 mr-2" onchange="updateStepState(${index}, this.checked)">
-                <input type="text" value="${step.title}" class="w-full border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-indigo-500 text-sm" onchange="updateStepTitle(${index}, this.value)">
-                <button onclick="removeProjectStep(${index})" class="ml-2 text-gray-400 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
-            `;
-            elements.projectStepsContainer.appendChild(stepEl);
+            addProjectStep(null, step);
         });
     }
     
-    window.addProjectStep = () => {
-        const newStep = { title: '', completed: false };
-        const steps = getStepsFromModal();
-        steps.push(newStep);
-        renderProjectSteps(steps);
+    window.addProjectStep = (event, step = { title: '', completed: false }) => {
+        if(event) event.preventDefault();
+        const index = elements.projectStepsContainer.children.length;
+
+        const stepEl = document.createElement('div');
+        stepEl.className = 'flex items-center space-x-2';
+        stepEl.innerHTML = `
+            <input type="checkbox" ${step.completed ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300 text-indigo-600" data-step-index="${index}">
+            <input type="text" value="${step.title}" class="w-full border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-indigo-500 text-sm p-1" placeholder="Step description">
+            <button type="button" onclick="this.parentElement.remove()" class="text-gray-400 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
+        `;
+        elements.projectStepsContainer.appendChild(stepEl);
     }
     
     function getStepsFromModal() {
         const steps = [];
         elements.projectStepsContainer.querySelectorAll('.flex').forEach(stepEl => {
-            steps.push({
-                title: stepEl.querySelector('input[type="text"]').value,
-                completed: stepEl.querySelector('input[type="checkbox"]').checked
-            });
+            const titleInput = stepEl.querySelector('input[type="text"]');
+            if (titleInput.value) { // Only add steps that have a title
+                steps.push({
+                    title: titleInput.value,
+                    completed: stepEl.querySelector('input[type="checkbox"]').checked
+                });
+            }
         });
         return steps;
     }
 
-    window.saveProject = () => {
+    elements.projectForm.addEventListener('submit', (e) => {
+        e.preventDefault();
         if (!currentUser) return;
         
         const id = elements.projectId.value;
@@ -144,47 +150,55 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (id) {
-            // Update existing project
             db.collection('users').doc(currentUser.uid).collection('projects').doc(id).update(data);
         } else {
-            // Create new project
             data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             db.collection('users').doc(currentUser.uid).collection('projects').add(data);
         }
         
         closeProjectModal();
-    }
+    });
     
-    // Attach to window for inline onclicks
+    // --- Global Functions ---
     window.signInWithGoogle = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
     window.signOutUser = () => auth.signOut();
-    // Other functions like loadTasks, renderTasks, etc. are defined above
-    // Simplified navigation and add button logic
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    
+    // --- Navigation ---
+     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active'));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('tab-active');
+                b.classList.add('text-gray-600');
+            });
             this.classList.add('tab-active');
+            this.classList.remove('text-gray-600');
+            
             document.querySelectorAll('#main-content > div[id$="-view"]').forEach(v => v.classList.add('hidden'));
-            document.getElementById(this.dataset.view).classList.remove('hidden');
+            
+            const viewId = this.dataset.view;
+            if (document.getElementById(viewId)) {
+                document.getElementById(viewId).classList.remove('hidden');
+            }
         });
     });
+
      document.querySelectorAll('.add-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            const currentView = [...document.querySelectorAll('#main-content > div[id$="-view"]')]
-                .find(view => !view.classList.contains('hidden'));
-
+            const currentView = document.querySelector('#main-content > div:not(.hidden)');
             if (!currentView) return;
 
             if (currentView.id === 'tasks-view') {
                 const title = prompt("Enter new task title:");
                 if (title) {
-                    addTask(title);
+                    // This is a simplified addTask, you might want to expand it
+                    db.collection('users').doc(currentUser.uid).collection('tasks').add({
+                        title: title,
+                        completed: false,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
                 }
             } else if (currentView.id === 'projects-view') {
                 openProjectModal();
-            }
-             else {
-                alert('Add functionality for other views is coming soon!');
             }
         });
     });
