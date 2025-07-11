@@ -36,17 +36,17 @@
             </button>
         </div>
 
-        <!-- Main Content (hidden by default) -->
+        <!-- Main Content (will be revealed by script) -->
         <main class="flex-1 p-4 overflow-y-auto hidden" id="main-content">
             <!-- Dashboard View -->
             <div id="dashboard-view">
-                <div class="mb-6">
+                 <div class="mb-6">
                     <h2 class="text-lg font-semibold mb-3">Welcome back!</h2>
                     <div class="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl p-4 text-white shadow-md">
                         <div class="flex justify-between items-start">
                             <div>
                                 <p class="text-sm opacity-90">Your progress</p>
-                                <h3 class="text-xl font-bold mt-1">0/0 Tasks Completed</h3>
+                                <h3 id="dashboard-progress-text" class="text-xl font-bold mt-1">Loading...</h3>
                             </div>
                             <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                                 <i class="fas fa-trophy text-xl"></i>
@@ -54,15 +54,24 @@
                         </div>
                         <div class="mt-4">
                             <div class="w-full bg-white bg-opacity-30 rounded-full h-2">
-                                <div class="progress-bar bg-white h-2 rounded-full" style="width: 0%"></div>
+                                <div id="dashboard-progress-bar" class="progress-bar bg-white h-2 rounded-full" style="width: 0%"></div>
                             </div>
-                            <p class="text-xs mt-2 opacity-90">Complete tasks to unlock a new kitten!</p>
+                            <p id="dashboard-progress-subtext" class="text-xs mt-2 opacity-90">Let's get some tasks done!</p>
                         </div>
+                    </div>
+                </div>
+                 <div class="mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-lg font-semibold">Recent Projects</h2>
+                        <a href="#" onclick="document.querySelector('[data-view='projects-view']').click()" class="text-sm text-indigo-500">See all</a>
+                    </div>
+                    <div id="dashboard-projects-container" class="space-y-3">
+                        <p class="text-center text-gray-500">No active projects.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Tasks View (hidden by default) -->
+            <!-- Tasks View -->
             <div id="tasks-view" class="hidden">
                  <div class="flex justify-between items-center mb-6">
                     <h2 class="text-lg font-semibold">Your Tasks</h2>
@@ -70,9 +79,7 @@
                         <i class="fas fa-plus"></i>
                     </button>
                 </div>
-                <div id="tasks-container" class="space-y-3">
-                    <!-- Tasks will be rendered here -->
-                </div>
+                <div id="tasks-container" class="space-y-3"></div>
             </div>
 
             <!-- Projects View -->
@@ -83,16 +90,14 @@
                         <i class="fas fa-plus"></i>
                     </button>
                 </div>
-                <div id="projects-container" class="space-y-4">
-                    <!-- Projects will be rendered here -->
-                </div>
+                <div id="projects-container" class="space-y-4"></div>
             </div>
-             <!-- Finances View (hidden by default) -->
+             <!-- Finances View -->
             <div id="finances-view" class="hidden">
                 <p class="text-center text-gray-500 mt-8">Finance tracking coming soon!</p>
             </div>
 
-            <!-- Kittens View (hidden by default) -->
+            <!-- Kittens View -->
             <div id="kittens-view" class="hidden">
                  <p class="text-center text-gray-500 mt-8">Kitten collection coming soon!</p>
             </div>
@@ -101,26 +106,11 @@
         <!-- Bottom Navigation -->
         <nav id="bottom-nav" class="bg-white border-t border-gray-200 p-2 hidden">
             <div class="flex justify-around">
-                <button class="tab-btn p-2 text-center text-gray-600 tab-active" data-view="dashboard-view">
-                    <i class="fas fa-home block text-xl mb-1"></i>
-                    <span class="text-xs">Home</span>
-                </button>
-                <button class="tab-btn p-2 text-center text-gray-600" data-view="tasks-view">
-                    <i class="fas fa-tasks block text-xl mb-1"></i>
-                    <span class="text-xs">Tasks</span>
-                </button>
-                <button class="tab-btn p-2 text-center text-gray-600" data-view="projects-view">
-                    <i class="fas fa-project-diagram block text-xl mb-1"></i>
-                    <span class="text-xs">Projects</span>
-                </button>
-                <button class="tab-btn p-2 text-center text-gray-600" data-view="finances-view">
-                    <i class="fas fa-wallet block text-xl mb-1"></i>
-                    <span class="text-xs">Finances</span>
-                </button>
-                <button class="tab-btn p-2 text-center text-gray-600" data-view="kittens-view">
-                    <i class="fas fa-paw block text-xl mb-1"></i>
-                    <span class="text-xs">Kittens</span>
-                </button>
+                <button class="tab-btn p-2 text-center text-gray-600 tab-active" data-view="dashboard-view"> <i class="fas fa-home block text-xl mb-1"></i> <span class="text-xs">Home</span> </button>
+                <button class="tab-btn p-2 text-center text-gray-600" data-view="tasks-view"> <i class="fas fa-tasks block text-xl mb-1"></i> <span class="text-xs">Tasks</span> </button>
+                <button class="tab-btn p-2 text-center text-gray-600" data-view="projects-view"> <i class="fas fa-project-diagram block text-xl mb-1"></i> <span class="text-xs">Projects</span> </button>
+                <button class="tab-btn p-2 text-center text-gray-600" data-view="finances-view"> <i class="fas fa-wallet block text-xl mb-1"></i> <span class="text-xs">Finances</span> </button>
+                <button class="tab-btn p-2 text-center text-gray-600" data-view="kittens-view"> <i class="fas fa-paw block text-xl mb-1"></i> <span class="text-xs">Kittens</span> </button>
             </div>
         </nav>
 
@@ -131,7 +121,7 @@
                     <div class="p-4 border-b">
                         <h3 id="project-modal-title" class="text-lg font-medium">New Project</h3>
                     </div>
-                    <div class="p-4">
+                    <div class="p-4 max-h-96 overflow-y-auto">
                         <input id="project-id" type="hidden">
                         <div class="mb-4">
                             <label for="project-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
@@ -143,10 +133,8 @@
                         </div>
                         <div class="mb-4">
                             <h4 class="text-sm font-medium text-gray-700 mb-2">Steps</h4>
-                            <div id="project-steps-container" class="space-y-2">
-                                <!-- Steps will be rendered here -->
-                            </div>
-                            <button onclick="addProjectStep(event)" class="mt-2 text-sm text-indigo-600 hover:text-indigo-800">+ Add step</button>
+                            <div id="project-steps-container" class="space-y-2"></div>
+                            <button type="button" onclick="addProjectStep(event)" class="mt-2 text-sm text-indigo-600 hover:text-indigo-800">+ Add step</button>
                         </div>
                     </div>
                     <div class="p-4 bg-gray-50 flex justify-end space-x-2">
@@ -158,12 +146,11 @@
         </div>
     </div>
 
-    <!-- Firebase -->
+    <!-- Use Firebase 8 COMPAT for simplicity with inline on-click handlers -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-    <!-- Firebase Configuration -->
     <script src="firebase-config.js"></script>
     <script src="script.js"></script>
 </body>
