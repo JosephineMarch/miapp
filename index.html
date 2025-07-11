@@ -1,121 +1,598 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crea Infantil - Centro Creativo</title>
-    <meta name="description" content="Tu centro de productividad y creatividad, sincronizado en la nube.">
-    <meta name="theme-color" content="#7B61FF">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="style.css">
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <title>Crea-Kitty - Organize Your Life with Kittens</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-active {
+            position: relative;
+            color: #6366f1;
+        }
+        
+        .tab-active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 6px;
+            background-color: #6366f1;
+            border-radius: 50%;
+        }
+        
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .kitten-card:hover .kitten-img {
+            transform: scale(1.05);
+        }
+        
+        .kitten-img {
+            transition: transform 0.3s ease;
+        }
+    </style>
 </head>
-<body>
-    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
-        <symbol id="icon-tasks" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/><path d="m9 17-3-3 1.41-1.41L9 14.17l4.59-4.59L15 11l-6 6z"/></symbol>
-        <symbol id="icon-inbox" viewBox="0 0 24 24"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 12h-4c0 1.66-1.34 3-3 3s-3-1.34-3-3H5V5h14v10z"/></symbol>
-        <symbol id="icon-wallet" viewBox="0 0 24 24"><path d="M21 4H3c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.11-.9-2-2-2zm0 14H3V8h18v10zm-10-6h9v2h-9v-2z"/></symbol>
-        <symbol id="icon-progress" viewBox="0 0 24 24"><path d="M4 9h4v11H4zm6 3h4v8h-4zm6-6h4v14h-4z"/></symbol>
-        <symbol id="icon-home" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
-        <symbol id="icon-add" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
-        <symbol id="icon-delete" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
-        <symbol id="icon-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
-        <symbol id="icon-copy" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></symbol>
-        <symbol id="icon-close" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
-        <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M9.37 5.51A7.35 7.35 0 0 0 9.1 7.5c0 4.08 3.32 7.4 7.4 7.4.68 0 1.35-.09 1.99-.27C17.45 18.2 14.9 20 12 20c-4.41 0-8-3.59-8-8 0-2.91 1.8-5.45 4.37-6.49z"/></symbol>
-        <symbol id="icon-sun" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.03-3.63 2.94-6.54 6.57-6.57L10 4.41c-4.22.36-7.64 3.78-8 8zM20 13h2c-.36-4.22-3.78-7.64-8-8v2.02c3.63.03 6.54 2.94 6.57 6.57L20 13z"/></symbol>
-        <symbol id="icon-google" viewBox="0 0 48 48"><path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.8l-7.11-5.52c-2.16 1.45-4.92 2.3-8.78 2.3-6.68 0-12.35-4.48-14.38-10.48H2.1v5.7C6.02 42.66 14.48 48 24 48z"/><path fill="#FBBC05" d="M9.62 28.18c-.48-1.45-.76-3-.76-4.68s.28-3.23.76-4.68V13.1H2.1c-1.4 2.78-2.23 5.92-2.23 9.22s.84 6.44 2.23 9.22l7.52-5.72z"/><path fill="#EA4335" d="M24 9.48c3.52 0 6.62 1.22 9.09 3.52l6.29-6.29C35.91 2.82 30.46 0 24 0 14.48 0 6.02 5.34 2.1 13.1l7.52 5.72C11.65 13.96 17.32 9.48 24 9.48z"/></symbol>
-        <symbol id="icon-logout" viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></symbol>
-        <symbol id="icon-arrow-left" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></symbol>
-        <symbol id="icon-arrow-right" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></symbol>
-    </svg>
-    
-    <div id="login-container" class="container visible">
-        <div class="login-card">
-            <div class="login-illustration">
-                <svg viewBox="0 0 200 150"><rect width="200" height="150" rx="20" fill="#EAEAFB"/></svg>
+<body class="bg-gray-50 font-sans text-gray-800">
+    <div class="max-w-md mx-auto min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white p-4 shadow-sm">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <i class="fas fa-cat text-2xl text-indigo-500 mr-2"></i>
+                    <h1 class="text-xl font-bold text-indigo-600">Crea-Kitty</h1>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
             </div>
-            <h2>Gestiona tu creatividad y bienestar</h2>
-            <p>Tu espacio personal para organizar ideas, proyectos y hábitos.</p>
-            <button id="loginBtn" class="btn-primary">
-                <svg class="icon"><use href="#icon-google"/></svg>
-                Iniciar sesión con Google
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 overflow-y-auto" id="main-content">
+            <!-- Dashboard View -->
+            <div id="dashboard-view">
+                <div class="mb-6">
+                    <h2 class="text-lg font-semibold mb-3">Welcome back!</h2>
+                    <div class="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl p-4 text-white shadow-md">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm opacity-90">Your progress</p>
+                                <h3 class="text-xl font-bold mt-1">3/10 Tasks Completed</h3>
+                            </div>
+                            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                <i class="fas fa-trophy text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="w-full bg-white bg-opacity-30 rounded-full h-2">
+                                <div class="progress-bar bg-white h-2 rounded-full" style="width: 30%"></div>
+                            </div>
+                            <p class="text-xs mt-2 opacity-90">Complete 7 more tasks to unlock a new kitten!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-lg font-semibold">Your Kittens</h2>
+                        <a href="#" class="text-sm text-indigo-500">See all</a>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="kitten-card bg-white rounded-xl p-3 shadow-sm text-center">
+                            <div class="w-16 h-16 mx-auto mb-2 overflow-hidden rounded-full bg-pink-100 flex items-center justify-center">
+                                <img src="https://placekitten.com/100/100" alt="Kitten" class="kitten-img w-full h-full object-cover">
+                            </div>
+                            <p class="text-xs font-medium">Whiskers</p>
+                        </div>
+                        <div class="kitten-card bg-white rounded-xl p-3 shadow-sm text-center">
+                            <div class="w-16 h-16 mx-auto mb-2 overflow-hidden rounded-full bg-yellow-100 flex items-center justify-center">
+                                <img src="https://placekitten.com/101/101" alt="Kitten" class="kitten-img w-full h-full object-cover">
+                            </div>
+                            <p class="text-xs font-medium">Mittens</p>
+                        </div>
+                        <div class="kitten-card bg-white rounded-xl p-3 shadow-sm text-center">
+                            <div class="w-16 h-16 mx-auto mb-2 overflow-hidden rounded-full bg-purple-100 flex items-center justify-center">
+                                <img src="https://placekitten.com/102/102" alt="Kitten" class="kitten-img w-full h-full object-cover">
+                            </div>
+                            <p class="text-xs font-medium">Shadow</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-lg font-semibold">Recent Tasks</h2>
+                        <a href="#" class="text-sm text-indigo-500">See all</a>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="card-hover bg-white rounded-xl p-4 shadow-sm flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-3">
+                                <i class="fas fa-check text-sm"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium">Morning workout</h3>
+                                <p class="text-xs text-gray-500">Completed today</p>
+                            </div>
+                            <div class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                                <i class="fas fa-paw text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="card-hover bg-white rounded-xl p-4 shadow-sm flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center mr-3">
+                                <i class="fas fa-times text-sm"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium">Read 30 pages</h3>
+                                <p class="text-xs text-gray-500">Due tomorrow</p>
+                            </div>
+                            <div class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                                <i class="fas fa-paw text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-lg font-semibold">Quick Stats</h2>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="card-hover bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2">
+                                    <i class="fas fa-wallet text-sm"></i>
+                                </div>
+                                <h3 class="font-medium">Finances</h3>
+                            </div>
+                            <p class="text-xs text-gray-500">$1,200 saved this month</p>
+                        </div>
+                        <div class="card-hover bg-white rounded-xl p-4 shadow-sm">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center mr-2">
+                                    <i class="fas fa-star text-sm"></i>
+                                </div>
+                                <h3 class="font-medium">Streak</h3>
+                            </div>
+                            <p class="text-xs text-gray-500">5 days in a row</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks View (hidden by default) -->
+            <div id="tasks-view" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold">Your Tasks</h2>
+                    <button class="add-btn w-10 h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-md">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex space-x-2 overflow-x-auto pb-2">
+                        <button class="px-4 py-1 bg-indigo-500 text-white rounded-full text-sm whitespace-nowrap">All</button>
+                        <button class="px-4 py-1 bg-gray-200 rounded-full text-sm whitespace-nowrap">Today</button>
+                        <button class="px-4 py-1 bg-gray-200 rounded-full text-sm whitespace-nowrap">Work</button>
+                        <button class="px-4 py-1 bg-gray-200 rounded-full text-sm whitespace-nowrap">Personal</button>
+                        <button class="px-4 py-1 bg-gray-200 rounded-full text-sm whitespace-nowrap">Completed</button>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="card-hover bg-white rounded-xl p-4 shadow-sm">
+                        <div class="flex items-start">
+                            <button class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center mr-3 mt-1"></button>
+                            <div class="flex-1">
+                                <h3 class="font-medium">Finish project presentation</h3>
+                                <p class="text-xs text-gray-500 mt-1">Due tomorrow • Work</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full text-xs">+5 points</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-hover bg-white rounded-xl p-4 shadow-sm">
+                        <div class="flex items-start">
+                            <button class="w-6 h-6 rounded-full border-2 border-indigo-500 flex items-center justify-center mr-3 mt-1"></button>
+                            <div class="flex-1">
+                                <h3 class="font-medium">Buy groceries</h3>
+                                <p class="text-xs text-gray-500 mt-1">Due today • Personal</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full text-xs">+3 points</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-hover bg-white rounded-xl p-4 shadow-sm opacity-60">
+                        <div class="flex items-start">
+                            <button class="w-6 h-6 rounded-full bg-indigo-500 text-white flex items-center justify-center mr-3 mt-1">
+                                <i class="fas fa-check text-xs"></i>
+                            </button>
+                            <div class="flex-1">
+                                <h3 class="font-medium line-through">Morning workout</h3>
+                                <p class="text-xs text-gray-500 mt-1">Completed today • Health</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="px-2 py-0.5 bg-green-100 text-green-600 rounded-full text-xs">+10 points</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projects View (hidden by default) -->
+            <div id="projects-view" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold">Your Projects</h2>
+                    <button class="add-btn w-10 h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-md">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex space-x-2 overflow-x-auto pb-2">
+                        <button class="px-4 py-1 bg-indigo-500 text-white rounded-full text-sm whitespace-nowrap">All</button>
+                        <button class="px-4 py-1 bg-gray-200 rounded-full text-sm whitespace-nowrap">Active</button>
+                        <button class="px-4 py-1 bg-gray-200 rounded-full text-sm whitespace-nowrap">Completed</button>
+                        <button class="px-4 py-1 bg-gray-200 rounded-full text-sm whitespace-nowrap">Overdue</button>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="card-hover bg-white rounded-xl p-4 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-medium">Website Redesign</h3>
+                            <span class="px-2 py-0.5 bg-green-100 text-green-600 rounded-full text-xs">Active</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Complete redesign of company website with new branding</p>
+                        <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+                            <span><i class="fas fa-calendar-alt mr-1"></i> Due: Aug 15</span>
+                            <span><i class="fas fa-paw mr-1"></i> Reward: 50 pts</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-indigo-500 h-2 rounded-full" style="width: 65%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>65% complete</span>
+                            <span>13/20 tasks</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-hover bg-white rounded-xl p-4 shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-medium">Learn Spanish</h3>
+                            <span class="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">Active</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Complete beginner to intermediate Spanish course</p>
+                        <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+                            <span><i class="fas fa-calendar-alt mr-1"></i> Due: Dec 1</span>
+                            <span><i class="fas fa-paw mr-1"></i> Reward: 100 pts</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-indigo-500 h-2 rounded-full" style="width: 30%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>30% complete</span>
+                            <span>6/20 lessons</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-hover bg-white rounded-xl p-4 shadow-sm opacity-80">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-medium line-through">Write Book</h3>
+                            <span class="px-2 py-0.5 bg-purple-100 text-purple-600 rounded-full text-xs">Completed</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Finish first draft of novel</p>
+                        <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
+                            <span><i class="fas fa-calendar-alt mr-1"></i> Completed: May 20</span>
+                            <span><i class="fas fa-paw mr-1"></i> Earned: 75 pts</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-indigo-500 h-2 rounded-full" style="width: 100%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>100% complete</span>
+                            <span>25/25 chapters</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Finances View (hidden by default) -->
+            <div id="finances-view" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold">Your Finances</h2>
+                    <button class="add-btn w-10 h-10 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-md">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="bg-white rounded-xl p-4 shadow-sm mb-3">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-medium">Monthly Balance</h3>
+                            <span class="text-sm text-gray-500">June 2023</span>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <p class="text-xs text-gray-500">Income</p>
+                                <h4 class="text-lg font-bold text-green-500">$3,200</h4>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Expenses</p>
+                                <h4 class="text-lg font-bold text-red-500">$1,800</h4>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Savings</p>
+                                <h4 class="text-lg font-bold text-indigo-500">$1,400</h4>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-medium">Expense Categories</h3>
+                            <a href="#" class="text-sm text-indigo-500">Details</a>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Food & Dining</span>
+                                    <span>$420</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-red-500 h-1.5 rounded-full" style="width: 35%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Transportation</span>
+                                    <span>$280</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-yellow-500 h-1.5 rounded-full" style="width: 25%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Entertainment</span>
+                                    <span>$180</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-purple-500 h-1.5 rounded-full" style="width: 15%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="font-medium mb-3">Recent Transactions</h3>
+                    <div class="space-y-3">
+                        <div class="card-hover bg-white rounded-xl p-4 shadow-sm flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center mr-3">
+                                <i class="fas fa-utensils"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-medium">Dinner with friends</h4>
+                                <p class="text-xs text-gray-500">June 15 • Food & Dining</p>
+                            </div>
+                            <div class="text-red-500 font-medium">-$45</div>
+                        </div>
+                        
+                        <div class="card-hover bg-white rounded-xl p-4 shadow-sm flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-green-100 text-green-500 flex items-center justify-center mr-3">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-medium">Salary</h4>
+                                <p class="text-xs text-gray-500">June 10 • Income</p>
+                            </div>
+                            <div class="text-green-500 font-medium">+$3,200</div>
+                        </div>
+                        
+                        <div class="card-hover bg-white rounded-xl p-4 shadow-sm flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center mr-3">
+                                <i class="fas fa-bus"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-medium">Monthly pass</h4>
+                                <p class="text-xs text-gray-500">June 5 • Transportation</p>
+                            </div>
+                            <div class="text-red-500 font-medium">-$85</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kittens View (hidden by default) -->
+            <div id="kittens-view" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold">Your Kittens</h2>
+                    <div class="flex items-center">
+                        <span class="px-2 py-1 bg-indigo-100 text-indigo-600 rounded-full text-xs font-medium">125 points</span>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex space-x-2 overflow-x-auto pb-2">
+                        <button class="px-4 py-1 bg-indigo-500 text-white rounded-full text-sm whitespace-nowrap">All</button>
+                        <button class="px-4 py-1 bg-gray-200 rounded-full text-sm whitespace-nowrap">Common</button>
+                        <button class="px-4 py-1 bg-gray-200 rounded-full text-sm whitespace-nowrap">Rare</button>
+                        <button class="px-4 py-1 bg-gray-200 rounded-full text-sm whitespace-nowrap">Legendary</button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="kitten-card bg-white rounded-xl p-4 shadow-sm text-center">
+                        <div class="w-24 h-24 mx-auto mb-3 overflow-hidden rounded-2xl bg-pink-100 flex items-center justify-center floating">
+                            <img src="https://placekitten.com/200/200" alt="Kitten" class="kitten-img w-full h-full object-cover">
+                        </div>
+                        <h3 class="font-medium">Whiskers</h3>
+                        <p class="text-xs text-gray-500 mb-2">Common • Level 2</p>
+                        <div class="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+                            <div class="bg-pink-500 h-1.5 rounded-full" style="width: 40%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500">15/40 points to next level</p>
+                    </div>
+                    
+                    <div class="kitten-card bg-white rounded-xl p-4 shadow-sm text-center">
+                        <div class="w-24 h-24 mx-auto mb-3 overflow-hidden rounded-2xl bg-yellow-100 flex items-center justify-center floating">
+                            <img src="https://placekitten.com/201/201" alt="Kitten" class="kitten-img w-full h-full object-cover">
+                        </div>
+                        <h3 class="font-medium">Mittens</h3>
+                        <p class="text-xs text-gray-500 mb-2">Rare • Level 3</p>
+                        <div class="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+                            <div class="bg-yellow-500 h-1.5 rounded-full" style="width: 75%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500">30/40 points to next level</p>
+                    </div>
+                    
+                    <div class="kitten-card bg-white rounded-xl p-4 shadow-sm text-center">
+                        <div class="w-24 h-24 mx-auto mb-3 overflow-hidden rounded-2xl bg-purple-100 flex items-center justify-center floating">
+                            <img src="https://placekitten.com/202/202" alt="Kitten" class="kitten-img w-full h-full object-cover">
+                        </div>
+                        <h3 class="font-medium">Shadow</h3>
+                        <p class="text-xs text-gray-500 mb-2">Common • Level 1</p>
+                        <div class="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+                            <div class="bg-purple-500 h-1.5 rounded-full" style="width: 20%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500">8/40 points to next level</p>
+                    </div>
+                    
+                    <div class="kitten-card bg-white rounded-xl p-4 shadow-sm text-center relative">
+                        <div class="absolute top-2 right-2 w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-xs">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <div class="w-24 h-24 mx-auto mb-3 overflow-hidden rounded-2xl bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-question text-2xl text-gray-400"></i>
+                        </div>
+                        <h3 class="font-medium">???</h3>
+                        <p class="text-xs text-gray-500 mb-2">Legendary • Locked</p>
+                        <button class="w-full mt-2 py-1.5 bg-indigo-500 text-white rounded-full text-xs font-medium">
+                            Unlock (200 points)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bg-white border-t border-gray-200 p-2">
+            <div class="flex justify-around">
+                <button class="tab-btn p-2 text-center text-gray-600 tab-active" data-view="dashboard-view">
+                    <i class="fas fa-home block text-xl mb-1"></i>
+                    <span class="text-xs">Home</span>
+                </button>
+                <button class="tab-btn p-2 text-center text-gray-600" data-view="tasks-view">
+                    <i class="fas fa-tasks block text-xl mb-1"></i>
+                    <span class="text-xs">Tasks</span>
+                </button>
+                <button class="tab-btn p-2 text-center text-gray-600" data-view="finances-view">
+                    <i class="fas fa-wallet block text-xl mb-1"></i>
+                    <span class="text-xs">Finances</span>
+                </button>
+                <button class="tab-btn p-2 text-center text-gray-600" data-view="projects-view">
+                    <i class="fas fa-project-diagram block text-xl mb-1"></i>
+                    <span class="text-xs">Projects</span>
+                </button>
+                <button class="tab-btn p-2 text-center text-gray-600" data-view="kittens-view">
+                    <i class="fas fa-paw block text-xl mb-1"></i>
+                    <span class="text-xs">Kittens</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Floating Action Button -->
+        <div class="fixed bottom-20 right-4">
+            <button class="add-btn w-14 h-14 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 transition-colors">
+                <i class="fas fa-plus text-xl"></i>
             </button>
         </div>
     </div>
 
-    <div id="app-wrapper">
-        <nav class="sidebar-nav">
-            <div class="sidebar-header"><h1 class="logo">Crea</h1></div>
-            <button class="nav-button active" data-tab="dashboard-content"><svg class="icon"><use href="#icon-home"/></svg> Dashboard</button>
-            <button class="nav-button" data-tab="projects-content"><svg class="icon"><use href="#icon-tasks"/></svg> Proyectos</button>
-            <button class="nav-button" data-tab="finances-content"><svg class="icon"><use href="#icon-wallet"/></svg> Finanzas</button>
-            <button class="nav-button" data-tab="progress-content"><svg class="icon"><use href="#icon-progress"/></svg> Progreso</button>
-            <button class="nav-button" data-tab="inbox-content"><svg class="icon"><use href="#icon-inbox"/></svg> Ideas</button>
-            <div class="sidebar-footer">
-                <button class="btn-icon" id="theme-toggle" title="Cambiar tema"><svg class="icon"><use href="#icon-moon"/></svg></button>
-                <button class="btn-icon" id="logoutBtn" title="Cerrar sesión"><svg class="icon"><use href="#icon-logout"/></svg></button>
-            </div>
-        </nav>
-
-        <div class="main-container">
-            <header class="main-header">
-                <div class="user-greeting">
-                    <img id="user-avatar" src="https://i.pravatar.cc/40" alt="Avatar de usuario" class="user-avatar">
-                    <div>
-                        <span class="greeting-text">Hola,</span>
-                        <span id="user-display-name" class="user-name"></span>
-                    </div>
-                </div>
-                <div class="mobile-header-actions">
-                    <button class="btn-icon" id="mobile-theme-toggle" title="Cambiar tema"><svg class="icon"><use href="#icon-moon"/></svg></button>
-                </div>
-            </header>
-
-            <main class="main-content">
-                <div class="tab-content active" id="dashboard-content">
-                    <div class="calendar-header">
-                        <button class="btn-icon nav-week-btn" id="prev-week-btn"><svg class="icon"><use href="#icon-arrow-left"/></svg></button>
-                        <h2 class="month-title" id="dashboardMonthTitle"></h2>
-                        <button class="btn-icon nav-week-btn" id="next-week-btn"><svg class="icon"><use href="#icon-arrow-right"/></svg></button>
-                    </div>
-                    <div id="weekly-dashboard-grid" class="weekly-dashboard-grid"></div>
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title" id="routines-title">Rutinas para Hoy</h3>
-                        </div>
-                        <div class="item-list" id="routines-list"></div>
-                        <div class="input-group">
-                            <input type="text" id="new-routine-input" placeholder="Añadir nueva rutina...">
-                            <button class="btn-icon btn-primary" id="add-routine-btn" title="Añadir Rutina"><svg class="icon"><use href="#icon-add"/></svg></button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-content" id="projects-content"></div>
-                <div class="tab-content" id="inbox-content"></div>
-                <div class="tab-content" id="finances-content"></div>
-                <div class="tab-content" id="progress-content"></div>
-            </main>
-        </div>
-    </div>
-    
-    <nav class="bottom-nav">
-        <button class="nav-button active" data-tab="dashboard-content"><svg class="icon"><use href="#icon-home"/></svg><span>Dashboard</span></button>
-        <button class="nav-button" data-tab="projects-content"><svg class="icon"><use href="#icon-tasks"/></svg><span>Proyectos</span></button>
-        <button class="nav-button" data-tab="finances-content"><svg class="icon"><use href="#icon-wallet"/></svg><span>Finanzas</span></button>
-        <button class="nav-button" data-tab="progress-content"><svg class="icon"><use href="#icon-progress"/></svg><span>Progreso</span></button>
-        <button class="nav-button" data-tab="inbox-content"><svg class="icon"><use href="#icon-inbox"/></svg><span>Ideas</span></button>
-    </nav>
-    
-    <div class="notification" id="notification"></div>
-    
-    <script src="script.js" type="module"></script>
+    <script>
+        // Tab navigation functionality
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab-btn').forEach(tab => {
+                    tab.classList.remove('tab-active');
+                    tab.classList.add('text-gray-600');
+                });
+                
+                // Add active class to clicked tab
+                this.classList.add('tab-active');
+                this.classList.remove('text-gray-600');
+                
+                // Hide all views
+                document.querySelectorAll('#main-content > div').forEach(view => {
+                    view.classList.add('hidden');
+                });
+                
+                // Show selected view
+                const viewId = this.getAttribute('data-view');
+                document.getElementById(viewId).classList.remove('hidden');
+            });
+        });
+        
+        // Add button functionality
+        document.querySelectorAll('.add-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Get current view
+                let currentView = '';
+                document.querySelectorAll('#main-content > div').forEach(view => {
+                    if (!view.classList.contains('hidden')) {
+                        currentView = view.id;
+                    }
+                });
+                
+                // Different actions based on current view
+                if (currentView === 'tasks-view') {
+                    alert('Add new task form would appear here');
+                } else if (currentView === 'projects-view') {
+                    alert('Add new project form would appear here');
+                } else if (currentView === 'finances-view') {
+                    alert('Add new transaction form would appear here');
+                } else {
+                    // Default action for other views
+                    alert('Quick add menu would appear here');
+                }
+            });
+        });
+        
+        // Task completion toggle
+        document.querySelectorAll('.kitten-card').forEach(card => {
+            card.addEventListener('click', function() {
+                if (!this.querySelector('.fa-lock')) {
+                    alert('Kitten details would appear here');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
