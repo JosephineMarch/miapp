@@ -1,150 +1,174 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
+    // Firebase services
     const auth = firebase.auth();
     const db = firebase.firestore();
     let currentUser = null;
 
     // UI Elements
-    const userProfileIcon = document.getElementById('user-profile-icon');
-    const mainContent = document.getElementById('main-content');
-    const loginView = document.getElementById('login-view');
-    const bottomNav = document.getElementById('bottom-nav');
-    const tasksContainer = document.getElementById('tasks-container');
+    const elements = {
+        userProfileIcon: document.getElementById('user-profile-icon'),
+        mainContent: document.getElementById('main-content'),
+        loginView: document.getElementById('login-view'),
+        bottomNav: document.getElementById('bottom-nav'),
+        tasksContainer: document.getElementById('tasks-container'),
+        projectsContainer: document.getElementById('projects-container'),
+        projectModal: document.getElementById('project-modal'),
+        projectModalTitle: document.getElementById('project-modal-title'),
+        projectId: document.getElementById('project-id'),
+        projectTitle: document.getElementById('project-title'),
+        projectDueDate: document.getElementById('project-due-date'),
+        projectStepsContainer: document.getElementById('project-steps-container'),
+    };
 
     // --- Authentication ---
     auth.onAuthStateChanged(user => {
         if (user) {
             currentUser = user;
-            // Show main app, hide login
-            mainContent.classList.remove('hidden');
-            bottomNav.classList.remove('hidden');
-            loginView.classList.add('hidden');
-            
-            // Update profile icon
-            userProfileIcon.innerHTML = `<img src="${user.photoURL}" alt="User" class="w-8 h-8 rounded-full">`;
-            
-            // Load user data
-            loadTasks();
+            elements.mainContent.classList.remove('hidden');
+            elements.bottomNav.classList.remove('hidden');
+            elements.loginView.classList.add('hidden');
+            elements.userProfileIcon.innerHTML = `<img src="${user.photoURL}" alt="User" class="w-8 h-8 rounded-full">`;
+            loadAllData();
         } else {
             currentUser = null;
-            // Show login, hide main app
-            mainContent.classList.add('hidden');
-            bottomNav.classList.add('hidden');
-            loginView.classList.remove('hidden');
-
-            // Reset UI
-            userProfileIcon.innerHTML = `<i class="fas fa-user"></i>`;
-            if(tasksContainer) renderTasks([]); // Clear tasks if container exists
+            elements.mainContent.classList.add('hidden');
+            elements.bottomNav.classList.add('hidden');
+            elements.loginView.classList.remove('hidden');
+            elements.userProfileIcon.innerHTML = `<i class="fas fa-user"></i>`;
         }
     });
+    
+    function loadAllData() {
+        loadTasks();
+        loadProjects();
+    }
 
-    window.signInWithGoogle = () => {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).catch(error => {
-            console.error("Error during sign-in:", error);
+    // --- Project Management ---
+    function loadProjects() {
+        if (!currentUser) return;
+        db.collection('users').doc(currentUser.uid).collection('projects').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+            const projects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderProjects(projects);
         });
     }
 
-    window.signOutUser = () => {
-        auth.signOut();
-    }
-
-    userProfileIcon.addEventListener('click', () => {
-        if (currentUser) {
-            signOutUser();
-        } else {
-            signInWithGoogle();
-        }
-    });
-
-
-    // --- Task Management ---
-    function loadTasks() {
-        if (!currentUser || !tasksContainer) return;
-
-        tasksContainer.innerHTML = '<p class="text-center text-gray-500">Loading tasks...</p>';
-
-        db.collection('users').doc(currentUser.uid).collection('tasks').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
-            const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderTasks(tasks);
-        }, error => {
-            console.error("Error loading tasks:", error);
-            tasksContainer.innerHTML = '<p class="text-center text-red-500">Could not load tasks.</p>';
-        });
-    }
-
-    function renderTasks(tasks) {
-        if (!tasksContainer) return;
-        tasksContainer.innerHTML = ''; // Clear previous tasks
-
-        if (tasks.length === 0) {
-            tasksContainer.innerHTML = '<p class="text-center text-gray-500">No tasks yet. Add one!</p>';
+    function renderProjects(projects) {
+        if (!elements.projectsContainer) return;
+        elements.projectsContainer.innerHTML = '';
+        if (projects.length === 0) {
+            elements.projectsContainer.innerHTML = '<p class="text-center text-gray-500">No projects yet. Add one!</p>';
             return;
         }
+        projects.forEach(project => {
+            const completedSteps = project.steps ? project.steps.filter(s => s.completed).length : 0;
+            const totalSteps = project.steps ? project.steps.length : 0;
+            const progress = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
 
-        tasks.forEach(task => {
-            const taskElement = document.createElement('div');
-            taskElement.className = `card-hover bg-white rounded-xl p-4 shadow-sm ${task.completed ? 'opacity-60' : ''}`;
-            taskElement.innerHTML = `
-                <div class="flex items-start">
-                    <button class="w-6 h-6 rounded-full border-2 ${task.completed ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-indigo-500'} flex items-center justify-center mr-3 mt-1 flex-shrink-0" onclick="toggleTask('${task.id}', ${task.completed})">
-                        ${task.completed ? '<i class="fas fa-check text-xs"></i>' : ''}
-                    </button>
-                    <div class="flex-1">
-                        <h3 class="font-medium ${task.completed ? 'line-through' : ''}">${task.title}</h3>
-                        <p class="text-xs text-gray-500 mt-1">${task.dueDate || ''} • ${task.category || 'General'}</p>
-                        <div class="flex items-center mt-2">
-                            <span class="px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full text-xs">+${task.points || 1} points</span>
-                        </div>
-                    </div>
+            const projectCard = document.createElement('div');
+            projectCard.className = 'card-hover bg-white rounded-xl p-4 shadow-sm cursor-pointer';
+            projectCard.onclick = () => openProjectModal(project);
+            projectCard.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-medium">${project.title}</h3>
+                    <span class="px-2 py-0.5 bg-green-100 text-green-600 rounded-full text-xs">${progress === 100 ? 'Completed' : 'Active'}</span>
+                </div>
+                ${project.dueDate ? `<p class="text-xs text-gray-500 mb-3"><i class="fas fa-calendar-alt mr-1"></i> Due: ${project.dueDate}</p>` : ''}
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-indigo-500 h-2 rounded-full" style="width: ${progress}%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>${Math.round(progress)}% complete</span>
+                    <span>${completedSteps}/${totalSteps} steps</span>
                 </div>
             `;
-            tasksContainer.appendChild(taskElement);
+            elements.projectsContainer.appendChild(projectCard);
         });
     }
+    
+    window.openProjectModal = (project = {}) => {
+        elements.projectModalTitle.textContent = project.id ? 'Edit Project' : 'New Project';
+        elements.projectId.value = project.id || '';
+        elements.projectTitle.value = project.title || '';
+        elements.projectDueDate.value = project.dueDate || '';
+        
+        renderProjectSteps(project.steps || []);
+        
+        elements.projectModal.classList.remove('hidden');
+    }
 
-    window.toggleTask = (taskId, currentState) => {
+    window.closeProjectModal = () => {
+        elements.projectModal.classList.add('hidden');
+    }
+    
+    function renderProjectSteps(steps = []) {
+        elements.projectStepsContainer.innerHTML = '';
+        steps.forEach((step, index) => {
+            const stepEl = document.createElement('div');
+            stepEl.className = 'flex items-center';
+            stepEl.innerHTML = `
+                <input type="checkbox" ${step.completed ? 'checked' : ''} class="h-4 w-4 rounded border-gray-300 text-indigo-600 mr-2" onchange="updateStepState(${index}, this.checked)">
+                <input type="text" value="${step.title}" class="w-full border-0 border-b-2 border-gray-200 focus:ring-0 focus:border-indigo-500 text-sm" onchange="updateStepTitle(${index}, this.value)">
+                <button onclick="removeProjectStep(${index})" class="ml-2 text-gray-400 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
+            `;
+            elements.projectStepsContainer.appendChild(stepEl);
+        });
+    }
+    
+    window.addProjectStep = () => {
+        const newStep = { title: '', completed: false };
+        const steps = getStepsFromModal();
+        steps.push(newStep);
+        renderProjectSteps(steps);
+    }
+    
+    function getStepsFromModal() {
+        const steps = [];
+        elements.projectStepsContainer.querySelectorAll('.flex').forEach(stepEl => {
+            steps.push({
+                title: stepEl.querySelector('input[type="text"]').value,
+                completed: stepEl.querySelector('input[type="checkbox"]').checked
+            });
+        });
+        return steps;
+    }
+
+    window.saveProject = () => {
         if (!currentUser) return;
-        db.collection('users').doc(currentUser.uid).collection('tasks').doc(taskId).update({
-            completed: !currentState
-        });
-    }
+        
+        const id = elements.projectId.value;
+        const data = {
+            title: elements.projectTitle.value,
+            dueDate: elements.projectDueDate.value,
+            steps: getStepsFromModal(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
 
-    function addTask(title) {
-        if (!currentUser) return;
-        db.collection('users').doc(currentUser.uid).collection('tasks').add({
-            title: title,
-            completed: false,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        if (id) {
+            // Update existing project
+            db.collection('users').doc(currentUser.uid).collection('projects').doc(id).update(data);
+        } else {
+            // Create new project
+            data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            db.collection('users').doc(currentUser.uid).collection('projects').add(data);
+        }
+        
+        closeProjectModal();
     }
-
-    // --- Navigation & UI ---
+    
+    // Attach to window for inline onclicks
+    window.signInWithGoogle = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+    window.signOutUser = () => auth.signOut();
+    // Other functions like loadTasks, renderTasks, etc. are defined above
+    // Simplified navigation and add button logic
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            // Deactivate all tabs
-            document.querySelectorAll('.tab-btn').forEach(tab => {
-                tab.classList.remove('tab-active');
-                tab.classList.add('text-gray-600');
-            });
-            
-            // Activate clicked tab
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active'));
             this.classList.add('tab-active');
-            this.classList.remove('text-gray-600');
-            
-            // Hide all main content views
-            document.querySelectorAll('#main-content > div[id$="-view"]').forEach(view => {
-                view.classList.add('hidden');
-            });
-            
-            // Show the selected view
-            const viewId = this.getAttribute('data-view');
-            document.getElementById(viewId).classList.remove('hidden');
+            document.querySelectorAll('#main-content > div[id$="-view"]').forEach(v => v.classList.add('hidden'));
+            document.getElementById(this.dataset.view).classList.remove('hidden');
         });
     });
-
-    document.querySelectorAll('.add-btn').forEach(btn => {
+     document.querySelectorAll('.add-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const currentView = [...document.querySelectorAll('#main-content > div[id$="-view"]')]
                 .find(view => !view.classList.contains('hidden'));
@@ -156,7 +180,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (title) {
                     addTask(title);
                 }
-            } else {
+            } else if (currentView.id === 'projects-view') {
+                openProjectModal();
+            }
+             else {
                 alert('Add functionality for other views is coming soon!');
             }
         });
