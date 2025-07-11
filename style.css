@@ -1,0 +1,59 @@
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.floating {
+    animation: float 3s ease-in-out infinite;
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.tab-active {
+    position: relative;
+    color: #6366f1;
+}
+
+.tab-active::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    background-color: #6366f1;
+    border-radius: 50%;
+}
+
+.progress-bar {
+    transition: width 0.5s ease-in-out;
+}
+
+.kitten-card:hover .kitten-img {
+    transform: scale(1.05);
+}
+
+.kitten-img {
+    transition: transform 0.3s ease;
+}
+
+/* Make the bottom navigation bar fixed */
+body {
+    padding-bottom: 70px; /* Adjust this value to match the height of your nav bar */
+}
+
+nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 28rem; /* Equivalent to max-w-md */
+    margin-left: auto;
+    margin-right: auto;
+    z-index: 1000;
+}
