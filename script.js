@@ -369,7 +369,7 @@ function renderDashboard() {
             <div class="space-y-3">
                 ${state.tasks.slice(0, 3).map(task => `
                     <div class="bg-surface rounded-2xl p-4 shadow-sm flex items-center">
-                        <i class="fa-regular ${task.completed ? 'fa-circle-check text-green-500' : 'fa-circle text-text-muted'} text-2xl mr-4"></i>
+                        <i class="fa-regular ${task.completed ? 'fa-circle-check text-accent-purple' : 'fa-circle text-text-muted'} text-2xl mr-4"></i>
                         <div class="flex-grow font-semibold text-primary-dark ${task.completed ? 'line-through text-text-muted' : ''}">${task.title}</div>
                     </div>
                 `).join('') || `<p class="text-center text-text-muted py-4">${texts.no_tasks}</p>`}
@@ -385,7 +385,7 @@ function renderTasks() {
             <h2 class="text-3xl font-bold text-primary-dark">${texts.tasks}</h2>
         </div>
         <div class="flex justify-center mb-6">
-             <img src="https://placekitten.com/200/140" class="w-48 h-auto rounded-2xl illustration" alt="Task illustration">
+             <img src="https://cdn.prod.website-files.com/5d5e2ff58f10c53dcffd8683/5db1e0e7e74e34610bcb4951_sprinting.gif" class="w-48 h-auto rounded-2xl illustration" alt="Task illustration">
         </div>
         <div class="space-y-4">
             ${state.tasks.length > 0 ? state.tasks.map(task => `
@@ -408,7 +408,7 @@ function renderProjects() {
     container.innerHTML = `
         <div class="flex justify-between items-center mb-4"><h2 class="text-3xl font-bold text-primary-dark">${texts.projects}</h2></div>
         <div class="flex justify-center mb-6">
-             <img src="https://placekitten.com/200/150" class="w-48 h-auto rounded-2xl illustration" alt="Project illustration">
+             <img src="https://cdn.prod.website-files.com/5d5e2ff58f10c53dcffd8683/5d5e30d9898356c023c60de1_loving.svg" class="w-48 h-auto rounded-2xl illustration" alt="Project illustration">
         </div>
         <div class="space-y-5">
             ${state.projects.length > 0 ? state.projects.map(project => {
@@ -435,7 +435,7 @@ function renderProjects() {
                     </div>
                     
                     <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
-                        <div class="bg-gradient-to-r from-accent-purple to-accent-magenta h-2.5 rounded-full" style="width: ${progress}%"></div>
+                        <div class="bg-accent-purple h-2.5 rounded-full" style="width: ${progress}%"></div>
                     </div>
                     <div class="flex justify-between text-xs text-text-muted">
                         <span>${completedSteps}/${totalSteps} ${texts.completed}</span>
@@ -470,7 +470,7 @@ function renderFinances() {
     container.innerHTML = `
         <div class="flex justify-between items-center mb-4"><h2 class="text-3xl font-bold text-primary-dark">${texts.money}</h2></div>
         <div class="flex justify-center mb-6">
-             <img src="https://placekitten.com/200/160" class="w-48 h-auto rounded-2xl illustration" alt="Money illustration">
+             <img src="https://cdn.prod.website-files.com/5d5e2ff58f10c53dcffd8683/5d73852f7a6dfa5b3e1e829f_clumsy.svg" class="w-48 h-auto rounded-2xl illustration" alt="Money illustration">
         </div>
         <div class="bg-gradient-to-br from-accent-purple to-accent-magenta text-white rounded-3xl p-6 shadow-lg mb-6">
             <p class="text-sm opacity-90">${texts.balance}</p>
