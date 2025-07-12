@@ -15,27 +15,16 @@ body {
     background-color: var(--background-color);
     font-family: var(--font-family);
     color: var(--text-color);
+    /* Se añade padding solo cuando la navegación inferior es visible */
 }
 
-/* Solo añade padding cuando el usuario ha iniciado sesión y la nav está visible */
 body.logged-in {
-    padding-bottom: 80px;
+    padding-bottom: 80px; 
 }
 
 #login-view {
-    width: 100%;
-    min-height: 100vh; /* Asegura que ocupe toda la altura de la pantalla */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Evita que el contenedor principal tenga doble padding cuando no está logueado */
-.max-w-md {
     min-height: 100vh;
 }
-
 
 /* --- ANIMACIONES Y EFECTOS --- */
 @keyframes float {
@@ -64,17 +53,16 @@ body.logged-in {
     bottom: 0;
     left: 0;
     right: 0;
-    max-width: 28rem; /* mx-auto for a centered block of this width */
+    max-width: 28rem;
     margin-left: auto;
     margin-right: auto;
-    z-index: 40; /* Menos que el modal */
+    z-index: 40;
     border-top: 1px solid var(--border-color);
     background-color: var(--surface-color);
 }
 
 .tab-btn {
     color: var(--text-muted);
-    transition: color 0.2s;
 }
 
 .tab-active {
@@ -85,7 +73,7 @@ body.logged-in {
 .tab-active::after {
     content: '';
     position: absolute;
-    bottom: -4px; /* Adjust as needed */
+    bottom: -4px;
     left: 50%;
     transform: translateX(-50%);
     width: 6px;
@@ -108,7 +96,7 @@ body.logged-in {
     border-radius: 0.375rem;
     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     z-index: 50;
-    display: none; /* Se mostrará con JS */
+    display: none; /* Se gestiona con JS */
 }
 
 .dropdown-menu.show {
