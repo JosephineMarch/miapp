@@ -391,7 +391,7 @@ function renderTasks() {
             ${state.tasks.length > 0 ? state.tasks.map(task => `
                 <div class="bg-surface rounded-2xl p-5 shadow-sm flex items-center card-hover">
                     <button data-id="${task.id}" class="task-check-btn flex-shrink-0 mr-4">
-                        <i class="fa-regular ${task.completed ? 'fa-circle-check bg-accent-purple' : 'fa-circle text-text-muted'} text-3xl"></i>
+                        <i class="fa-regular ${task.completed ? 'fa-circle-check text-accent-purple' : 'fa-circle text-text-muted'} text-3xl"></i>
                     </button>
                     <div class="flex-grow font-semibold text-primary-dark ${task.completed ? 'line-through text-text-muted' : ''}">${task.title}</div>
                     <button class="edit-task-btn text-text-muted hover:text-accent-purple" data-id="${task.id}"><i class="fa-regular fa-pen-to-square"></i></button>
