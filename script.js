@@ -44,15 +44,15 @@ const state = {
 
 // --- Textos de la Interfaz (i18n) ---
 const texts = {
-    welcome: "¡Bienvenido/a!",
+    welcome: "¡Hola de nuevo,",
     progress: "Tu progreso",
     tasksCompleted: "Tareas Completadas",
     unlockKitten: "¡Sigue así para desbloquear un nuevo gatito!",
     seeAll: "Ver todo",
     recentTasks: "Tareas Recientes",
-    quickStats: "Estadísticas",
+    quickStats: "Estadísticas Rápidas",
     financesSummary: "Resumen Financiero",
-    balance: "Balance",
+    balance: "Balance Actual",
     streak: "Racha",
     daysInARow: "días seguidos",
     home: "Inicio",
@@ -82,9 +82,9 @@ const texts = {
     cancel: "Cancelar",
     delete: "Eliminar",
     edit: "Editar",
-    no_tasks: "No hay tareas. ¡Añade una!",
-    no_projects: "No hay proyectos. ¡Añade uno!",
-    no_transactions: "No hay transacciones este mes.",
+    no_tasks: "No hay tareas pendientes. ¡Buen trabajo!",
+    no_projects: "No hay proyectos activos. ¡Empieza uno nuevo!",
+    no_transactions: "Aún no hay transacciones.",
     are_you_sure: "¿Estás seguro/a de que quieres eliminar esto?",
     confirm_delete: "Confirmar Eliminación",
     completed: "Completado",
@@ -101,7 +101,7 @@ onAuthStateChanged(auth, (user) => {
         ui.bottomNav.classList.remove('hidden');
         ui.fabContainer.classList.remove('hidden');
         ui.loginView.classList.add('hidden');
-        ui.userProfileIcon.innerHTML = `<img src="${user.photoURL}" alt="User" class="w-8 h-8 rounded-full cursor-pointer">`;
+        ui.userProfileIcon.innerHTML = `<img src="${user.photoURL}" alt="User" class="w-10 h-10 rounded-full cursor-pointer border-2 border-white">`;
         initializeAppShell();
     } else {
         currentUser = null;
@@ -158,8 +158,8 @@ function renderAppLayout() {
         <div class="flex justify-around items-center h-full">
             ${Object.keys(navIcons).map(view => `
                 <button data-view="${view}" class="tab-btn flex flex-col items-center justify-center w-full h-full">
-                    <i class="${navIcons[view]} text-2xl"></i>
-                    <span class="text-xs mt-1">${navLabels[view]}</span>
+                    <i class="${navIcons[view]} text-xl"></i>
+                    <span class="text-xs mt-1 font-semibold">${navLabels[view]}</span>
                 </button>
             `).join('')}
         </div>
@@ -227,7 +227,7 @@ function openModal({ title, fields, onSave, data = {}, onDelete }) {
     for (const field of fields) {
         const value = data[field.id] || field.default || '';
         const inputId = `modal-input-${field.id}`;
-        const inputClasses = "w-full bg-gray-100 border-transparent rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-transparent";
+        const inputClasses = "w-full bg-gray-100 border-transparent rounded-lg p-3 focus:ring-2 focus:ring-accent-purple focus:border-transparent";
         switch (field.type) {
             case 'text':
                 fieldsHTML += `<div class="mb-4"><label for="${inputId}" class="block text-sm font-medium text-text-muted mb-1">${field.label}</label><input type="text" id="${inputId}" value="${value}" class="${inputClasses}" ${field.required ? 'required' : ''}></div>`;
@@ -246,7 +246,7 @@ function openModal({ title, fields, onSave, data = {}, onDelete }) {
                 fieldsHTML += `<div class="mb-4"><label for="${inputId}" class="block text-sm font-medium text-text-muted mb-1">${field.label}</label><input type="date" id="${inputId}" value="${dateValue}" class="${inputClasses}"></div>`;
                 break;
             case 'steps':
-                fieldsHTML += `<div class="mb-4"><h4 class="text-sm font-medium text-text-muted mb-2">${texts.steps}</h4><div id="steps-container" class="space-y-2">${(value || []).map((step, i) => renderStepInput(step)).join('')}</div><button type="button" id="add-step-btn" class="mt-2 text-sm text-primary hover:underline">${texts.add_step}</button></div>`;
+                fieldsHTML += `<div class="mb-4"><h4 class="text-sm font-medium text-text-muted mb-2">${texts.steps}</h4><div id="steps-container" class="space-y-2">${(value || []).map((step, i) => renderStepInput(step)).join('')}</div><button type="button" id="add-step-btn" class="mt-2 text-sm text-accent-purple hover:underline">${texts.add_step}</button></div>`;
                 break;
         }
     }
@@ -263,7 +263,7 @@ function openModal({ title, fields, onSave, data = {}, onDelete }) {
             <footer class="flex justify-end items-center p-4 bg-gray-50 rounded-b-3xl space-x-3">
                 ${onDelete ? `<button class="delete-btn bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600">${texts.delete}</button>` : ''}
                 <button class="cancel-btn bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300">${texts.cancel}</button>
-                <button class="save-btn bg-primary text-primary-dark font-bold py-2 px-4 rounded-lg hover:opacity-90">${texts.save}</button>
+                <button class="save-btn bg-accent-purple text-white font-bold py-2 px-4 rounded-lg hover:opacity-90">${texts.save}</button>
             </footer>
         </div>
     `;
@@ -301,8 +301,8 @@ function closeModal() {
 function renderStepInput(step = { title: '', completed: false }) {
     return `
         <div class="flex items-center space-x-2">
-            <input type="checkbox" ${step.completed ? 'checked' : ''} class="h-5 w-5 rounded-md border-gray-300 text-primary focus:ring-primary">
-            <input type="text" value="${step.title || ''}" class="flex-grow border-0 border-b-2 bg-transparent p-1 focus:ring-0 focus:border-primary text-sm" placeholder="Descripción del paso">
+            <input type="checkbox" ${step.completed ? 'checked' : ''} class="h-5 w-5 rounded-md border-gray-300 text-accent-purple focus:ring-accent-purple">
+            <input type="text" value="${step.title || ''}" class="flex-grow border-0 border-b-2 bg-transparent p-1 focus:ring-0 focus:border-accent-purple text-sm" placeholder="Descripción del paso">
             <button type="button" onclick="this.parentElement.remove()" class="remove-step-btn text-text-muted hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
         </div>`;
 }
@@ -338,27 +338,32 @@ function renderDashboard() {
     const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
     container.innerHTML = `
-        <h2 class="text-3xl font-bold text-primary-dark mb-6">${texts.welcome} ${currentUser.displayName.split(' ')[0]}!</h2>
-        <div class="bg-primary-dark rounded-3xl p-6 text-white shadow-lg mb-8 card-hover">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="text-sm opacity-80">${texts.progress}</p>
-                    <h3 class="text-2xl font-bold mt-1">${completedTasks}/${totalTasks} ${texts.tasksCompleted}</h3>
+        <h2 class="text-3xl font-bold text-primary-dark mb-6">${texts.welcome} <span class="text-accent-purple">${currentUser.displayName.split(' ')[0]}!</span></h2>
+        
+        <div class="mb-8">
+            <h3 class="text-xl font-bold text-primary-dark mb-4">${texts.quickStats}</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-accent-purple-soft rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-center mb-2">
+                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center mr-3"><i class="fa-regular fa-square-check text-accent-purple"></i></div>
+                        <h4 class="font-bold text-primary-dark">${texts.tasks}</h4>
+                    </div>
+                    <p class="text-lg font-bold text-primary-dark">${completedTasks}/${totalTasks} <span class="text-sm font-normal text-text-muted">${texts.completed}</span></p>
                 </div>
-                <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                    <i class="fa-regular fa-trophy text-xl"></i>
+                <div class="bg-accent-pink-soft rounded-2xl p-4 shadow-sm">
+                    <div class="flex items-center mb-2">
+                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center mr-3"><i class="fa-regular fa-star text-accent-magenta"></i></div>
+                        <h4 class="font-bold text-primary-dark">${texts.streak}</h4>
+                    </div>
+                    <p class="text-lg font-bold text-primary-dark">0 <span class="text-sm font-normal text-text-muted">${texts.daysInARow}</span></p>
                 </div>
-            </div>
-            <div class="mt-4">
-                <div class="w-full bg-white bg-opacity-20 rounded-full h-2.5"><div class="bg-white h-2.5 rounded-full progress-bar" style="width: ${progress}%"></div></div>
-                <p class="text-xs mt-2 opacity-80">${texts.unlockKitten}</p>
             </div>
         </div>
-        
+
         <div class="mb-8">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-primary-dark">${texts.recentTasks}</h3>
-                <a href="#" class="text-sm text-primary font-semibold hover:underline" onclick="document.querySelector('[data-view=\\'tasks-view\\']').click()">${texts.seeAll}</a>
+                <a href="#" class="text-sm text-accent-purple font-semibold hover:underline" onclick="document.querySelector('[data-view=\\'tasks-view\\']').click()">${texts.seeAll}</a>
             </div>
             <div class="space-y-3">
                 ${state.tasks.slice(0, 3).map(task => `
@@ -369,34 +374,17 @@ function renderDashboard() {
                 `).join('') || `<p class="text-center text-text-muted py-4">${texts.no_tasks}</p>`}
             </div>
         </div>
-
-        <div>
-            <h3 class="text-xl font-bold text-primary-dark mb-4">${texts.quickStats}</h3>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-surface rounded-2xl p-4 shadow-sm">
-                    <div class="flex items-center mb-2">
-                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3"><i class="fa-regular fa-wallet text-blue-600"></i></div>
-                        <h4 class="font-bold text-primary-dark">${texts.money}</h4>
-                    </div>
-                    <p class="text-lg font-bold text-primary-dark">$${(state.transactions.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0)).toFixed(2)}</p>
-                </div>
-                <div class="bg-surface rounded-2xl p-4 shadow-sm">
-                    <div class="flex items-center mb-2">
-                        <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center mr-3"><i class="fa-regular fa-star text-yellow-600"></i></div>
-                        <h4 class="font-bold text-primary-dark">${texts.streak}</h4>
-                    </div>
-                    <p class="text-lg font-bold text-primary-dark">0 <span class="text-sm font-normal text-text-muted">${texts.daysInARow}</span></p>
-                </div>
-            </div>
-        </div>
     `;
 }
 
 function renderTasks() {
     const container = document.getElementById('tasks-view');
     container.innerHTML = `
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex justify-between items-center mb-4">
             <h2 class="text-3xl font-bold text-primary-dark">${texts.tasks}</h2>
+        </div>
+        <div class="flex justify-center mb-6">
+             <img src="https://placekitten.com/200/140" class="w-48 h-auto rounded-2xl illustration" alt="Task illustration">
         </div>
         <div class="space-y-4">
             ${state.tasks.length > 0 ? state.tasks.map(task => `
@@ -405,7 +393,7 @@ function renderTasks() {
                         <i class="fa-regular ${task.completed ? 'fa-circle-check text-green-500' : 'fa-circle text-text-muted'} text-3xl"></i>
                     </button>
                     <div class="flex-grow font-semibold text-primary-dark ${task.completed ? 'line-through text-text-muted' : ''}">${task.title}</div>
-                    <button class="edit-task-btn text-text-muted hover:text-primary" data-id="${task.id}"><i class="fa-regular fa-pen-to-square"></i></button>
+                    <button class="edit-task-btn text-text-muted hover:text-accent-purple" data-id="${task.id}"><i class="fa-regular fa-pen-to-square"></i></button>
                 </div>
             `).join('') : `<p class="text-center text-text-muted py-8">${texts.no_tasks}</p>`}
         </div>
@@ -417,7 +405,10 @@ function renderTasks() {
 function renderProjects() {
     const container = document.getElementById('projects-view');
     container.innerHTML = `
-        <div class="flex justify-between items-center mb-6"><h2 class="text-3xl font-bold text-primary-dark">${texts.projects}</h2></div>
+        <div class="flex justify-between items-center mb-4"><h2 class="text-3xl font-bold text-primary-dark">${texts.projects}</h2></div>
+        <div class="flex justify-center mb-6">
+             <img src="https://placekitten.com/200/150" class="w-48 h-auto rounded-2xl illustration" alt="Project illustration">
+        </div>
         <div class="space-y-5">
             ${state.projects.length > 0 ? state.projects.map(project => {
                 const totalSteps = project.steps?.length || 0;
@@ -428,7 +419,7 @@ function renderProjects() {
                     <div class="mt-4 pt-4 border-t border-gray-100 space-y-3">
                         ${project.steps.map((step, index) => `
                             <div class="flex items-center">
-                                <input type="checkbox" id="step-${project.id}-${index}" data-project-id="${project.id}" data-step-index="${index}" class="step-checkbox h-5 w-5 rounded-md border-gray-300 text-primary focus:ring-primary mr-3 cursor-pointer" ${step.completed ? 'checked' : ''}>
+                                <input type="checkbox" id="step-${project.id}-${index}" data-project-id="${project.id}" data-step-index="${index}" class="step-checkbox h-5 w-5 rounded-md border-gray-300 text-accent-purple focus:ring-accent-purple mr-3 cursor-pointer" ${step.completed ? 'checked' : ''}>
                                 <label for="step-${project.id}-${index}" class="text-sm font-medium ${step.completed ? 'line-through text-text-muted' : 'text-primary-dark'} cursor-pointer">${step.title}</label>
                             </div>
                         `).join('')}
@@ -438,12 +429,12 @@ function renderProjects() {
                 return `
                 <div class="bg-surface rounded-3xl p-5 shadow-sm card-hover">
                     <div class="project-header cursor-pointer" data-id="${project.id}">
-                        <h3 class="font-bold text-lg text-primary-dark">${project.title}</h3>
+                        <h3 class="font-bold text-lg text-accent-purple">${project.title}</h3>
                         <p class="text-sm text-text-muted mt-1 mb-3">${project.description || ''}</p>
                     </div>
                     
                     <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
-                        <div class="bg-accent-dataviz h-2.5 rounded-full" style="width: ${progress}%"></div>
+                        <div class="bg-gradient-to-r from-accent-purple to-accent-magenta h-2.5 rounded-full" style="width: ${progress}%"></div>
                     </div>
                     <div class="flex justify-between text-xs text-text-muted">
                         <span>${completedSteps}/${totalSteps} ${texts.completed}</span>
@@ -476,13 +467,16 @@ function renderFinances() {
     const expenses = state.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
 
     container.innerHTML = `
-        <div class="flex justify-between items-center mb-6"><h2 class="text-3xl font-bold text-primary-dark">${texts.money}</h2></div>
-        <div class="bg-surface rounded-3xl p-5 shadow-sm mb-6">
-            <h3 class="font-bold text-lg text-primary-dark mb-4">${texts.financesSummary}</h3>
-            <div class="flex justify-between items-center text-center">
-                <div><p class="text-sm text-text-muted">${texts.income}</p><h4 class="text-xl font-bold text-green-500">$${income.toFixed(2)}</h4></div>
-                <div><p class="text-sm text-text-muted">${texts.expense}</p><h4 class="text-xl font-bold text-red-500">$${expenses.toFixed(2)}</h4></div>
-                <div><p class="text-sm text-text-muted">${texts.balance}</p><h4 class="text-xl font-bold ${balance >= 0 ? 'text-primary-dark' : 'text-red-500'}">$${balance.toFixed(2)}</h4></div>
+        <div class="flex justify-between items-center mb-4"><h2 class="text-3xl font-bold text-primary-dark">${texts.money}</h2></div>
+        <div class="flex justify-center mb-6">
+             <img src="https://placekitten.com/200/160" class="w-48 h-auto rounded-2xl illustration" alt="Money illustration">
+        </div>
+        <div class="bg-gradient-to-br from-accent-purple to-accent-magenta text-white rounded-3xl p-6 shadow-lg mb-6">
+            <p class="text-sm opacity-90">${texts.balance}</p>
+            <h3 class="text-4xl font-bold mt-1">$${balance.toFixed(2)}</h3>
+            <div class="flex justify-between items-end mt-4">
+                <div><p class="text-xs opacity-80">${texts.income}</p><h4 class="font-semibold">$${income.toFixed(2)}</h4></div>
+                <div><p class="text-xs opacity-80">${texts.expense}</p><h4 class="font-semibold">$${expenses.toFixed(2)}</h4></div>
             </div>
         </div>
         <div>
