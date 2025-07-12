@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Cambiado a español -->
+<!-- Mantenido en español y estructura base para el script -->
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -16,9 +16,10 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-gray-50 font-poppins text-gray-800">
-    <div class="max-w-md mx-auto min-h-screen flex flex-col">
+    <!-- Contenedor principal para el layout móvil -->
+    <div class="max-w-md mx-auto min-h-screen flex flex-col relative">
         <!-- Header -->
-        <header class="bg-white p-4 shadow-sm">
+        <header class="bg-white p-4 shadow-sm sticky top-0 z-30">
             <div class="flex justify-between items-center">
                 <div class="flex items-center">
                     <i class="fas fa-cat text-2xl text-indigo-500 mr-2"></i>
@@ -32,26 +33,33 @@
             </div>
         </header>
 
-        <!-- Vista de Login en Español -->
+        <!-- Vista de Login (se oculta al iniciar sesión) -->
         <div id="login-view" class="flex-1 flex flex-col items-center justify-center text-center p-8">
             <i class="fas fa-cat text-6xl text-indigo-500 mb-4 floating"></i>
             <h2 class="text-2xl font-bold mb-2">Bienvenido/a a Crea-Kitty</h2>
             <p class="text-gray-600 mb-6">Organiza tu vida y desbloquea lindos gatitos en el proceso.</p>
-            <button id="login-button" class="bg-indigo-500 text-white font-bold py-2 px-4 rounded-full hover:bg-indigo-600 transition-colors flex items-center">
+            <button id="login-button" class="bg-indigo-500 text-white font-bold py-3 px-6 rounded-full hover:bg-indigo-600 transition-colors flex items-center shadow-md">
                 <i class="fab fa-google mr-2"></i>
                 Iniciar sesión con Google
             </button>
         </div>
 
         <!-- Contenido Principal (revelado por el script) -->
-        <main class="flex-1 p-4 overflow-y-auto hidden" id="main-content">
-            <!-- Vistas generadas dinámicamente -->
+        <main class="flex-1 overflow-y-auto hidden" id="main-content">
+            <!-- Vistas generadas dinámicamente por script.js -->
         </main>
 
         <!-- Navegación Inferior (revelado por el script) -->
         <nav id="bottom-nav" class="bg-white border-t border-gray-200 p-2 hidden">
-            <!-- Pestañas generadas dinámicamente -->
+            <!-- Pestañas generadas dinámicamente por script.js -->
         </nav>
+
+        <!-- Botón de Acción Flotante (FAB) (revelado por el script) -->
+        <div id="fab-container" class="hidden">
+            <button id="fab-add-button" class="fixed bottom-24 right-6 w-14 h-14 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 transition-transform hover:scale-110 z-40">
+                <i class="fas fa-plus text-xl"></i>
+            </button>
+        </div>
     </div>
 
     <!-- Módulo JS principal -->
