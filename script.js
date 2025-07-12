@@ -44,7 +44,7 @@ const state = {
 
 // --- Textos de la Interfaz (i18n) ---
 const texts = {
-    welcome: "¡Hola de nuevo,",
+    welcome: "¡Bienvenido/a de nuevo!",
     progress: "Tu progreso",
     tasksCompleted: "Tareas Completadas",
     unlockKitten: "¡Sigue así para desbloquear un nuevo gatito!",
@@ -101,7 +101,7 @@ onAuthStateChanged(auth, (user) => {
         ui.bottomNav.classList.remove('hidden');
         ui.fabContainer.classList.remove('hidden');
         ui.loginView.classList.add('hidden');
-        ui.userProfileIcon.innerHTML = `<img src="${user.photoURL}" alt="User" class="w-10 h-10 rounded-full cursor-pointer border-2 border-white">`;
+        ui.userProfileIcon.innerHTML = `<img src="${user.photoURL}" alt="User" class="w-9 h-9 rounded-full cursor-pointer">`;
         initializeAppShell();
     } else {
         currentUser = null;
@@ -110,7 +110,7 @@ onAuthStateChanged(auth, (user) => {
         ui.bottomNav.classList.add('hidden');
         ui.fabContainer.classList.add('hidden');
         ui.loginView.classList.remove('hidden');
-        ui.userProfileIcon.innerHTML = `<i class="fa-regular fa-user"></i>`;
+        ui.userProfileIcon.innerHTML = `<i class="fa-regular fa-user text-primary-dark text-lg"></i>`;
         state.tasks = [];
         state.projects = [];
         state.transactions = [];
@@ -134,7 +134,7 @@ function renderAppLayout() {
     const navIcons = {
         'dashboard-view': 'fa-regular fa-house',
         'tasks-view': 'fa-regular fa-square-check',
-        'projects-view': 'fa-regular fa-rectangle-history',
+        'projects-view': 'fa-regular fa-diagram-project', // Icono Corregido
         'finances-view': 'fa-regular fa-wallet',
         'kittens-view': 'fa-regular fa-cat'
     };
@@ -158,7 +158,7 @@ function renderAppLayout() {
         <div class="flex justify-around items-center h-full">
             ${Object.keys(navIcons).map(view => `
                 <button data-view="${view}" class="tab-btn flex flex-col items-center justify-center w-full h-full">
-                    <i class="${navIcons[view]} text-xl"></i>
+                    <i class="${navIcons[view]} text-2xl"></i>
                     <span class="text-xs mt-1 font-semibold">${navLabels[view]}</span>
                 </button>
             `).join('')}
@@ -335,14 +335,14 @@ function renderDashboard() {
     const container = document.getElementById('dashboard-view');
     const completedTasks = state.tasks.filter(t => t.completed).length;
     const totalTasks = state.tasks.length;
-    const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
     container.innerHTML = `
-        <h2 class="text-3xl font-bold text-primary-dark mb-6">${texts.welcome} <span class="text-accent-purple">${currentUser.displayName.split(' ')[0]}!</span></h2>
+        <h2 class="text-3xl font-bold text-primary-dark mb-6">${texts.welcome} <span class="text-accent-purple">${currentUser.displayName.split(' ')[0]}</span>!</h2>
         
         <div class="mb-8">
             <h3 class="text-xl font-bold text-primary-dark mb-4">${texts.quickStats}</h3>
             <div class="grid grid-cols-2 gap-4">
+                <!-- TARJETA CON FONDO MORADO SUAVE -->
                 <div class="bg-accent-purple-soft rounded-2xl p-4 shadow-sm">
                     <div class="flex items-center mb-2">
                         <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center mr-3"><i class="fa-regular fa-square-check text-accent-purple"></i></div>
@@ -350,6 +350,7 @@ function renderDashboard() {
                     </div>
                     <p class="text-lg font-bold text-primary-dark">${completedTasks}/${totalTasks} <span class="text-sm font-normal text-text-muted">${texts.completed}</span></p>
                 </div>
+                <!-- TARJETA CON FONDO ROSA SUAVE -->
                 <div class="bg-accent-pink-soft rounded-2xl p-4 shadow-sm">
                     <div class="flex items-center mb-2">
                         <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center mr-3"><i class="fa-regular fa-star text-accent-magenta"></i></div>

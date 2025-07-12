@@ -10,18 +10,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Usaremos la versión 6.5.2 de FontAwesome que tiene mejores iconos de línea -->
+    <!-- Usamos la versión 6.5.2 de FontAwesome que tiene los iconos correctos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="font-poppins">
     <!-- Contenedor principal para el layout móvil -->
     <div class="max-w-md mx-auto min-h-screen flex flex-col relative bg-background">
-        <!-- Header (sin fondo ni sombra para integrarse) -->
-        <header class="p-4 sticky top-0 z-30">
+        <!-- Header (Recuperado y correcto) -->
+        <header class="p-4 sticky top-0 z-30 bg-background">
             <div class="flex justify-between items-center">
                 <div class="flex items-center">
-                    <i class="fa-regular fa-cat text-2xl text-primary mr-2"></i>
+                    <i class="fa-regular fa-cat text-2xl text-accent-purple mr-2"></i>
                     <h1 class="text-xl font-bold text-primary-dark">Crea-Kitty</h1>
                 </div>
                 <div class="flex items-center">
@@ -32,7 +32,7 @@
             </div>
         </header>
 
-        <!-- Vista de Login (se oculta al iniciar sesión) -->
+        <!-- Vista de Login (Correcta y actualizada) -->
         <div id="login-view" class="flex-1 flex flex-col items-center justify-center text-center p-8">
             <img src="https://assets-global.website-files.com/652a233b86064f275cdb271d/653ec865d1b7ef3834316d9b_Learning-illustration-color.svg" alt="Ilustración de estudio" class="w-64 h-64 mb-4">
             <h2 class="text-3xl font-extrabold text-primary-dark mb-3">La única app que necesitas</h2>
@@ -43,19 +43,19 @@
             </button>
         </div>
 
-        <!-- Contenido Principal (revelado por el script) -->
+        <!-- Contenido Principal (El script lo llenará) -->
         <main class="flex-1 overflow-y-auto hidden" id="main-content">
             <!-- Vistas generadas dinámicamente por script.js -->
         </main>
 
-        <!-- Navegación Inferior (revelado por el script) -->
+        <!-- Navegación Inferior (El script la llenará) -->
         <nav id="bottom-nav" class="hidden">
             <!-- Pestañas generadas dinámicamente por script.js -->
         </nav>
 
-        <!-- Botón de Acción Flotante (FAB) (revelado por el script) -->
+        <!-- Botón de Acción Flotante (FAB) (El script lo mostrará) -->
         <div id="fab-container" class="hidden">
-            <button id="fab-add-button" class="fixed bottom-28 right-6 w-16 h-16 bg-primary text-primary-dark rounded-full flex items-center justify-center shadow-lg hover:opacity-90 transition-transform hover:scale-105 z-40">
+            <button id="fab-add-button" class="fixed bottom-28 right-6 w-16 h-16 bg-accent-purple text-white rounded-full flex items-center justify-center shadow-lg hover:opacity-90 transition-transform hover:scale-105 z-40">
                 <i class="fas fa-plus text-2xl"></i>
             </button>
         </div>

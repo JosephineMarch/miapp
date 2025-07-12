@@ -1,42 +1,32 @@
 /* --- VARIABLES Y ESTILOS GLOBALES --- */
 :root {
-    /* Paleta de colores base (modificada) */
-    --primary-color: #A9A7FF; /* Lavanda suave se mantiene para elementos secundarios */
-    --primary-dark: #1C1C1E;  /* Gris carbón para texto principal */
-    --background-color: #F8FAFC; /* Un gris aún más claro, como en la referencia */
-    --surface-color: #FFFFFF;    /* Blanco puro para tarjetas */
+    --primary-dark: #1C1C1E;  /* Gris carbón para texto principal y nav */
+    --background-color: #F8FAFC; 
+    --surface-color: #FFFFFF;    
     --text-color: #1f2937;       
-    --text-muted: #6B7280;       /* Gris para subtexto (reemplaza al anterior #8A8A8E) */
+    --text-muted: #8A8A8E;       /* Gris para subtexto (más suave) */
     
-    /* --- NUEVOS COLORES DE ACENTO --- */
-    --accent-magenta: #D946EF;  /* Magenta vibrante */
-    --accent-pink-soft: #FBCFE8;/* Rosa muy suave */
-    --accent-purple: #9333EA;   /* Morado vibrante */
-    --accent-purple-soft: #E9D5FF; /* Morado muy suave */
+    /* Colores de acento */
+    --accent-magenta: #D946EF;  
+    --accent-pink-soft: #FBCFE8;
+    --accent-purple: #9333EA;   
+    --accent-purple-soft: #E9D5FF; 
     
-    /* Estilos de diseño */
-    --border-radius: 1.25rem; /* 20px */
+    --border-radius: 1.25rem; 
     --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
     --font-family: 'Poppins', sans-serif;
 }
 
 /* --- CLASES DE UTILIDAD PERSONALIZADAS (CRUCIAL) --- */
-.bg-primary { background-color: var(--primary-color); }
-.text-primary { color: var(--primary-color); }
+/* Esto permite que el script.js use las clases como si fueran de Tailwind */
 .bg-primary-dark { background-color: var(--primary-dark); }
 .text-primary-dark { color: var(--primary-dark); }
 .bg-surface { background-color: var(--surface-color); }
 .text-text-muted { color: var(--text-muted); }
-
-/* Nuevas clases de acento */
-.bg-accent-magenta { background-color: var(--accent-magenta); }
-.text-accent-magenta { color: var(--accent-magenta); }
 .bg-accent-pink-soft { background-color: var(--accent-pink-soft); }
 .bg-accent-purple { background-color: var(--accent-purple); }
 .text-accent-purple { color: var(--accent-purple); }
 .bg-accent-purple-soft { background-color: var(--accent-purple-soft); }
-
-.focus\:ring-primary:focus { --tw-ring-color: var(--primary-color); }
 .focus\:ring-accent-purple:focus { --tw-ring-color: var(--accent-purple); }
 
 
@@ -80,12 +70,12 @@ body.logged-in {
     transition: width 0.5s ease-in-out;
 }
 
-/* --- NAVEGACIÓN INFERIOR (NUEVO ESTILO) --- */
+/* --- NAVEGACIÓN INFERIOR (ESTILO OSCURO RECUPERADO) --- */
 #bottom-nav {
     height: 80px;
-    background-color: var(--surface-color); /* Fondo blanco */
-    border-top: 1px solid #e5e7eb; /* Borde superior sutil */
-    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04); /* Sombra superior */
+    background-color: var(--primary-dark); /* Fondo oscuro */
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
     padding: 0 0.5rem;
     position: fixed;
     bottom: 0;
@@ -100,23 +90,19 @@ body.logged-in {
 .tab-btn {
     color: var(--text-muted);
     transition: all 0.2s ease-in-out;
-    position: relative;
 }
 
-/* Estilo para el tab activo */
-.tab-active {
-    color: var(--accent-magenta); /* Color del icono y texto */
+/* Estilo para el icono del tab activo (Píldora morado suave) */
+.tab-active i {
+    color: var(--accent-purple); /* Icono en morado oscuro para contraste */
+    background-color: var(--accent-purple-soft); /* Fondo de la píldora */
+    border-radius: 9999px; 
+    padding: 0.5rem 1.25rem;
+    transform: translateY(-4px); 
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
 }
 
-/* Subrayado para el tab activo */
-.tab-active::after {
-    content: '';
-    position: absolute;
-    bottom: 4px; /* Posición del subrayado */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 24px;
-    height: 4px;
-    border-radius: 2px;
-    background-color: var(--accent-magenta);
+/* Ocultar el texto del tab activo */
+.tab-active span {
+    display: none; 
 }
