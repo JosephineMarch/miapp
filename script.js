@@ -381,15 +381,15 @@ function renderDashboard() {
 function renderTasks() {
     const container = document.getElementById('tasks-view');
     container.innerHTML = `
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-3xl font-bold text-primary-dark">${texts.tasks}</h2>
+        <div class="flex justify-center items-center mb-4">
+            <h2 class="text-3xl font-bold text-accent-purple">${texts.tasks}</h2>
         </div>
         <div class="flex justify-center mb-6">
              <img src="https://cdn.prod.website-files.com/5d5e2ff58f10c53dcffd8683/5db1e0e7e74e34610bcb4951_sprinting.gif" class="w-48 h-auto rounded-2xl illustration" alt="Task illustration">
         </div>
         <div class="space-y-4">
             ${state.tasks.length > 0 ? state.tasks.map(task => `
-                <div class="bg-surface rounded-2xl p-5 shadow-sm flex items-center card-hover">
+                <div class="bg-accent-purple-soft rounded-2xl p-5 shadow-sm flex items-center card-hover">
                     <button data-id="${task.id}" class="task-check-btn flex-shrink-0 mr-4">
                         <i class="fa-regular ${task.completed ? 'fa-circle-check text-accent-purple' : 'fa-circle text-text-muted'} text-3xl"></i>
                     </button>
@@ -406,7 +406,7 @@ function renderTasks() {
 function renderProjects() {
     const container = document.getElementById('projects-view');
     container.innerHTML = `
-        <div class="flex justify-between items-center mb-4"><h2 class="text-3xl font-bold text-primary-dark">${texts.projects}</h2></div>
+        <div class="flex justify-center items-center mb-4"><h2 class="text-3xl font-bold text-accent-purple">${texts.projects}</h2></div>
         <div class="flex justify-center mb-6">
              <img src="https://cdn.prod.website-files.com/5d5e2ff58f10c53dcffd8683/5d5e30d9898356c023c60de1_loving.svg" class="w-48 h-auto rounded-2xl illustration" alt="Project illustration">
         </div>
@@ -468,7 +468,7 @@ function renderFinances() {
     const expenses = state.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
 
     container.innerHTML = `
-        <div class="flex justify-between items-center mb-4"><h2 class="text-3xl font-bold text-primary-dark">${texts.money}</h2></div>
+        <div class="flex justify-center items-center mb-4"><h2 class="text-3xl font-bold text-accent-purple">${texts.money}</h2></div>
         <div class="flex justify-center mb-6">
              <img src="https://cdn.prod.website-files.com/5d5e2ff58f10c53dcffd8683/5d73852f7a6dfa5b3e1e829f_clumsy.svg" class="w-48 h-auto rounded-2xl illustration" alt="Money illustration">
         </div>
