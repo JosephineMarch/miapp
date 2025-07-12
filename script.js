@@ -472,7 +472,7 @@ function renderFinances() {
         <div class="flex justify-center mb-6">
              <img src="https://cdn.prod.website-files.com/5d5e2ff58f10c53dcffd8683/5d73852f7a6dfa5b3e1e829f_clumsy.svg" class="w-48 h-auto rounded-2xl illustration" alt="Money illustration">
         </div>
-        <div class="bg-accent-purple rounded-3xl p-6 shadow-lg mb-6">
+        <div class="text-white bg-accent-purple rounded-3xl p-6 shadow-lg mb-6">
             <p class="text-sm opacity-90">${texts.balance}</p>
             <h3 class="text-4xl font-bold mt-1">$${balance.toFixed(2)}</h3>
             <div class="flex justify-between items-end mt-4">
