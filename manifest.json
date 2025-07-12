@@ -2,7 +2,7 @@
     "name": "Crea-Kitty - Organiza tu Vida",
     "short_name": "Crea-Kitty",
     "description": "Tu espacio personal para organizar ideas, proyectos, finanzas y hábitos.",
-    "start_url": "/index.html",
+    "start_url": "https://josephinemarch.github.io/miapp",
     "display": "standalone",
     "background_color": "#F8FAFC",
     "theme_color": "#9333EA",
