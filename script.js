@@ -428,13 +428,13 @@ function renderProjects() {
                 ` : '';
 
                 return `
-                <div class="bg-accent-purple rounded-3xl p-5 shadow-sm card-hover">
+                <div class="bg-accent-pink-soft rounded-3xl p-5 shadow-sm card-hover">
                     <div class="project-header cursor-pointer" data-id="${project.id}">
                         <h3 class="font-bold text-lg text-accent-purple">${project.title}</h3>
                         <p class="text-sm text-text-muted mt-1 mb-3">${project.description || ''}</p>
                     </div>
                     
-                    <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                    <div class="w-full bg-accent-purple rounded-full h-2.5 mb-2">
                         <div class="text-accent-purple h-2.5 rounded-full" style="width: ${progress}%"></div>
                     </div>
                     <div class="flex justify-between text-xs text-text-muted">
