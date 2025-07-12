@@ -435,7 +435,7 @@ function renderProjects() {
                     </div>
                     
                     <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
-                        <div class="bg-accent-purple h-2.5 rounded-full" style="width: ${progress}%"></div>
+                        <div class="text-accent-purple h-2.5 rounded-full" style="width: ${progress}%"></div>
                     </div>
                     <div class="flex justify-between text-xs text-text-muted">
                         <span>${completedSteps}/${totalSteps} ${texts.completed}</span>
