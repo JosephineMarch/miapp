@@ -1,1 +1,15 @@
 Este es un archivo de prueba para diagnosticar el problema.
+
+prompt para deepsite
+Design a productivity mobile app with a cute, cheerful, and motivating design, using a turquoise, magenta, yellow, light blue, and complementary color palette.
+
+The app should have four sections: Tasks, which displays the current date, the title "Today's Tasks," and a list of tasks the user has created for that day. If nothing has been created, it simply says "You have no tasks for today."
+
+In Projects, a list of projects with steps that can be selected to complete the project.
+
+In Money, a card with a balance,
+and below it, a list of expenses and earnings.
+
+And Achievements: a super-visual dashboard with statistics and graphs of all the data the user has entered.
+
+The design has cute illustrations, icons, and buttons, all in the colors of the palette.

@@ -1,33 +1,32 @@
 <!DOCTYPE html>
-<!-- Mantenido en español y estructura base para el script -->
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Título y descripción en español -->
     <title>Crea-Kitty - Organiza tu Vida</title>
     <meta name="description" content="Tu espacio personal para organizar ideas, proyectos, finanzas y hábitos.">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Usaremos la versión 6.5.2 de FontAwesome que tiene mejores iconos de línea -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-50 font-poppins text-gray-800">
+<body class="font-poppins">
     <!-- Contenedor principal para el layout móvil -->
-    <div class="max-w-md mx-auto min-h-screen flex flex-col relative">
-        <!-- Header -->
-        <header class="bg-white p-4 shadow-sm sticky top-0 z-30">
+    <div class="max-w-md mx-auto min-h-screen flex flex-col relative bg-background">
+        <!-- Header (sin fondo ni sombra para integrarse) -->
+        <header class="p-4 sticky top-0 z-30">
             <div class="flex justify-between items-center">
                 <div class="flex items-center">
-                    <i class="fas fa-cat text-2xl text-indigo-500 mr-2"></i>
-                    <h1 class="text-xl font-bold text-indigo-600">Crea-Kitty</h1>
+                    <i class="fa-regular fa-cat text-2xl text-primary mr-2"></i>
+                    <h1 class="text-xl font-bold text-primary-dark">Crea-Kitty</h1>
                 </div>
                 <div class="flex items-center">
-                    <div id="user-profile-icon" class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 cursor-pointer">
-                        <i class="fas fa-user"></i>
+                    <div id="user-profile-icon" class="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer">
+                        <i class="fa-regular fa-user text-primary-dark text-lg"></i>
                     </div>
                 </div>
             </div>
@@ -35,11 +34,11 @@
 
         <!-- Vista de Login (se oculta al iniciar sesión) -->
         <div id="login-view" class="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <i class="fas fa-cat text-6xl text-indigo-500 mb-4 floating"></i>
-            <h2 class="text-2xl font-bold mb-2">Bienvenido/a a Crea-Kitty</h2>
-            <p class="text-gray-600 mb-6">Organiza tu vida y desbloquea lindos gatitos en el proceso.</p>
-            <button id="login-button" class="bg-indigo-500 text-white font-bold py-3 px-6 rounded-full hover:bg-indigo-600 transition-colors flex items-center shadow-md">
-                <i class="fab fa-google mr-2"></i>
+            <img src="https://assets-global.website-files.com/652a233b86064f275cdb271d/653ec865d1b7ef3834316d9b_Learning-illustration-color.svg" alt="Ilustración de estudio" class="w-64 h-64 mb-4">
+            <h2 class="text-3xl font-extrabold text-primary-dark mb-3">La única app que necesitas</h2>
+            <p class="text-text-muted mb-8 max-w-xs">Organiza tu vida y desbloquea lindos gatitos en el proceso.</p>
+            <button id="login-button" class="w-full max-w-xs bg-primary-dark text-white font-bold py-4 px-6 rounded-2xl hover:opacity-90 transition-opacity flex items-center justify-center shadow-lg">
+                <i class="fab fa-google mr-3"></i>
                 Iniciar sesión con Google
             </button>
         </div>
@@ -50,14 +49,14 @@
         </main>
 
         <!-- Navegación Inferior (revelado por el script) -->
-        <nav id="bottom-nav" class="bg-white border-t border-gray-200 p-2 hidden">
+        <nav id="bottom-nav" class="hidden">
             <!-- Pestañas generadas dinámicamente por script.js -->
         </nav>
 
         <!-- Botón de Acción Flotante (FAB) (revelado por el script) -->
         <div id="fab-container" class="hidden">
-            <button id="fab-add-button" class="fixed bottom-24 right-6 w-14 h-14 bg-indigo-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-600 transition-transform hover:scale-110 z-40">
-                <i class="fas fa-plus text-xl"></i>
+            <button id="fab-add-button" class="fixed bottom-28 right-6 w-16 h-16 bg-primary text-primary-dark rounded-full flex items-center justify-center shadow-lg hover:opacity-90 transition-transform hover:scale-105 z-40">
+                <i class="fas fa-plus text-2xl"></i>
             </button>
         </div>
     </div>

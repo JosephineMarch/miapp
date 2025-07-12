@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HappyTasks - Your Cheerful Productivity App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .task-completed {
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+        
+        .progress-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: conic-gradient(#3b82f6 var(--progress), #e0e7ff var(--progress));
+        }
+        
+        .illustration {
+            transition: all 0.3s ease;
+        }
+        
+        .illustration:hover {
+            transform: scale(1.05);
+        }
+        
+        .tab-active {
+            position: relative;
+        }
+        
+        .tab-active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 4px;
+            border-radius: 2px;
+            background-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="max-w-md mx-auto bg-white min-h-screen relative pb-20">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-cyan-400 to-blue-500 text-white p-6 rounded-b-3xl shadow-lg">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">HappyTasks</h1>
+                <p class="text-sm opacity-90">Stay productive & happy!</p>
+            </div>
+            <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md">
+                <i class="fas fa-smile text-yellow-400 text-2xl"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="px-4 py-6">
+        <!-- Navigation Tabs -->
+        <div class="flex justify-around mb-8 bg-white p-2 rounded-full shadow-md sticky top-0 z-10">
+            <button onclick="showTab('tasks')" id="tasks-tab" class="tab-active text-blue-500 p-2 rounded-full transition-colors">
+                <i class="fas fa-tasks text-xl"></i>
+            </button>
+            <button onclick="showTab('projects')" id="projects-tab" class="text-purple-500 p-2 rounded-full transition-colors">
+                <i class="fas fa-project-diagram text-xl"></i>
+            </button>
+            <button onclick="showTab('money')" id="money-tab" class="text-green-500 p-2 rounded-full transition-colors">
+                <i class="fas fa-wallet text-xl"></i>
+            </button>
+            <button onclick="showTab('achievements')" id="achievements-tab" class="text-yellow-500 p-2 rounded-full transition-colors">
+                <i class="fas fa-trophy text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-content">
+            <!-- Tasks Tab -->
+            <div id="tasks" class="tab-panel">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Today's Tasks</h2>
+                    <span class="text-sm text-gray-500" id="current-date"></span>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex items-center bg-cyan-50 p-4 rounded-xl mb-4">
+                        <img src="https://cdn-icons-png.flaticon.com/512/3774/3774299.png" class="w-16 h-16 illustration" alt="Task illustration">
+                        <div class="ml-4">
+                            <h3 class="font-bold text-cyan-800">Daily Motivation</h3>
+                            <p class="text-sm text-cyan-600" id="daily-motivation">You've got this! Small steps lead to big achievements.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex items-center">
+                        <input type="text" id="new-task" placeholder="Add a new task..." class="flex-grow p-3 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                        <button onclick="addTask()" class="bg-blue-500 text-white p-3 rounded-r-lg hover:bg-blue-600 transition-colors">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="task-list" class="space-y-2">
+                    <!-- Tasks will be added here dynamically -->
+                    <div class="text-center py-8 text-gray-400" id="no-tasks-message">
+                        <i class="fas fa-check-circle text-4xl mb-2"></i>
+                        <p>You have no tasks for today</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projects Tab -->
+            <div id="projects" class="tab-panel hidden">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Your Projects</h2>
+                
+                <div class="flex justify-center mb-6">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3281/3281289.png" class="w-24 h-24 illustration" alt="Project illustration">
+                </div>
+                
+                <div class="mb-4">
+                    <div class="flex items-center">
+                        <input type="text" id="new-project" placeholder="Add a new project..." class="flex-grow p-3 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-300">
+                        <button onclick="addProject()" class="bg-purple-500 text-white p-3 rounded-r-lg hover:bg-purple-600 transition-colors">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="project-list" class="space-y-4">
+                    <!-- Projects will be added here dynamically -->
+                    <div class="text-center py-8 text-gray-400" id="no-projects-message">
+                        <i class="fas fa-lightbulb text-4xl mb-2"></i>
+                        <p>No projects yet. Start by adding one!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Money Tab -->
+            <div id="money" class="tab-panel hidden">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Your Finances</h2>
+                
+                <div class="flex justify-center mb-6">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3132/3132693.png" class="w-24 h-24 illustration" alt="Money illustration">
+                </div>
+                
+                <div class="bg-gradient-to-r from-green-400 to-teal-400 text-white p-6 rounded-2xl shadow-lg mb-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-sm opacity-90">Current Balance</p>
+                            <h3 class="text-3xl font-bold" id="balance">$1,250.75</h3>
+                        </div>
+                        <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-coins text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2 mb-4">
+                    <button onclick="showTransactionForm('income')" class="flex-grow bg-green-100 text-green-700 p-3 rounded-lg font-medium hover:bg-green-200 transition-colors">
+                        <i class="fas fa-plus-circle mr-2"></i> Income
+                    </button>
+                    <button onclick="showTransactionForm('expense')" class="flex-grow bg-red-100 text-red-700 p-3 rounded-lg font-medium hover:bg-red-200 transition-colors">
+                        <i class="fas fa-minus-circle mr-2"></i> Expense
+                    </button>
+                </div>
+                
+                <div id="transaction-form" class="hidden mb-4 bg-gray-50 p-4 rounded-xl">
+                    <input type="text" id="transaction-description" placeholder="Description" class="w-full p-3 rounded-lg border border-gray-300 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    <input type="number" id="transaction-amount" placeholder="Amount" class="w-full p-3 rounded-lg border border-gray-300 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    <div class="flex space-x-2">
+                        <button onclick="addTransaction()" class="flex-grow bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition-colors">
+                            Add
+                        </button>
+                        <button onclick="hideTransactionForm()" class="flex-grow bg-gray-200 text-gray-700 p-3 rounded-lg hover:bg-gray-300 transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+                
+                <h3 class="font-bold text-gray-700 mb-2">Recent Transactions</h3>
+                <div id="transaction-list" class="space-y-2">
+                    <!-- Transactions will be added here dynamically -->
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-dollar-sign text-green-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">Freelance Work</p>
+                                <p class="text-xs text-gray-500">Today, 10:30 AM</p>
+                            </div>
+                        </div>
+                        <span class="font-bold text-green-600">+$250.00</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-shopping-bag text-red-600"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">Grocery Shopping</p>
+                                <p class="text-xs text-gray-500">Yesterday, 5:45 PM</p>
+                            </div>
+                        </div>
+                        <span class="font-bold text-red-600">-$87.25</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievements Tab -->
+            <div id="achievements" class="tab-panel hidden">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Your Achievements</h2>
+                
+                <div class="flex justify-center mb-6">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3132/3132699.png" class="w-24 h-24 illustration" alt="Achievement illustration">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-yellow-50 p-4 rounded-xl text-center">
+                        <div class="w-16 h-16 mx-auto mb-2 flex items-center justify-center bg-yellow-100 rounded-full">
+                            <i class="fas fa-check-circle text-yellow-500 text-2xl"></i>
+                        </div>
+                        <h3 class="font-bold text-yellow-700">Tasks Completed</h3>
+                        <p class="text-2xl font-bold" id="completed-tasks-count">0</p>
+                    </div>
+                    
+                    <div class="bg-purple-50 p-4 rounded-xl text-center">
+                        <div class="w-16 h-16 mx-auto mb-2 flex items-center justify-center bg-purple-100 rounded-full">
+                            <i class="fas fa-project-diagram text-purple-500 text-2xl"></i>
+                        </div>
+                        <h3 class="font-bold text-purple-700">Projects Done</h3>
+                        <p class="text-2xl font-bold" id="completed-projects-count">0</p>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-4 rounded-xl text-center">
+                        <div class="w-16 h-16 mx-auto mb-2 flex items-center justify-center bg-blue-100 rounded-full">
+                            <i class="fas fa-calendar-check text-blue-500 text-2xl"></i>
+                        </div>
+                        <h3 class="font-bold text-blue-700">Productive Days</h3>
+                        <p class="text-2xl font-bold" id="productive-days-count">0</p>
+                    </div>
+                    
+                    <div class="bg-green-50 p-4 rounded-xl text-center">
+                        <div class="w-16 h-16 mx-auto mb-2 flex items-center justify-center bg-green-100 rounded-full">
+                            <i class="fas fa-piggy-bank text-green-500 text-2xl"></i>
+                        </div>
+                        <h3 class="font-bold text-green-700">Money Saved</h3>
+                        <p class="text-2xl font-bold" id="money-saved">$0</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-4 rounded-xl shadow-sm mb-4">
+                    <h3 class="font-bold text-gray-700 mb-3">Weekly Progress</h3>
+                    <div class="flex justify-between items-end h-32">
+                        <div class="flex flex-col items-center">
+                            <div class="w-6 bg-blue-400 rounded-t-sm" style="height: 20%;"></div>
+                            <span class="text-xs mt-1">Mon</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-6 bg-blue-500 rounded-t-sm" style="height: 40%;"></div>
+                            <span class="text-xs mt-1">Tue</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-6 bg-blue-600 rounded-t-sm" style="height: 60%;"></div>
+                            <span class="text-xs mt-1">Wed</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-6 bg-blue-700 rounded-t-sm" style="height: 80%;"></div>
+                            <span class="text-xs mt-1">Thu</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-6 bg-blue-800 rounded-t-sm" style="height: 100%;"></div>
+                            <span class="text-xs mt-1">Fri</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-6 bg-blue-400 rounded-t-sm" style="height: 30%;"></div>
+                            <span class="text-xs mt-1">Sat</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-6 bg-blue-500 rounded-t-sm" style="height: 10%;"></div>
+                            <span class="text-xs mt-1">Sun</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <h3 class="font-bold text-gray-700 mb-3">Recent Achievements</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center p-2 bg-yellow-50 rounded-lg">
+                            <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-medal text-yellow-500"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">First Task Completed!</p>
+                                <p class="text-xs text-gray-500">Unlocked today</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center p-2 bg-purple-50 rounded-lg">
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-rocket text-purple-500"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">Project Starter</p>
+                                <p class="text-xs text-gray-500">Unlocked yesterday</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-3 flex justify-around max-w-md mx-auto">
+        <button onclick="showMotivation()" class="p-2 rounded-full bg-pink-100 text-pink-500">
+            <i class="fas fa-heart text-xl"></i>
+        </button>
+        <button onclick="showRandomIllustration()" class="p-2 rounded-full bg-cyan-100 text-cyan-500">
+            <i class="fas fa-image text-xl"></i>
+        </button>
+        <button onclick="showCelebration()" class="p-2 rounded-full bg-yellow-100 text-yellow-500">
+            <i class="fas fa-fireworks text-xl"></i>
+        </button>
+    </nav>
+
+    <script>
+        // Set current date
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+        
+        // Tab navigation
+        function showTab(tabName) {
+            // Hide all tab panels
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            
+            // Show selected tab panel
+            document.getElementById(tabName).classList.remove('hidden');
+            
+            // Update active tab indicator
+            document.querySelectorAll('[id$="-tab"]').forEach(tab => {
+                tab.classList.remove('tab-active', 'text-blue-500', 'text-purple-500', 'text-green-500', 'text-yellow-500');
+                
+                if (tab.id === `${tabName}-tab`) {
+                    tab.classList.add('tab-active');
+                    if (tabName === 'tasks') tab.classList.add('text-blue-500');
+                    if (tabName === 'projects') tab.classList.add('text-purple-500');
+                    if (tabName === 'money') tab.classList.add('text-green-500');
+                    if (tabName === 'achievements') tab.classList.add('text-yellow-500');
+                }
+            });
+        }
+        
+        // Task functionality
+        let tasks = [];
+        
+        function addTask() {
+            const taskInput = document.getElementById('new-task');
+            const taskText = taskInput.value.trim();
+            
+            if (taskText) {
+                const newTask = {
+                    id: Date.now(),
+                    text: taskText,
+                    completed: false
+                };
+                
+                tasks.push(newTask);
+                renderTasks();
+                taskInput.value = '';
+                updateAchievements();
+                
+                // Hide "no tasks" message if it's shown
+                document.getElementById('no-tasks-message').classList.add('hidden');
+            }
+        }
+        
+        function toggleTaskCompletion(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = !task.completed;
+                renderTasks();
+                updateAchievements();
+            }
+        }
+        
+        function deleteTask(taskId) {
+            tasks = tasks.filter(t => t.id !== taskId);
+            renderTasks();
+            updateAchievements();
+            
+            // Show "no tasks" message if all tasks are deleted
+            if (tasks.length === 0) {
+                document.getElementById('no-tasks-message').classList.remove('hidden');
+            }
+        }
+        
+        function renderTasks() {
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = '';
+            
+            tasks.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = `flex items-center justify-between p-3 bg-white rounded-lg shadow-sm ${task.completed ? 'task-completed' : ''}`;
+                taskElement.innerHTML = `
+                    <div class="flex items-center">
+                        <button onclick="toggleTaskCompletion(${task.id})" class="w-6 h-6 rounded-full border-2 ${task.completed ? 'bg-green-100 border-green-300 text-green-500' : 'border-gray-300'} flex items-center justify-center mr-3">
+                            ${task.completed ? '<i class="fas fa-check text-xs"></i>' : ''}
+                        </button>
+                        <span class="${task.completed ? 'text-gray-400' : 'text-gray-700'}">${task.text}</span>
+                    </div>
+                    <button onclick="deleteTask(${task.id})" class="text-gray-400 hover:text-red-500">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                `;
+                taskList.appendChild(taskElement);
+            });
+        }
+        
+        // Project functionality
+        let projects = [];
+        
+        function addProject() {
+            const projectInput = document.getElementById('new-project');
+            const projectText = projectInput.value.trim();
+            
+            if (projectText) {
+                const newProject = {
+                    id: Date.now(),
+                    name: projectText,
+                    steps: [],
+                    completed: false
+                };
+                
+                projects.push(newProject);
+                renderProjects();
+                projectInput.value = '';
+                updateAchievements();
+                
+                // Hide "no projects" message if it's shown
+                document.getElementById('no-projects-message').classList.add('hidden');
+            }
+        }
+        
+        function addProjectStep(projectId) {
+            const stepText = prompt("Add a step to this project:");
+            if (stepText) {
+                const project = projects.find(p => p.id === projectId);
+                if (project) {
+                    project.steps.push({
+                        id: Date.now(),
+                        text: stepText,
+                        completed: false
+                    });
+                    renderProjects();
+                    updateAchievements();
+                }
+            }
+        }
+        
+        function toggleProjectStepCompletion(projectId, stepId) {
+            const project = projects.find(p => p.id === projectId);
+            if (project) {
+                const step = project.steps.find(s => s.id === stepId);
+                if (step) {
+                    step.completed = !step.completed;
+                    
+                    // Check if all steps are completed
+                    project.completed = project.steps.every(s => s.completed);
+                    
+                    renderProjects();
+                    updateAchievements();
+                }
+            }
+        }
+        
+        function deleteProject(projectId) {
+            projects = projects.filter(p => p.id !== projectId);
+            renderProjects();
+            updateAchievements();
+            
+            // Show "no projects" message if all projects are deleted
+            if (projects.length === 0) {
+                document.getElementById('no-projects-message').classList.remove('hidden');
+            }
+        }
+        
+        function renderProjects() {
+            const projectList = document.getElementById('project-list');
+            projectList.innerHTML = '';
+            
+            projects.forEach(project => {
+                const projectElement = document.createElement('div');
+                projectElement.className = `bg-white p-4 rounded-xl shadow-sm ${project.completed ? 'border-l-4 border-green-400' : ''}`;
+                
+                let stepsHtml = '';
+                project.steps.forEach(step => {
+                    stepsHtml += `
+                        <div class="flex items-center mt-2 ml-4">
+                            <button onclick="toggleProjectStepCompletion(${project.id}, ${step.id})" class="w-5 h-5 rounded-full border-2 ${step.completed ? 'bg-purple-100 border-purple-300 text-purple-500' : 'border-gray-300'} flex items-center justify-center mr-2">
+                                ${step.completed ? '<i class="fas fa-check text-xs"></i>' : ''}
+                            </button>
+                            <span class="${step.completed ? 'text-gray-400 line-through' : 'text-gray-600'} text-sm">${step.text}</span>
+                        </div>
+                    `;
+                });
+                
+                projectElement.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold ${project.completed ? 'text-green-600' : 'text-purple-600'}">${project.name}</h3>
+                        <div class="flex space-x-2">
+                            <button onclick="addProjectStep(${project.id})" class="text-gray-400 hover:text-purple-500">
+                                <i class="fas fa-plus-circle"></i>
+                            </button>
+                            <button onclick="deleteProject(${project.id})" class="text-gray-400 hover:text-red-500">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    ${stepsHtml}
+                    ${project.steps.length > 0 ? `
+                        <div class="mt-3 ml-4">
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-purple-500 h-2 rounded-full" style="width: ${(project.steps.filter(s => s.completed).length / project.steps.length) * 100}%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">${project.steps.filter(s => s.completed).length} of ${project.steps.length} steps completed</p>
+                        </div>
+                    ` : ''}
+                `;
+                
+                projectList.appendChild(projectElement);
+            });
+        }
+        
+        // Money functionality
+        let balance = 1250.75;
+        let transactions = [
+            { id: 1, type: 'income', description: 'Freelance Work', amount: 250.00, date: 'Today, 10:30 AM' },
+            { id: 2, type: 'expense', description: 'Grocery Shopping', amount: 87.25, date: 'Yesterday, 5:45 PM' }
+        ];
+        let currentTransactionType = '';
+        
+        function showTransactionForm(type) {
+            currentTransactionType = type;
+            document.getElementById('transaction-form').classList.remove('hidden');
+        }
+        
+        function hideTransactionForm() {
+            document.getElementById('transaction-form').classList.add('hidden');
+            document.getElementById('transaction-description').value = '';
+            document.getElementById('transaction-amount').value = '';
+        }
+        
+        function addTransaction() {
+            const description = document.getElementById('transaction-description').value.trim();
+            const amount = parseFloat(document.getElementById('transaction-amount').value);
+            
+            if (description && !isNaN(amount) && amount > 0) {
+                const newTransaction = {
+                    id: Date.now(),
+                    type: currentTransactionType,
+                    description: description,
+                    amount: amount,
+                    date: new Date().toLocaleString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
+                };
+                
+                transactions.unshift(newTransaction);
+                
+                if (currentTransactionType === 'income') {
+                    balance += amount;
+                } else {
+                    balance -= amount;
+                }
+                
+                renderTransactions();
+                updateBalance();
+                hideTransactionForm();
+                updateAchievements();
+            }
+        }
+        
+        function updateBalance() {
+            document.getElementById('balance').textContent = `$${balance.toFixed(2)}`;
+        }
+        
+        function renderTransactions() {
+            const transactionList = document.getElementById('transaction-list');
+            transactionList.innerHTML = '';
+            
+            transactions.forEach(transaction => {
+                const transactionElement = document.createElement('div');
+                transactionElement.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+                
+                transactionElement.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 ${transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'} rounded-full flex items-center justify-center mr-3">
+                            <i class="fas ${transaction.type === 'income' ? 'fa-dollar-sign text-green-600' : 'fa-shopping-bag text-red-600'}"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium">${transaction.description}</p>
+                            <p class="text-xs text-gray-500">${transaction.date}</p>
+                        </div>
+                    </div>
+                    <span class="font-bold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}">${transaction.type === 'income' ? '+' : '-'}$${transaction.amount.toFixed(2)}</span>
+                `;
+                
+                transactionList.appendChild(transactionElement);
+            });
+        }
+        
+        // Achievements functionality
+        function updateAchievements() {
+            const completedTasks = tasks.filter(t => t.completed).length;
+            const completedProjects = projects.filter(p => p.completed).length;
+            const productiveDays = completedTasks > 0 ? 1 : 0; // Simplified for demo
+            
+            document.getElementById('completed-tasks-count').textContent = completedTasks;
+            document.getElementById('completed-projects-count').textContent = completedProjects;
+            document.getElementById('productive-days-count').textContent = productiveDays;
+            document.getElementById('money-saved').textContent = `$${(balance - 1000).toFixed(2)}`; // Assuming starting balance was $1000
+        }
+        
+        // Cheerful features
+        const motivations = [
+            "You're doing great! Keep going!",
+            "Small progress is still progress!",
+            "Believe in yourself and all that you are!",
+            "You've got this! One step at a time!",
+            "Your potential is endless! Keep pushing forward!",
+            "Today is a new opportunity to be amazing!"
+        ];
+        
+        const illustrations = [
+            "https://cdn-icons-png.flaticon.com/512/3774/3774278.png",
+            "https://cdn-icons-png.flaticon.com/512/3774/3774281.png",
+            "https://cdn-icons-png.flaticon.com/512/3774/3774283.png",
+            "https://cdn-icons-png.flaticon.com/512/3774/3774285.png",
+            "https://cdn-icons-png.flaticon.com/512/3774/3774287.png",
+            "https://cdn-icons-png.flaticon.com/512/3774/3774289.png"
+        ];
+        
+        function showMotivation() {
+            const randomIndex = Math.floor(Math.random() * motivations.length);
+            document.getElementById('daily-motivation').textContent = motivations[randomIndex];
+            
+            // Show a little animation
+            const motivationElement = document.getElementById('daily-motivation');
+            motivationElement.classList.add('animate-bounce');
+            setTimeout(() => {
+                motivationElement.classList.remove('animate-bounce');
+            }, 1000);
+        }
+        
+        function showRandomIllustration() {
+            const randomIndex = Math.floor(Math.random() * illustrations.length);
+            const illustrationElements = document.querySelectorAll('.illustration');
+            
+            illustrationElements.forEach(el => {
+                el.src = illustrations[randomIndex];
+                el.classList.add('animate-pulse');
+                setTimeout(() => {
+                    el.classList.remove('animate-pulse');
+                }, 1000);
+            });
+        }
+        
+        function showCelebration() {
+            // Simple celebration effect
+            const colors = ['text-yellow-400', 'text-pink-400', 'text-blue-400', 'text-green-400'];
+            
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const star = document.createElement('div');
+                    star.className = `absolute text-xl ${colors[Math.floor(Math.random() * colors.length)]}`;
+                    star.innerHTML = '<i class="fas fa-star"></i>';
+                    star.style.left = `${Math.random() * 100}%`;
+                    star.style.top = `${Math.random() * 100}%`;
+                    star.style.opacity = '0';
+                    star.style.transform = 'scale(0)';
+                    star.style.transition = 'all 0.5s ease-out';
+                    
+                    document.body.appendChild(star);
+                    
+                    setTimeout(() => {
+                        star.style.opacity = '1';
+                        star.style.transform = 'scale(1.5)';
+                    }, 10);
+                    
+                    setTimeout(() => {
+                        star.style.opacity = '0';
+                        star.style.transform = 'scale(0) translateY(-50px)';
+                        setTimeout(() => {
+                            star.remove();
+                        }, 500);
+                    }, 1000);
+                }, i * 100);
+            }
+        }
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            showTab('tasks');
+            updateBalance();
+            renderTransactions();
+            updateAchievements();
+        });
+    </script>
+</body>
+</html>
