@@ -428,7 +428,7 @@ function renderProjects() {
                 ` : '';
 
                 return `
-                <div class="bg-surface rounded-3xl p-5 shadow-sm card-hover">
+                <div class="bg-accent-purple rounded-3xl p-5 shadow-sm card-hover">
                     <div class="project-header cursor-pointer" data-id="${project.id}">
                         <h3 class="font-bold text-lg text-accent-purple">${project.title}</h3>
                         <p class="text-sm text-text-muted mt-1 mb-3">${project.description || ''}</p>
