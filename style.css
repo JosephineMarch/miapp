@@ -106,3 +106,42 @@ body.logged-in {
 .tab-active span {
     display: none; 
 }
+/* === Estilos para el Explorador de Nubes === */
+.explorer-layout {
+    display: flex;
+    flex-direction: column; /* Cambiado a columna para móviles */
+    gap: 1.25rem;
+    height: calc(100vh - 200px); /* Ajusta la altura para que quepa en la pantalla */
+}
+
+.explorer-sidebar {
+    background-color: var(--surface-color);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    overflow-y: auto; /* Permite scroll si hay muchas carpetas */
+    flex-shrink: 0;
+}
+
+.explorer-content {
+    flex-grow: 1; /* Ocupa el espacio restante */
+    background-color: var(--surface-color);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden; /* El scroll lo tendrá el contenedor de archivos */
+}
+
+#files-container {
+    overflow-y: auto; /* Scroll solo para la lista de archivos */
+    flex-grow: 1;
+}
+
+/* Estilo para la carpeta activa, similar a tu tab activo */
+#folder-list .tab-active {
+    background-color: var(--accent-purple-soft);
+    color: var(--accent-purple);
+    font-weight: 700;
+}
