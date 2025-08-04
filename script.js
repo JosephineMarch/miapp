@@ -339,7 +339,7 @@ function handleEditTransaction(transaction) { openModal({ title: texts.edit_tran
 // =================================================================================
 
 // Pega aquí el enlace CSV que publicaste en Google Sheets
-const CSV_URL = 'AQUI_VA_TU_ENLACE_CSV_PUBLICADO';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTo02xMWzMN--bzWUEjCM4qPnt0irknRoH5oA5pW1q_JJ6zX1e5_Q1C1FQxa3anNLgw7zrvI-CPCTyX/pub?gid=0&single=true&output=csv';
 let cloudData = []; // Guardaremos los datos aquí para no pedirlos cada vez
 
 async function initCloudExplorer() {
