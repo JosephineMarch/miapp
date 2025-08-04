@@ -1,24 +1,20 @@
 /* --- VARIABLES Y ESTILOS GLOBALES --- */
 :root {
-    --primary-dark: #1C1C1E;  /* Gris carbón para texto principal y nav */
+    --primary-dark: #1C1C1E;
     --background-color: #F8FAFC; 
     --surface-color: #FFFFFF;    
     --text-color: #1f2937;       
-    --text-muted: #8A8A8E;       /* Gris para subtexto (más suave) */
-    
-    /* Colores de acento */
+    --text-muted: #8A8A8E;
     --accent-magenta: #15dffa;  
     --accent-pink-soft: #b0edf3;
     --accent-purple: #9333EA;   
     --accent-purple-soft: #E9D5FF; 
-    
     --border-radius: 1.25rem; 
     --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
     --font-family: 'Poppins', sans-serif;
 }
 
-/* --- CLASES DE UTILIDAD PERSONALIZADAS (CRUCIAL) --- */
-/* Esto permite que el script.js use las clases como si fueran de Tailwind */
+/* --- CLASES DE UTILIDAD PERSONALIZADAS --- */
 .bg-primary-dark { background-color: var(--primary-dark); }
 .text-primary-dark { color: var(--primary-dark); }
 .bg-surface { background-color: var(--surface-color); }
@@ -29,119 +25,35 @@
 .bg-accent-purple-soft { background-color: var(--accent-purple-soft); }
 .focus\:ring-accent-purple:focus { --tw-ring-color: var(--accent-purple); }
 
-
-body {
-    background-color: var(--background-color);
-    font-family: var(--font-family);
-    color: var(--text-color);
-}
-
-body.logged-in {
-    padding-bottom: 96px; 
-}
-
-#login-view {
-    min-height: 100vh;
-}
+body { background-color: var(--background-color); font-family: var(--font-family); color: var(--text-color); }
+body.logged-in { padding-bottom: 96px; }
+#login-view { min-height: 100vh; }
 
 /* --- ANIMACIONES Y EFECTOS --- */
-@keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
-}
+@keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+.floating { animation: float 3s ease-in-out infinite; }
+.card-hover { border-radius: var(--border-radius); box-shadow: var(--card-shadow); transition: transform 0.2s, box-shadow 0.2s; }
+.card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.07); }
+.progress-bar { transition: width 0.5s ease-in-out; }
 
-.floating {
-    animation: float 3s ease-in-out infinite;
-}
+/* --- NAVEGACIÓN INFERIOR --- */
+#bottom-nav { height: 80px; background-color: var(--primary-dark); border-top-left-radius: var(--border-radius); border-top-right-radius: var(--border-radius); padding: 0 0.5rem; position: fixed; bottom: 0; left: 0; right: 0; max-width: 28rem; margin-left: auto; margin-right: auto; z-index: 40; }
+.tab-btn { color: var(--text-muted); transition: all 0.2s ease-in-out; }
+.tab-active i { color: var(--accent-purple); background-color: var(--accent-purple-soft); border-radius: 9999px; padding: 0.5rem 1.25rem; transform: translateY(-4px); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); }
+.tab-active span { display: none; }
 
-.card-hover {
-    border-radius: var(--border-radius);
-    box-shadow: var(--card-shadow);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
+/* === Estilos para el Explorador de Nubes v3 (Final) === */
+.explorer-layout { display: flex; flex-direction: column; gap: 1rem; height: calc(100vh - 220px); }
+@media (min-width: 768px) { .explorer-layout { flex-direction: row; } }
 
-.card-hover:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.07);
-}
+.explorer-sidebar { background-color: var(--surface-color); padding: 1rem; border-radius: var(--border-radius); box-shadow: var(--card-shadow); overflow-y: auto; flex-shrink: 0; height: 40%; }
+@media (min-width: 768px) { .explorer-sidebar { height: auto; flex-basis: 33%; } }
 
-.progress-bar {
-    transition: width 0.5s ease-in-out;
-}
+.explorer-content { flex-grow: 1; background-color: var(--surface-color); padding: 1rem; border-radius: var(--border-radius); box-shadow: var(--card-shadow); display: flex; flex-direction: column; overflow-y: hidden; }
+#files-container { overflow-y: auto; flex-grow: 1; }
 
-/* --- NAVEGACIÓN INFERIOR (ESTILO OSCURO RECUPERADO) --- */
-#bottom-nav {
-    height: 80px;
-    background-color: var(--primary-dark); /* Fondo oscuro */
-    border-top-left-radius: var(--border-radius);
-    border-top-right-radius: var(--border-radius);
-    padding: 0 0.5rem;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-width: 28rem;
-    margin-left: auto;
-    margin-right: auto;
-    z-index: 40;
-}
-
-.tab-btn {
-    color: var(--text-muted);
-    transition: all 0.2s ease-in-out;
-}
-
-/* Estilo para el icono del tab activo (Píldora morado suave) */
-.tab-active i {
-    color: var(--accent-purple); /* Icono en morado oscuro para contraste */
-    background-color: var(--accent-purple-soft); /* Fondo de la píldora */
-    border-radius: 9999px; 
-    padding: 0.5rem 1.25rem;
-    transform: translateY(-4px); 
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
-}
-
-/* Ocultar el texto del tab activo */
-.tab-active span {
-    display: none; 
-}
-/* === Estilos para el Explorador de Nubes === */
-.explorer-layout {
-    display: flex;
-    flex-direction: column; /* Cambiado a columna para móviles */
-    gap: 1.25rem;
-    height: calc(100vh - 200px); /* Ajusta la altura para que quepa en la pantalla */
-}
-
-.explorer-sidebar {
-    background-color: var(--surface-color);
-    padding: 1rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--card-shadow);
-    overflow-y: auto; /* Permite scroll si hay muchas carpetas */
-    flex-shrink: 0;
-}
-
-.explorer-content {
-    flex-grow: 1; /* Ocupa el espacio restante */
-    background-color: var(--surface-color);
-    padding: 1rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--card-shadow);
-    display: flex;
-    flex-direction: column;
-    overflow-y: hidden; /* El scroll lo tendrá el contenedor de archivos */
-}
-
-#files-container {
-    overflow-y: auto; /* Scroll solo para la lista de archivos */
-    flex-grow: 1;
-}
-
-/* Estilo para la carpeta activa, similar a tu tab activo */
-#folder-list .tab-active {
-    background-color: var(--accent-purple-soft);
-    color: var(--accent-purple);
-    font-weight: 700;
-}
+/* Estilos para el Árbol de Carpetas */
+#folder-tree-container ul { list-style: none; padding: 0; }
+#folder-tree-container li > div { display: flex; align-items: center; }
+.folder-item .fa-chevron-right { transition: transform 0.2s ease-in-out; }
+.folder-item .rotate-90 { transform: rotate(90deg); }

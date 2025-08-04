@@ -1,9 +1,9 @@
-// Importa las funciones necesarias del SDK de Firebase v9
+// Importa las funciones necesarias (sin cambios)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-// --- Configuración de Firebase ---
+// --- Configuración de Firebase --- (sin cambios)
 const firebaseConfig = {
     apiKey: "AIzaSyD0gGVvxwFxEnfbOYIhwVDExSR9HZy1YG4",
     authDomain: "miapp-e4dc6.firebaseapp.com",
@@ -14,18 +14,13 @@ const firebaseConfig = {
     measurementId: "G-ZG1T9MZ8MD"
 };
 
-// --- Inicialización de Firebase ---
+// --- Inicialización de Firebase --- (sin cambios)
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 let currentUser = null;
 
-// --- Variables del Explorador de Nubes ---
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTo02xMWzMN--bzWUEjCM4qPnt0irknRoH5oA5pW1q_JJ6zX1e5_Q1C1FQxa3anNLgw7zrvI-CPCTyX/pub?gid=0&single=true&output=csv';
-let cloudData = [];
-let folderTree = {};
-
-// --- Referencias a Elementos UI ---
+// --- Referencias a Elementos UI --- (sin cambios)
 const ui = {
     loginView: document.getElementById('login-view'),
     mainContent: document.getElementById('main-content'),
@@ -39,7 +34,7 @@ const ui = {
 ui.modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50';
 document.body.appendChild(ui.modal);
 
-// --- Estado de la Aplicación ---
+// --- Estado de la Aplicación --- (sin cambios)
 const state = {
     currentView: 'dashboard-view',
     tasks: [],
@@ -47,7 +42,7 @@ const state = {
     transactions: [],
 };
 
-// --- Textos de la Interfaz (i18n) ---
+// --- Textos de la Interfaz (i18n) --- (sin cambios)
 const texts = {
     welcome: "¡Bienvenido/a de nuevo!",
     progress: "Tu progreso",
@@ -94,9 +89,8 @@ const texts = {
     confirm_delete: "Confirmar Eliminación",
     completed: "Completado",
 };
-
 // =================================================================================
-// --- AUTENTICACIÓN ---
+// --- AUTENTICACIÓN (CORRECTA) ---
 // =================================================================================
 onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -111,7 +105,6 @@ onAuthStateChanged(auth, async (user) => {
         initializeAppShell();
         await initCloudExplorer();
         
-        // Una vez cargado todo, renderizamos la vista por defecto
         renderView(state.currentView);
 
     } else {
@@ -122,12 +115,10 @@ onAuthStateChanged(auth, async (user) => {
         ui.fabContainer.classList.add('hidden');
         ui.loginView.classList.remove('hidden');
         ui.userProfileIcon.innerHTML = `<i class="fa-regular fa-user text-primary-dark text-lg"></i>`;
-        // Limpiamos los datos al cerrar sesión
         state.tasks = [];
         state.projects = [];
         state.transactions = [];
         cloudData = [];
-        folderTree = {};
     }
 });
 
@@ -183,7 +174,6 @@ function renderAppLayout() {
     
     ui.bottomNav.querySelector('[data-view="dashboard-view"]')?.classList.add('tab-active');
 }
-
 function attachBaseEventListeners() {
     ui.bottomNav.querySelectorAll('.tab-btn').forEach(btn => {
         btn.onclick = (e) => {
@@ -203,7 +193,6 @@ function attachBaseEventListeners() {
         }
     };
 }
-
 function setupRealtimeListeners() {
     if (!currentUser) return;
     const collections = ['tasks', 'projects', 'transactions'];
@@ -219,7 +208,6 @@ function setupRealtimeListeners() {
         });
     });
 }
-
 function renderView(viewId) {
     state.currentView = viewId;
     ui.mainContent.querySelectorAll('div[id$="-view"]').forEach(v => v.classList.add('hidden'));
@@ -230,29 +218,32 @@ function renderView(viewId) {
             case 'dashboard-view': renderDashboard(); break;
             case 'tasks-view': renderTasks(); break;
             case 'projects-view': renderProjects(); break;
-            case 'cloud-explorer-view': renderCloudExplorer(); break;
             case 'finances-view': renderFinances(); break;
+            case 'cloud-explorer-view': renderCloudExplorer(); break;
         }
     }
 }
 
+
 // =================================================================================
-// --- EXPLORADOR DE NUBES (VERSIÓN MEJORADA) ---
+// --- LÓGICA DEL EXPLORADOR DE NUBES (VERSIÓN 3.0 con ÁRBOL REAL) ---
 // =================================================================================
+
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTo02xMWzMN--bzWUEjCM4qPnt0irknRoH5oA5pW1q_JJ6zX1e5_Q1C1FQxa3anNLgw7zrvI-CPCTyX/pub?gid=0&single=true&output=csv';
+let cloudData = [];
+let folderTree = {};
+
 async function initCloudExplorer() {
     if (cloudData.length > 0) return;
     try {
-        console.log("Iniciando carga de datos de la nube...");
         const response = await fetch(CSV_URL);
         if (!response.ok) { throw new Error(`Error en la red: ${response.statusText}`); }
         const csvText = await response.text();
         cloudData = parseCSV(csvText);
         folderTree = buildFolderTree(cloudData);
-        console.log(`Cargados ${cloudData.length} archivos y árbol de carpetas construido.`);
     } catch (error) {
-        console.error("Error al cargar los datos del explorador:", error);
+        console.error("Error al cargar datos de la nube:", error);
         cloudData = [];
-        folderTree = {};
     }
 }
 
@@ -273,9 +264,10 @@ function parseCSV(text) {
 
 function buildFolderTree(data) {
     const tree = {};
-    const paths = [...new Set(data.map(item => item['Ruta (Path)']))].filter(Boolean);
-
-    paths.forEach(path => {
+    const foldersOnly = data.filter(item => item.Tipo === 'Carpeta');
+    
+    foldersOnly.forEach(folder => {
+        const path = folder['Ruta (Path)'];
         let currentNode = tree;
         const parts = path.split('/');
         parts.forEach(part => {
@@ -285,8 +277,9 @@ function buildFolderTree(data) {
             currentNode = currentNode[part];
         });
     });
-    return tree;
+    return tree['Mi unidad'] || {}; // Empezamos desde "Mi unidad"
 }
+
 
 function renderCloudExplorer() {
     const container = document.getElementById('cloud-explorer-view');
@@ -299,70 +292,52 @@ function renderCloudExplorer() {
                 <div id="folder-tree-container"></div>
             </aside>
             <main class="explorer-content">
-                <input type="text" id="file-search-input" placeholder="Buscar en todos los archivos..." class="w-full bg-gray-100 border-transparent rounded-lg p-3 text-sm focus:ring-2 focus:ring-accent-purple mb-4">
+                <div id="current-path-display" class="text-sm text-text-muted mb-2 font-semibold"></div>
                 <div id="files-container" class="space-y-2"></div>
             </main>
         </div>
     `;
 
     if (cloudData.length === 0) {
-        document.getElementById('files-container').innerHTML = '<p class="text-text-muted text-center py-8">Cargando datos... Si esto persiste, revisa la consola (F12).</p>';
+        document.getElementById('files-container').innerHTML = '<p class="text-text-muted text-center py-8">Cargando datos...</p>';
         return;
     }
 
     renderFolderTree(folderTree, document.getElementById('folder-tree-container'));
-    displayFiles(cloudData);
-    
-    document.getElementById('file-search-input').addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const activeFolder = document.querySelector('.folder-item.tab-active');
-        const basePath = activeFolder ? activeFolder.dataset.path : '';
-        
-        let dataToSearch = cloudData;
-        if(basePath) {
-            dataToSearch = cloudData.filter(file => file['Ruta (Path)'] === basePath);
-        }
-
-        const filteredData = dataToSearch.filter(file => file['Nombre Archivo'].toLowerCase().includes(searchTerm));
-        displayFiles(filteredData, true);
-    });
+    // Al inicio, mostramos el contenido de "Mi unidad"
+    displayFilesForPath('Mi unidad'); 
 }
 
-function renderFolderTree(node, parentElement, currentPath = '') {
+function renderFolderTree(node, parentElement, currentPath = 'Mi unidad') {
     const ul = document.createElement('ul');
-    if (currentPath !== '') ul.className = 'ml-4 hidden';
+    if (currentPath !== 'Mi unidad') ul.className = 'ml-4 hidden';
 
-    if (currentPath === '') {
-        const allFilesLi = document.createElement('li');
-        allFilesLi.innerHTML = `<i class="fa-regular fa-folder-open mr-2"></i> Todos los Archivos`;
-        allFilesLi.className = 'folder-item font-bold cursor-pointer p-2 rounded-lg tab-active';
-        allFilesLi.dataset.path = '';
-        allFilesLi.onclick = (e) => {
+    if (currentPath === 'Mi unidad') {
+        const rootLi = document.createElement('li');
+        rootLi.innerHTML = `<div class="folder-item cursor-pointer p-2 rounded-lg flex items-center font-bold"><i class="fa-solid fa-cloud mr-2 text-accent-purple"></i> Mi unidad</div>`;
+        rootLi.onclick = (e) => {
             e.stopPropagation();
-            document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('tab-active'));
-            allFilesLi.classList.add('tab-active');
-            displayFiles(cloudData);
+            displayFilesForPath('Mi unidad');
         };
-        ul.appendChild(allFilesLi);
+        ul.appendChild(rootLi);
+        // Renderiza el siguiente nivel dentro de la raíz
+        renderFolderTree(node, rootLi, 'Mi unidad'); 
+        parentElement.appendChild(ul);
+        return;
     }
-    
+
     Object.keys(node).sort().forEach(key => {
-        const newPath = currentPath ? `${currentPath}/${key}` : key;
+        const newPath = `${currentPath}/${key}`;
         const li = document.createElement('li');
-        li.dataset.path = newPath;
         
         const hasChildren = Object.keys(node[key]).length > 0;
-        const icon = hasChildren ? '<i class="fa-solid fa-chevron-right text-xs mr-2 transition-transform"></i>' : '<i class="fa-regular fa-folder mr-2"></i>';
+        const icon = hasChildren ? '<i class="fa-solid fa-chevron-right text-xs mr-2 transition-transform"></i>' : '<i class="fa-regular fa-folder mr-2 text-yellow-500"></i>';
         
         li.innerHTML = `<div class="folder-item cursor-pointer p-2 rounded-lg hover:bg-gray-100 flex items-center">${icon} ${key}</div>`;
         
         li.querySelector('.folder-item').onclick = (e) => {
             e.stopPropagation();
-            document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('tab-active'));
-            li.querySelector('.folder-item').classList.add('tab-active');
-
-            const filtered = cloudData.filter(file => file['Ruta (Path)'] === newPath);
-            displayFiles(filtered, true);
+            displayFilesForPath(newPath);
 
             if (hasChildren) {
                 const subUl = li.querySelector('ul');
@@ -382,25 +357,33 @@ function renderFolderTree(node, parentElement, currentPath = '') {
     parentElement.appendChild(ul);
 }
 
-function displayFiles(files, isFiltered = false) {
+function displayFilesForPath(path) {
+    document.getElementById('current-path-display').textContent = path;
     const filesContainer = document.getElementById('files-container');
     filesContainer.innerHTML = '';
+    
+    // Filtramos los elementos cuyo padre es la ruta seleccionada
+    const itemsInPath = cloudData.filter(item => item['Ruta (Path)'] === path);
 
-    if (files.length === 0) {
-        filesContainer.innerHTML = `<p class="text-text-muted text-center py-8">${isFiltered ? 'No hay archivos en esta carpeta.' : 'No se encontraron archivos.'}</p>`;
+    if (itemsInPath.length === 0) {
+        filesContainer.innerHTML = `<p class="text-text-muted text-center py-8">Esta carpeta está vacía.</p>`;
         return;
     }
 
-    files.sort((a, b) => {
+    // Ordenamos carpetas primero, luego por nombre
+    itemsInPath.sort((a, b) => {
         if (a.Tipo === 'Carpeta' && b.Tipo !== 'Carpeta') return -1;
         if (a.Tipo !== 'Carpeta' && b.Tipo === 'Carpeta') return 1;
         return a['Nombre Archivo'].localeCompare(b['Nombre Archivo']);
     }).forEach(file => {
+        // No mostramos las carpetas aquí, ya están en el árbol de la izquierda.
+        if(file.Tipo === 'Carpeta') return;
+
         const fileElement = document.createElement('div');
         fileElement.className = 'bg-surface p-3 rounded-lg flex items-center justify-between card-hover';
         
         let fileIcon = 'fa-regular fa-file';
-        if (file.Tipo === 'Carpeta') fileIcon = 'fa-regular fa-folder text-yellow-500';
+        if (file.Tipo === 'Acceso Directo') fileIcon = 'fa-solid fa-link text-indigo-500';
         else if (file['Nombre Archivo'].includes('.pdf')) fileIcon = 'fa-regular fa-file-pdf text-red-500';
         else if (/\.(png|jpg|jpeg|gif|svg)$/i.test(file['Nombre Archivo'])) fileIcon = 'fa-regular fa-file-image text-blue-500';
         else if (/\.(doc|docx)$/i.test(file['Nombre Archivo'])) fileIcon = 'fa-regular fa-file-word text-blue-600';
@@ -418,9 +401,9 @@ function displayFiles(files, isFiltered = false) {
     });
 }
 
-// =================================================================================
-// --- SISTEMA DE MODALES ---
-// =================================================================================
+
+// --- Pega aquí el resto de tu código JS ---
+// --- (openModal, handleAddTask, renderDashboard, etc.) ---
 function openModal({ title, fields, onSave, data = {}, onDelete }) {
     let fieldsHTML = '';
     for (const field of fields) {
@@ -491,212 +474,18 @@ function openModal({ title, fields, onSave, data = {}, onDelete }) {
     const addStepBtn = document.getElementById('add-step-btn');
     if (addStepBtn) { addStepBtn.onclick = () => document.getElementById('steps-container').insertAdjacentHTML('beforeend', renderStepInput()); }
 }
-
-function closeModal() {
-    ui.modal.classList.add('hidden');
-    ui.modal.innerHTML = '';
-}
-
-function renderStepInput(step = { title: '', completed: false }) {
-    return `
-        <div class="flex items-center space-x-2">
-            <input type="checkbox" ${step.completed ? 'checked' : ''} class="h-5 w-5 rounded-md border-gray-300 text-accent-purple focus:ring-accent-purple">
-            <input type="text" value="${step.title || ''}" class="flex-grow border-0 border-b-2 bg-transparent p-1 focus:ring-0 focus:border-accent-purple text-sm" placeholder="Descripción del paso">
-            <button type="button" onclick="this.parentElement.remove()" class="remove-step-btn text-text-muted hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
-        </div>`;
-}
-
-// =================================================================================
-// --- LÓGICA DE COLECCIONES (CRUD) ---
-// =================================================================================
+function closeModal() { ui.modal.classList.add('hidden'); ui.modal.innerHTML = ''; }
+function renderStepInput(step = { title: '', completed: false }) { return ` <div class="flex items-center space-x-2"> <input type="checkbox" ${step.completed ? 'checked' : ''} class="h-5 w-5 rounded-md border-gray-300 text-accent-purple focus:ring-accent-purple"> <input type="text" value="${step.title || ''}" class="flex-grow border-0 border-b-2 bg-transparent p-1 focus:ring-0 focus:border-accent-purple text-sm" placeholder="Descripción del paso"> <button type="button" onclick="this.parentElement.remove()" class="remove-step-btn text-text-muted hover:text-red-500"><i class="fas fa-trash-alt"></i></button> </div>`; }
 function handleAddTask() { openModal({ title: texts.new_task, fields: [{ id: 'title', label: texts.task_title, type: 'text', required: true }], onSave: (data) => addDoc(collection(db, 'users', currentUser.uid, 'tasks'), { ...data, completed: false, createdAt: serverTimestamp() }) }); }
 function handleEditTask(task) { openModal({ title: texts.edit_task, fields: [{ id: 'title', label: texts.task_title, type: 'text', required: true }], data: task, onSave: (data) => updateDoc(doc(db, 'users', currentUser.uid, 'tasks', task.id), data), onDelete: () => deleteTask(task.id) }); }
 function handleToggleTask(task) { updateDoc(doc(db, 'users', currentUser.uid, 'tasks', task.id), { completed: !task.completed }); }
 function deleteTask(id) { deleteDoc(doc(db, 'users', currentUser.uid, 'tasks', id)); }
 function handleAddProject() { openModal({ title: texts.new_project, fields: [ { id: 'title', label: texts.project_title, type: 'text', required: true }, { id: 'description', label: texts.description, type: 'textarea' }, { id: 'dueDate', label: texts.due_date, type: 'date' }, { id: 'steps', label: texts.steps, type: 'steps' } ], onSave: (data) => addDoc(collection(db, 'users', currentUser.uid, 'projects'), { ...data, createdAt: serverTimestamp() }) }); }
 function handleEditProject(project) { openModal({ title: texts.edit_project, data: project, fields: [ { id: 'title', label: texts.project_title, type: 'text', required: true }, { id: 'description', label: texts.description, type: 'textarea' }, { id: 'dueDate', label: texts.due_date, type: 'date' }, { id: 'steps', label: texts.steps, type: 'steps' } ], onSave: (data) => updateDoc(doc(db, 'users', currentUser.uid, 'projects', project.id), data), onDelete: () => deleteDoc(doc(db, 'users', currentUser.uid, 'projects', project.id)) }); }
-function handleToggleProjectStep(projectId, stepIndex) {
-    const project = state.projects.find(p => p.id === projectId);
-    if (!project || !project.steps) return;
-    const updatedSteps = project.steps.map((step, index) => {
-        if (index === stepIndex) { return { ...step, completed: !step.completed }; }
-        return step;
-    });
-    updateDoc(doc(db, 'users', currentUser.uid, 'projects', projectId), { steps: updatedSteps });
-}
+function handleToggleProjectStep(projectId, stepIndex) { const project = state.projects.find(p => p.id === projectId); if (!project || !project.steps) return; const updatedSteps = project.steps.map((step, index) => { if (index === stepIndex) { return { ...step, completed: !step.completed }; } return step; }); updateDoc(doc(db, 'users', currentUser.uid, 'projects', projectId), { steps: updatedSteps }); }
 function handleAddTransaction() { openModal({ title: texts.new_transaction, fields: [ { id: 'description', label: texts.description, type: 'text', required: true }, { id: 'amount', label: texts.amount, type: 'number', required: true }, { id: 'type', label: texts.type, type: 'select', options: [{value: 'expense', label: texts.expense}, {value: 'income', label: texts.income}]}, { id: 'category', label: texts.category, type: 'text' }, { id: 'date', label: texts.date, type: 'date' } ], onSave: (data) => addDoc(collection(db, 'users', currentUser.uid, 'transactions'), { ...data, createdAt: serverTimestamp() }) }); }
 function handleEditTransaction(transaction) { openModal({ title: texts.edit_transaction, data: transaction, fields: [ { id: 'description', label: texts.description, type: 'text', required: true }, { id: 'amount', label: texts.amount, type: 'number', required: true }, { id: 'type', label: texts.type, type: 'select', options: [{value: 'expense', label: texts.expense}, {value: 'income', label: texts.income}]}, { id: 'category', label: texts.category, type: 'text' }, { id: 'date', label: texts.date, type: 'date' } ], onSave: (data) => updateDoc(doc(db, 'users', currentUser.uid, 'transactions', transaction.id), data), onDelete: () => deleteDoc(doc(db, 'users',currentUser.uid, 'transactions', transaction.id)) }); }
-
-// =================================================================================
-// --- RENDERIZADO DE VISTAS ---
-// =================================================================================
-function renderDashboard() {
-    const container = document.getElementById('dashboard-view');
-    const completedTasks = state.tasks.filter(t => t.completed).length;
-    const totalTasks = state.tasks.length;
-
-    container.innerHTML = `
-        <h2 class="text-3xl font-bold text-primary-dark mb-6">${texts.welcome} <span class="text-accent-purple">${currentUser.displayName.split(' ')[0]}</span>!</h2>
-        
-        <div class="mb-8">
-            <h3 class="text-xl font-bold text-primary-dark mb-4">${texts.quickStats}</h3>
-            <div class="grid grid-cols-2 gap-4">
-                <!-- TARJETA CON FONDO MORADO SUAVE -->
-                <div class="bg-accent-purple-soft rounded-2xl p-4 shadow-sm">
-                    <div class="flex items-center mb-2">
-                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center mr-3"><i class="fa-regular fa-square-check text-accent-purple"></i></div>
-                        <h4 class="font-bold text-primary-dark">${texts.tasks}</h4>
-                    </div>
-                    <p class="text-lg font-bold text-primary-dark">${completedTasks}/${totalTasks} <span class="text-sm font-normal text-text-muted">${texts.completed}</span></p>
-                </div>
-                <!-- TARJETA CON FONDO ROSA SUAVE -->
-                <div class="bg-accent-pink-soft rounded-2xl p-4 shadow-sm">
-                    <div class="flex items-center mb-2">
-                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center mr-3"><i class="fa-regular fa-star text-accent-magenta"></i></div>
-                        <h4 class="font-bold text-primary-dark">${texts.streak}</h4>
-                    </div>
-                    <p class="text-lg font-bold text-primary-dark">0 <span class="text-sm font-normal text-text-muted">${texts.daysInARow}</span></p>
-                </div>
-            </div>
-        </div>
-
-        <div class="mb-8">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-primary-dark">${texts.recentTasks}</h3>
-                <a href="#" class="text-sm text-accent-purple font-semibold hover:underline" onclick="document.querySelector('[data-view=\\'tasks-view\\']').click()">${texts.seeAll}</a>
-            </div>
-            <div class="space-y-3">
-                ${state.tasks.slice(0, 3).map(task => `
-                    <div class="bg-surface rounded-2xl p-4 shadow-sm flex items-center">
-                        <i class="fa-regular ${task.completed ? 'fa-circle-check text-accent-purple' : 'fa-circle text-text-muted'} text-2xl mr-4"></i>
-                        <div class="flex-grow font-semibold text-primary-dark ${task.completed ? 'line-through text-text-muted' : ''}">${task.title}</div>
-                    </div>
-                `).join('') || `<p class="text-center text-text-muted py-4">${texts.no_tasks}</p>`}
-            </div>
-        </div>
-    `;
-}
-
-function renderTasks() {
-    const container = document.getElementById('tasks-view');
-    container.innerHTML = `
-        <div class="flex justify-center items-center mb-4">
-            <h2 class="text-3xl font-bold text-accent-purple">${texts.tasks}</h2>
-        </div>
-        <div class="flex justify-center mb-6">
-             <img src="https://cdn.prod.website-files.com/5d5e2ff58f10c53dcffd8683/5db1e0e7e74e34610bcb4951_sprinting.gif" class="w-48 h-auto rounded-2xl illustration" alt="Task illustration">
-        </div>
-        <div class="space-y-4">
-            ${state.tasks.length > 0 ? state.tasks.map(task => `
-                <div class="bg-accent-purple-soft rounded-2xl p-5 shadow-sm flex items-center card-hover">
-                    <button data-id="${task.id}" class="task-check-btn flex-shrink-0 mr-4">
-                        <i class="fa-regular ${task.completed ? 'fa-circle-check text-accent-purple' : 'fa-circle text-text-muted'} text-3xl"></i>
-                    </button>
-                    <div class="flex-grow font-semibold text-primary-dark ${task.completed ? 'line-through text-text-muted' : ''}">${task.title}</div>
-                    <button class="edit-task-btn text-text-muted hover:text-accent-purple" data-id="${task.id}"><i class="fa-regular fa-pen-to-square"></i></button>
-                </div>
-            `).join('') : `<p class="text-center text-text-muted py-8">${texts.no_tasks}</p>`}
-        </div>
-    `;
-    container.querySelectorAll('.task-check-btn').forEach(btn => btn.onclick = () => handleToggleTask(state.tasks.find(t => t.id === btn.dataset.id)));
-    container.querySelectorAll('.edit-task-btn').forEach(btn => btn.onclick = () => handleEditTask(state.tasks.find(t => t.id === btn.dataset.id)));
-}
-
-function renderProjects() {
-    const container = document.getElementById('projects-view');
-    container.innerHTML = `
-        <div class="flex justify-center items-center mb-4"><h2 class="text-3xl font-bold text-accent-purple">${texts.projects}</h2></div>
-        <div class="flex justify-center mb-6">
-             <img src="https://cdn.prod.website-files.com/5d5e2ff58f10c53dcffd8683/5db1e0e7e74e34610bcb4951_loving.svg" class="w-48 h-auto rounded-2xl illustration" alt="Project illustration">
-        </div>
-        <div class="space-y-5">
-            ${state.projects.length > 0 ? state.projects.map(project => {
-                const totalSteps = project.steps?.length || 0;
-                const completedSteps = project.steps?.filter(s => s.completed).length || 0;
-                const progress = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
-                
-                const stepsHTML = (project.steps && project.steps.length > 0) ? `
-                    <div class="mt-4 pt-4 border-t border-gray-100 space-y-3">
-                        ${project.steps.map((step, index) => `
-                            <div class="flex items-center">
-                                <input type="checkbox" id="step-${project.id}-${index}" data-project-id="${project.id}" data-step-index="${index}" class="step-checkbox h-5 w-5 rounded-md border-gray-300 text-accent-purple focus:ring-accent-purple mr-3 cursor-pointer" ${step.completed ? 'checked' : ''}>
-                                <label for="step-${project.id}-${index}" class="text-sm font-medium ${step.completed ? 'line-through text-text-muted' : 'text-primary-dark'} cursor-pointer">${step.title}</label>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : '';
-
-                return `
-                <div class="bg-accent-pink-soft rounded-3xl p-5 shadow-sm card-hover">
-                    <div class="project-header cursor-pointer" data-id="${project.id}">
-                        <h3 class="font-bold text-lg text-accent-purple">${project.title}</h3>
-                        <p class="text-sm text-text-muted mt-1 mb-3">${project.description || ''}</p>
-                    </div>
-                    
-                    <div class="w-full bg-accent-purple rounded-full h-2.5 mb-2">
-                        <div class="text-accent-purple h-2.5 rounded-full" style="width: ${progress}%"></div>
-                    </div>
-                    <div class="flex justify-between text-xs text-text-muted">
-                        <span>${completedSteps}/${totalSteps} ${texts.completed}</span>
-                        <span>${progress.toFixed(0)}%</span>
-                    </div>
-
-                    ${stepsHTML}
-                </div>
-            `}).join('') : `<p class="text-center text-text-muted py-8">${texts.no_projects}</p>`}
-        </div>
-    `;
-
-    container.querySelectorAll('.project-header').forEach(header => {
-        header.onclick = () => handleEditProject(state.projects.find(p => p.id === header.dataset.id));
-    });
-
-    container.querySelectorAll('.step-checkbox').forEach(checkbox => {
-        checkbox.onchange = () => {
-            const projectId = checkbox.dataset.projectId;
-            const stepIndex = parseInt(checkbox.dataset.stepIndex, 10);
-            handleToggleProjectStep(projectId, stepIndex);
-        };
-    });
-}
-
-function renderFinances() {
-    const container = document.getElementById('finances-view');
-    const balance = state.transactions.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
-    const income = state.transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-    const expenses = state.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-
-    container.innerHTML = `
-        <div class="flex justify-center items-center mb-4"><h2 class="text-3xl font-bold text-accent-purple">${texts.money}</h2></div>
-        <div class="flex justify-center mb-6">
-             <img src="https://cdn.prod.website-files.com/5d5e2ff58f10c53dcffd8683/5d73852f7a6dfa5b3e1e829f_clumsy.svg" class="w-48 h-auto rounded-2xl illustration" alt="Money illustration">
-        </div>
-        <div class="text-white bg-accent-purple rounded-3xl p-6 shadow-lg mb-6">
-            <p class="text-sm opacity-90">${texts.balance}</p>
-            <h3 class="text-4xl font-bold mt-1">$${balance.toFixed(2)}</h3>
-            <div class="flex justify-between items-end mt-4">
-                <div><p class="text-xs opacity-80">${texts.income}</p><h4 class="font-semibold">$${income.toFixed(2)}</h4></div>
-                <div><p class="text-xs opacity-80">${texts.expense}</p><h4 class="font-semibold">$${expenses.toFixed(2)}</h4></div>
-            </div>
-        </div>
-        <div>
-            <h3 class="font-bold text-lg text-primary-dark mb-4">Transacciones Recientes</h3>
-            <div class="space-y-3">
-                ${state.transactions.length > 0 ? state.transactions.map(t => `
-                    <div class="bg-surface rounded-2xl p-4 shadow-sm flex items-center card-hover cursor-pointer transaction-card" data-id="${t.id}">
-                        <div class="w-12 h-12 rounded-xl ${t.type === 'income' ? 'bg-green-100 text-green-500' : 'bg-red-100 text-red-500'} flex items-center justify-center mr-4">
-                           <i class="fa-regular ${t.type === 'income' ? 'fa-arrow-up' : 'fa-arrow-down'}"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-primary-dark">${t.description}</h4>
-                            <p class="text-xs text-text-muted">${new Date(t.date).toLocaleDateString()} • ${t.category || 'Sin categoría'}</p>
-                        </div>
-                        <div class="font-bold ${t.type === 'income' ? 'text-green-500' : 'text-red-500'}">${t.type === 'income' ? '+' : '-'}$${t.amount.toFixed(2)}</div>
-                    </div>
-                `).join('') : `<p class="text-center text-text-muted py-8">${texts.no_transactions}</p>`}
-            </div>
-        </div>
-    `;
-
-    container.querySelectorAll('.transaction-card').forEach(card => card.onclick = () => handleEditTransaction(state.transactions.find(t => t.id === card.dataset.id)));
-}
+function renderDashboard() { const container = document.getElementById('dashboard-view'); const completedTasks = state.tasks.filter(t => t.completed).length; const totalTasks = state.tasks.length; container.innerHTML = ` <h2 class="text-3xl font-bold text-primary-dark mb-6">${texts.welcome} <span class="text-accent-purple">${currentUser.displayName.split(' ')[0]}</span>!</h2> <div class="mb-8"> <h3 class="text-xl font-bold text-primary-dark mb-4">${texts.quickStats}</h3> <div class="grid grid-cols-2 gap-4"> <div class="bg-accent-purple-soft rounded-2xl p-4 shadow-sm"> <div class="flex items-center mb-2"> <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center mr-3"><i class="fa-regular fa-square-check text-accent-purple"></i></div> <h4 class="font-bold text-primary-dark">${texts.tasks}</h4> </div> <p class="text-lg font-bold text-primary-dark">${completedTasks}/${totalTasks} <span class="text-sm font-normal text-text-muted">${texts.completed}</span></p> </div> <div class="bg-accent-pink-soft rounded-2xl p-4 shadow-sm"> <div class="flex items-center mb-2"> <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center mr-3"><i class="fa-regular fa-star text-accent-magenta"></i></div> <h4 class="font-bold text-primary-dark">${texts.streak}</h4> </div> <p class="text-lg font-bold text-primary-dark">0 <span class="text-sm font-normal text-text-muted">${texts.daysInARow}</span></p> </div> </div> </div> <div class="mb-8"> <div class="flex justify-between items-center mb-4"> <h3 class="text-xl font-bold text-primary-dark">${texts.recentTasks}</h3> <a href="#" class="text-sm text-accent-purple font-semibold hover:underline" onclick="document.querySelector('[data-view=\\'tasks-view\\']').click()">${texts.seeAll}</a> </div> <div class="space-y-3"> ${state.tasks.slice(0, 3).map(task => ` <div class="bg-surface rounded-2xl p-4 shadow-sm flex items-center"> <i class="fa-regular ${task.completed ? 'fa-circle-check text-accent-purple' : 'fa-circle text-text-muted'} text-2xl mr-4"></i> <div class="flex-grow font-semibold text-primary-dark ${task.completed ? 'line-through text-text-muted' : ''}">${task.title}</div> </div> `).join('') || `<p class="text-center text-text-muted py-4">${texts.no_tasks}</p>`} </div> </div> `; }
+function renderTasks() { const container = document.getElementById('tasks-view'); container.innerHTML = ` <div class="flex justify-center items-center mb-4"> <h2 class="text-3xl font-bold text-accent-purple">${texts.tasks}</h2> </div> <div class="flex justify-center mb-6"> <img src="https://cdn.prod.website-files.com/5d5e2ff58f10c53dcffd8683/5db1e0e7e74e34610bcb4951_sprinting.gif" class="w-48 h-auto rounded-2xl illustration" alt="Task illustration"> </div> <div class="space-y-4"> ${state.tasks.length > 0 ? state.tasks.map(task => ` <div class="bg-accent-purple-soft rounded-2xl p-5 shadow-sm flex items-center card-hover"> <button data-id="${task.id}" class="task-check-btn flex-shrink-0 mr-4"> <i class="fa-regular ${task.completed ? 'fa-circle-check text-accent-purple' : 'fa-circle text-text-muted'} text-3xl"></i> </button> <div class="flex-grow font-semibold text-primary-dark ${task.completed ? 'line-through text-text-muted' : ''}">${task.title}</div> <button class="edit-task-btn text-text-muted hover:text-accent-purple" data-id="${task.id}"><i class="fa-regular fa-pen-to-square"></i></button> </div> `).join('') : `<p class="text-center text-text-muted py-8">${texts.no_tasks}</p>`} </div> `; container.querySelectorAll('.task-check-btn').forEach(btn => btn.onclick = () => handleToggleTask(state.tasks.find(t => t.id === btn.dataset.id))); container.querySelectorAll('.edit-task-btn').forEach(btn => btn.onclick = () => handleEditTask(state.tasks.find(t => t.id === btn.dataset.id))); }
+function renderProjects() { const container = document.getElementById('projects-view'); container.innerHTML = ` <div class="flex justify-center items-center mb-4"><h2 class="text-3xl font-bold text-accent-purple">${texts.projects}</h2></div> <div class="flex justify-center mb-6"> <img src="https://cdn.prod.website-files.com/5d5e2ff58f10c53dcffd8683/5db1e0e7e74e34610bcb4951_loving.svg" class="w-48 h-auto rounded-2xl illustration" alt="Project illustration"> </div> <div class="space-y-5"> ${state.projects.length > 0 ? state.projects.map(project => { const totalSteps = project.steps?.length || 0; const completedSteps = project.steps?.filter(s => s.completed).length || 0; const progress = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0; const stepsHTML = (project.steps && project.steps.length > 0) ? ` <div class="mt-4 pt-4 border-t border-gray-100 space-y-3"> ${project.steps.map((step, index) => ` <div class="flex items-center"> <input type="checkbox" id="step-${project.id}-${index}" data-project-id="${project.id}" data-step-index="${index}" class="step-checkbox h-5 w-5 rounded-md border-gray-300 text-accent-purple focus:ring-accent-purple mr-3 cursor-pointer" ${step.completed ? 'checked' : ''}> <label for="step-${project.id}-${index}" class="text-sm font-medium ${step.completed ? 'line-through text-text-muted' : 'text-primary-dark'} cursor-pointer">${step.title}</label> </div> `).join('')} </div> ` : ''; return ` <div class="bg-accent-pink-soft rounded-3xl p-5 shadow-sm card-hover"> <div class="project-header cursor-pointer" data-id="${project.id}"> <h3 class="font-bold text-lg text-accent-purple">${project.title}</h3> <p class="text-sm text-text-muted mt-1 mb-3">${project.description || ''}</p> </div> <div class="w-full bg-accent-purple rounded-full h-2.5 mb-2"> <div class="text-accent-purple h-2.5 rounded-full" style="width: ${progress}%"></div> </div> <div class="flex justify-between text-xs text-text-muted"> <span>${completedSteps}/${totalSteps} ${texts.completed}</span> <span>${progress.toFixed(0)}%</span> </div> ${stepsHTML} </div> `}).join('') : `<p class="text-center text-text-muted py-8">${texts.no_projects}</p>`} </div> `; container.querySelectorAll('.project-header').forEach(header => { header.onclick = () => handleEditProject(state.projects.find(p => p.id === header.dataset.id)); }); container.querySelectorAll('.step-checkbox').forEach(checkbox => { checkbox.onchange = () => { const projectId = checkbox.dataset.projectId; const stepIndex = parseInt(checkbox.dataset.stepIndex, 10); handleToggleProjectStep(projectId, stepIndex); }; }); }
+function renderFinances() { const container = document.getElementById('finances-view'); const balance = state.transactions.reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0); const income = state.transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0); const expenses = state.transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0); container.innerHTML = ` <div class="text-white bg-accent-purple rounded-3xl p-6 shadow-lg mb-6"> <p class="text-sm opacity-90">${texts.balance}</p> <h3 class="text-4xl font-bold mt-1">$${balance.toFixed(2)}</h3> <div class="flex justify-between items-end mt-4"> <div><p class="text-xs opacity-80">${texts.income}</p><h4 class="font-semibold">$${income.toFixed(2)}</h4></div> <div><p class="text-xs opacity-80">${texts.expense}</p><h4 class="font-semibold">$${expenses.toFixed(2)}</h4></div> </div> </div> <div> <h3 class="font-bold text-lg text-primary-dark mb-4">Transacciones Recientes</h3> <div class="space-y-3"> ${state.transactions.length > 0 ? state.transactions.map(t => ` <div class="bg-surface rounded-2xl p-4 shadow-sm flex items-center card-hover cursor-pointer transaction-card" data-id="${t.id}"> <div class="w-12 h-12 rounded-xl ${t.type === 'income' ? 'bg-green-100 text-green-500' : 'bg-red-100 text-red-500'} flex items-center justify-center mr-4"> <i class="fa-regular ${t.type === 'income' ? 'fa-arrow-up' : 'fa-arrow-down'}"></i> </div> <div class="flex-1"> <h4 class="font-semibold text-primary-dark">${t.description}</h4> <p class="text-xs text-text-muted">${new Date(t.date).toLocaleDateString()} • ${t.category || 'Sin categoría'}</p> </div> <div class="font-bold ${t.type === 'income' ? 'text-green-500' : 'text-red-500'}">${t.type === 'income' ? '+' : '-'}$${t.amount.toFixed(2)}</div> </div> `).join('') : `<p class="text-center text-text-muted py-8">${texts.no_transactions}</p>`} </div> </div> `; container.querySelectorAll('.transaction-card').forEach(card => card.onclick = () => handleEditTransaction(state.transactions.find(t => t.id === card.dataset.id))); }
