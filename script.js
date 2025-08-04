@@ -91,9 +91,9 @@ const texts = {
 };
 
 // =================================================================================
-// --- AUTENTICACIÓN ---
+// --- AUTENTICACIÓN (CON LA CORRECCIÓN PARA EL MÓVIL) ---
 // =================================================================================
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => { // <-- Se añade 'async' aquí
     if (user) {
         currentUser = user;
         document.body.classList.add('logged-in');
@@ -102,8 +102,13 @@ onAuthStateChanged(auth, (user) => {
         ui.fabContainer.classList.remove('hidden');
         ui.loginView.classList.add('hidden');
         ui.userProfileIcon.innerHTML = `<img src="${user.photoURL}" alt="User" class="w-9 h-9 rounded-full cursor-pointer">`;
+        
         initializeAppShell();
-        initCloudExplorer();
+        await initCloudExplorer(); // <-- Se añade 'await' para esperar a que los datos carguen
+        
+        // Una vez cargado todo, renderizamos la vista por defecto
+        renderView(state.currentView);
+
     } else {
         currentUser = null;
         document.body.classList.remove('logged-in');
@@ -112,31 +117,33 @@ onAuthStateChanged(auth, (user) => {
         ui.fabContainer.classList.add('hidden');
         ui.loginView.classList.remove('hidden');
         ui.userProfileIcon.innerHTML = `<i class="fa-regular fa-user text-primary-dark text-lg"></i>`;
+        // Limpiamos los datos al cerrar sesión
         state.tasks = [];
         state.projects = [];
         state.transactions = [];
-        cloudData = [];
+        cloudData = []; // <-- Limpiamos los datos de la nube también
     }
 });
 
 ui.loginButton.onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
 ui.userProfileIcon.onclick = () => { if (currentUser) signOut(auth); };
 
+
 // =================================================================================
-// --- INICIALIZACIÓN Y NAVEGACIÓN ---
+// --- INICIALIZACIÓN Y NAVEGACIÓN (LIGERO CAMBIO) ---
 // =================================================================================
 function initializeAppShell() {
     renderAppLayout();
     attachBaseEventListeners();
     setupRealtimeListeners();
-    renderView('dashboard-view');
+    // Ya no renderizamos la vista aquí, lo hacemos después de cargar los datos
 }
 
 function renderAppLayout() {
     const navIcons = {
         'dashboard-view': 'fa-regular fa-house',
         'tasks-view': 'fa-regular fa-square-check',
-        'projects-view': 'fa-regular fa-diagram-project', // Icono Corregido
+        'projects-view': 'fa-regular fa-diagram-project',
         'cloud-explorer-view': 'fa-regular fa-cloud',
         'finances-view': 'fa-regular fa-wallet',
         'kittens-view': 'fa-regular fa-cat'
@@ -154,7 +161,7 @@ function renderAppLayout() {
         <div id="dashboard-view" class="p-6"></div>
         <div id="tasks-view" class="p-6 hidden"></div>
         <div id="projects-view" class="p-6 hidden"></div>
-        <div id="cloud-explorer-view" class="p-6 hidden">
+        <div id="cloud-explorer-view" class="p-6 hidden"></div>
         <div id="finances-view" class="p-6 hidden"></div>
         <div id="kittens-view" class="p-6 hidden"><p class="text-center text-text-muted">${texts.achievements} próximamente...</p></div>
     `;
@@ -224,6 +231,192 @@ function renderView(viewId) {
         }
     }
 }
+
+// =================================================================================
+// --- LÓGICA DEL EXPLORADOR DE NUBES (VERSIÓN 2.0 con ÁRBOL DE CARPETAS) ---
+// =================================================================================
+
+const CSV_URL = 'AQUI_VA_TU_ENLACE_CSV_PUBLICADO';
+let cloudData = [];
+let folderTree = {};
+
+async function initCloudExplorer() {
+    if (cloudData.length > 0) return;
+    try {
+        const response = await fetch(CSV_URL);
+        if (!response.ok) { throw new Error(`Error en la red: ${response.statusText}`); }
+        const csvText = await response.text();
+        cloudData = parseCSV(csvText);
+        folderTree = buildFolderTree(cloudData);
+        console.log(`Cargados ${cloudData.length} archivos y árbol de carpetas construido.`);
+    } catch (error) {
+        console.error("Error al cargar los datos del explorador:", error);
+        cloudData = []; // Asegurarse de que esté vacío si falla
+    }
+}
+
+function parseCSV(text) {
+    const lines = text.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const result = [];
+    for (let i = 1; i < lines.length; i++) {
+        const obj = {};
+        const values = lines[i].split(',');
+        for (let j = 0; j < headers.length; j++) {
+            obj[headers[j]] = values[j] ? values[j].trim() : '';
+        }
+        result.push(obj);
+    }
+    return result;
+}
+
+function buildFolderTree(data) {
+    const tree = {};
+    const paths = [...new Set(data.map(item => item['Ruta (Path)']))].filter(Boolean);
+
+    paths.forEach(path => {
+        let currentNode = tree;
+        const parts = path.split('/');
+        parts.forEach(part => {
+            if (!currentNode[part]) {
+                currentNode[part] = {};
+            }
+            currentNode = currentNode[part];
+        });
+    });
+    return tree;
+}
+
+function renderCloudExplorer() {
+    const container = document.getElementById('cloud-explorer-view');
+    if (!container) return;
+
+    container.innerHTML = `
+        <h2 class="text-3xl font-bold text-accent-purple mb-6 text-center">Explorador de Nubes</h2>
+        <div class="explorer-layout">
+            <aside class="explorer-sidebar">
+                <div id="folder-tree-container"></div>
+            </aside>
+            <main class="explorer-content">
+                <input type="text" id="file-search-input" placeholder="Buscar en todos los archivos..." class="w-full bg-gray-100 border-transparent rounded-lg p-3 text-sm focus:ring-2 focus:ring-accent-purple mb-4">
+                <div id="files-container" class="space-y-2"></div>
+            </main>
+        </div>
+    `;
+
+    if (cloudData.length === 0) {
+        document.getElementById('files-container').innerHTML = '<p class="text-text-muted text-center py-8">Cargando datos...</p>';
+        return;
+    }
+
+    renderFolderTree(folderTree, document.getElementById('folder-tree-container'));
+    displayFiles(cloudData); // Muestra todos al inicio
+    
+    document.getElementById('file-search-input').addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        if (!searchTerm) {
+            displayFiles(cloudData);
+            return;
+        }
+        const filteredData = cloudData.filter(file => file['Nombre Archivo'].toLowerCase().includes(searchTerm));
+        displayFiles(filteredData, true);
+    });
+}
+
+function renderFolderTree(node, parentElement, currentPath = '') {
+    const ul = document.createElement('ul');
+    if(currentPath !== '') ul.className = 'ml-4 hidden'; // Oculto por defecto, excepto el nivel raíz
+
+    // Botón para mostrar todos los archivos si estamos en la raíz
+    if (currentPath === '') {
+        const allFilesLi = document.createElement('li');
+        allFilesLi.innerHTML = `<i class="fa-regular fa-folder-open mr-2"></i> Todos los Archivos`;
+        allFilesLi.className = 'folder-item font-bold cursor-pointer p-2 rounded-lg tab-active';
+        allFilesLi.onclick = (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('tab-active'));
+            allFilesLi.classList.add('tab-active');
+            displayFiles(cloudData);
+        };
+        ul.appendChild(allFilesLi);
+    }
+    
+    Object.keys(node).sort().forEach(key => {
+        const newPath = currentPath ? `${currentPath}/${key}` : key;
+        const li = document.createElement('li');
+        li.className = 'folder-item cursor-pointer p-2 rounded-lg hover:bg-gray-100';
+        
+        const hasChildren = Object.keys(node[key]).length > 0;
+        const icon = hasChildren ? '<i class="fa-solid fa-chevron-right text-xs mr-2 transition-transform"></i>' : '<i class="fa-regular fa-folder mr-2"></i>';
+        
+        li.innerHTML = `<div>${icon} ${key}</div>`;
+        
+        li.onclick = (e) => {
+            e.stopPropagation();
+            // Lógica de selección
+            document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('tab-active'));
+            li.classList.add('tab-active');
+
+            // Muestra los archivos de esta carpeta
+            const filtered = cloudData.filter(file => file['Ruta (Path)'] === newPath);
+            displayFiles(filtered, true);
+
+            // Expande/contrae el sub-árbol
+            if (hasChildren) {
+                const subUl = li.querySelector('ul');
+                const chevron = li.querySelector('.fa-chevron-right');
+                if (subUl) {
+                    subUl.classList.toggle('hidden');
+                    chevron.classList.toggle('rotate-90');
+                }
+            }
+        };
+
+        if (hasChildren) {
+            renderFolderTree(node[key], li, newPath);
+        }
+        ul.appendChild(li);
+    });
+    parentElement.appendChild(ul);
+}
+
+function displayFiles(files, isFiltered = false) {
+    // ... (Esta función no necesita grandes cambios, la pego por completitud)
+    const filesContainer = document.getElementById('files-container');
+    filesContainer.innerHTML = '';
+
+    if (files.length === 0) {
+        filesContainer.innerHTML = `<p class="text-text-muted text-center py-8">${isFiltered ? 'No hay archivos en esta carpeta.' : 'No se encontraron archivos.'}</p>`;
+        return;
+    }
+
+    files.sort((a, b) => {
+        if (a.Tipo === 'Carpeta' && b.Tipo !== 'Carpeta') return -1;
+        if (a.Tipo !== 'Carpeta' && b.Tipo === 'Carpeta') return 1;
+        return a['Nombre Archivo'].localeCompare(b['Nombre Archivo']);
+    }).forEach(file => {
+        const fileElement = document.createElement('div');
+        fileElement.className = 'bg-surface p-3 rounded-lg flex items-center justify-between card-hover';
+        
+        let fileIcon = 'fa-regular fa-file';
+        if (file.Tipo === 'Carpeta') fileIcon = 'fa-regular fa-folder text-yellow-500';
+        else if (file['Nombre Archivo'].includes('.pdf')) fileIcon = 'fa-regular fa-file-pdf text-red-500';
+        else if (/\.(png|jpg|jpeg|gif|svg)$/i.test(file['Nombre Archivo'])) fileIcon = 'fa-regular fa-file-image text-blue-500';
+        else if (/\.(doc|docx)$/i.test(file['Nombre Archivo'])) fileIcon = 'fa-regular fa-file-word text-blue-600';
+
+        const hasPublicLink = file['Enlace compartir'] && file['Enlace compartir'] !== 'Privado';
+
+        fileElement.innerHTML = `
+            <div class="flex items-center flex-grow overflow-hidden mr-4">
+                <i class="${fileIcon} text-xl mr-4"></i>
+                <a href="${file['Enlace al original']}" target="_blank" class="font-semibold text-primary-dark hover:underline truncate" title="${file['Nombre Archivo']}">${file['Nombre Archivo']}</a>
+            </div>
+            ${hasPublicLink ? `<a href="${file['Enlace compartir']}" target="_blank" class="text-accent-purple hover:opacity-80 flex-shrink-0" title="Abrir enlace compartido"><i class="fa-solid fa-share-nodes"></i></a>` : ''}
+        `;
+        filesContainer.appendChild(fileElement);
+    });
+}
+
 
 // =================================================================================
 // --- SISTEMA DE MODALES ---
