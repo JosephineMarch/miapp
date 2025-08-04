@@ -237,11 +237,12 @@ function renderView(viewId) {
 }
 
 // =================================================================================
-// --- EXPLORADOR DE NUBES ---
+// --- EXPLORADOR DE NUBES (VERSIÓN MEJORADA) ---
 // =================================================================================
 async function initCloudExplorer() {
     if (cloudData.length > 0) return;
     try {
+        console.log("Iniciando carga de datos de la nube...");
         const response = await fetch(CSV_URL);
         if (!response.ok) { throw new Error(`Error en la red: ${response.statusText}`); }
         const csvText = await response.text();
@@ -305,7 +306,7 @@ function renderCloudExplorer() {
     `;
 
     if (cloudData.length === 0) {
-        document.getElementById('files-container').innerHTML = '<p class="text-text-muted text-center py-8">Cargando datos...</p>';
+        document.getElementById('files-container').innerHTML = '<p class="text-text-muted text-center py-8">Cargando datos... Si esto persiste, revisa la consola (F12).</p>';
         return;
     }
 
@@ -314,24 +315,28 @@ function renderCloudExplorer() {
     
     document.getElementById('file-search-input').addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase();
-        if (!searchTerm) {
-            displayFiles(cloudData);
-            return;
+        const activeFolder = document.querySelector('.folder-item.tab-active');
+        const basePath = activeFolder ? activeFolder.dataset.path : '';
+        
+        let dataToSearch = cloudData;
+        if(basePath) {
+            dataToSearch = cloudData.filter(file => file['Ruta (Path)'] === basePath);
         }
-        const filteredData = cloudData.filter(file => file['Nombre Archivo'].toLowerCase().includes(searchTerm));
+
+        const filteredData = dataToSearch.filter(file => file['Nombre Archivo'].toLowerCase().includes(searchTerm));
         displayFiles(filteredData, true);
     });
 }
 
 function renderFolderTree(node, parentElement, currentPath = '') {
     const ul = document.createElement('ul');
-    if(currentPath !== '') ul.className = 'ml-4 hidden';
+    if (currentPath !== '') ul.className = 'ml-4 hidden';
 
-    // Botón para mostrar todos los archivos si estamos en la raíz
     if (currentPath === '') {
         const allFilesLi = document.createElement('li');
         allFilesLi.innerHTML = `<i class="fa-regular fa-folder-open mr-2"></i> Todos los Archivos`;
         allFilesLi.className = 'folder-item font-bold cursor-pointer p-2 rounded-lg tab-active';
+        allFilesLi.dataset.path = '';
         allFilesLi.onclick = (e) => {
             e.stopPropagation();
             document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('tab-active'));
@@ -344,24 +349,21 @@ function renderFolderTree(node, parentElement, currentPath = '') {
     Object.keys(node).sort().forEach(key => {
         const newPath = currentPath ? `${currentPath}/${key}` : key;
         const li = document.createElement('li');
-        li.className = 'folder-item cursor-pointer p-2 rounded-lg hover:bg-gray-100';
+        li.dataset.path = newPath;
         
         const hasChildren = Object.keys(node[key]).length > 0;
         const icon = hasChildren ? '<i class="fa-solid fa-chevron-right text-xs mr-2 transition-transform"></i>' : '<i class="fa-regular fa-folder mr-2"></i>';
         
-        li.innerHTML = `<div>${icon} ${key}</div>`;
+        li.innerHTML = `<div class="folder-item cursor-pointer p-2 rounded-lg hover:bg-gray-100 flex items-center">${icon} ${key}</div>`;
         
-        li.onclick = (e) => {
+        li.querySelector('.folder-item').onclick = (e) => {
             e.stopPropagation();
-            // Lógica de selección
             document.querySelectorAll('.folder-item').forEach(f => f.classList.remove('tab-active'));
-            li.classList.add('tab-active');
+            li.querySelector('.folder-item').classList.add('tab-active');
 
-            // Muestra los archivos de esta carpeta
             const filtered = cloudData.filter(file => file['Ruta (Path)'] === newPath);
             displayFiles(filtered, true);
 
-            // Expande/contrae el sub-árbol
             if (hasChildren) {
                 const subUl = li.querySelector('ul');
                 const chevron = li.querySelector('.fa-chevron-right');
