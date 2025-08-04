@@ -103,6 +103,7 @@ onAuthStateChanged(auth, (user) => {
         ui.loginView.classList.add('hidden');
         ui.userProfileIcon.innerHTML = `<img src="${user.photoURL}" alt="User" class="w-9 h-9 rounded-full cursor-pointer">`;
         initializeAppShell();
+        initCloudExplorer();
     } else {
         currentUser = null;
         document.body.classList.remove('logged-in');
@@ -114,6 +115,7 @@ onAuthStateChanged(auth, (user) => {
         state.tasks = [];
         state.projects = [];
         state.transactions = [];
+        cloudData = [];
     }
 });
 
@@ -135,6 +137,7 @@ function renderAppLayout() {
         'dashboard-view': 'fa-regular fa-house',
         'tasks-view': 'fa-regular fa-square-check',
         'projects-view': 'fa-regular fa-diagram-project', // Icono Corregido
+        'cloud-explorer-view': 'fa-regular fa-cloud',
         'finances-view': 'fa-regular fa-wallet',
         'kittens-view': 'fa-regular fa-cat'
     };
@@ -142,6 +145,7 @@ function renderAppLayout() {
         'dashboard-view': texts.home,
         'tasks-view': texts.tasks,
         'projects-view': texts.projects,
+        'cloud-explorer-view': 'Nubes',
         'finances-view': texts.money,
         'kittens-view': texts.achievements
     };
@@ -150,6 +154,7 @@ function renderAppLayout() {
         <div id="dashboard-view" class="p-6"></div>
         <div id="tasks-view" class="p-6 hidden"></div>
         <div id="projects-view" class="p-6 hidden"></div>
+        <div id="cloud-explorer-view" class="p-6 hidden">
         <div id="finances-view" class="p-6 hidden"></div>
         <div id="kittens-view" class="p-6 hidden"><p class="text-center text-text-muted">${texts.achievements} próximamente...</p></div>
     `;
@@ -214,6 +219,7 @@ function renderView(viewId) {
             case 'dashboard-view': renderDashboard(); break;
             case 'tasks-view': renderTasks(); break;
             case 'projects-view': renderProjects(); break;
+            case 'cloud-explorer-view': renderCloudExplorer(); break;
             case 'finances-view': renderFinances(); break;
         }
     }
@@ -327,6 +333,153 @@ function handleToggleProjectStep(projectId, stepIndex) {
 }
 function handleAddTransaction() { openModal({ title: texts.new_transaction, fields: [ { id: 'description', label: texts.description, type: 'text', required: true }, { id: 'amount', label: texts.amount, type: 'number', required: true }, { id: 'type', label: texts.type, type: 'select', options: [{value: 'expense', label: texts.expense}, {value: 'income', label: texts.income}]}, { id: 'category', label: texts.category, type: 'text' }, { id: 'date', label: texts.date, type: 'date' } ], onSave: (data) => addDoc(collection(db, 'users', currentUser.uid, 'transactions'), { ...data, createdAt: serverTimestamp() }) }); }
 function handleEditTransaction(transaction) { openModal({ title: texts.edit_transaction, data: transaction, fields: [ { id: 'description', label: texts.description, type: 'text', required: true }, { id: 'amount', label: texts.amount, type: 'number', required: true }, { id: 'type', label: texts.type, type: 'select', options: [{value: 'expense', label: texts.expense}, {value: 'income', label: texts.income}]}, { id: 'category', label: texts.category, type: 'text' }, { id: 'date', label: texts.date, type: 'date' } ], onSave: (data) => updateDoc(doc(db, 'users', currentUser.uid, 'transactions', transaction.id), data), onDelete: () => deleteDoc(doc(db, 'users',currentUser.uid, 'transactions', transaction.id)) }); }
+
+// =================================================================================
+// --- LÓGICA DEL EXPLORADOR DE NUBES ---
+// =================================================================================
+
+// Pega aquí el enlace CSV que publicaste en Google Sheets
+const CSV_URL = 'AQUI_VA_TU_ENLACE_CSV_PUBLICADO';
+let cloudData = []; // Guardaremos los datos aquí para no pedirlos cada vez
+
+async function initCloudExplorer() {
+    if (cloudData.length > 0) return; // Si ya los tenemos, no hacemos nada
+    try {
+        const response = await fetch(CSV_URL);
+        if (!response.ok) { throw new Error(`Error en la red: ${response.statusText}`); }
+        const csvText = await response.text();
+        // Usamos una función de parseo más robusta
+        cloudData = parseCSV(csvText);
+        console.log(`Cargados ${cloudData.length} archivos de la nube.`);
+        // Si el usuario está viendo el explorador, lo renderizamos de nuevo
+        if(state.currentView === 'cloud-explorer-view') {
+            renderCloudExplorer();
+        }
+    } catch (error) {
+        console.error("Error al cargar los datos del explorador:", error);
+        const container = document.getElementById('cloud-explorer-view');
+        if (container) {
+             container.innerHTML = '<p class="text-center text-red-500">No se pudieron cargar los datos de la nube. Revisa el enlace CSV.</p>';
+        }
+    }
+}
+
+function parseCSV(text) {
+    // Función de parseo mejorada que maneja comas dentro de los campos
+    const lines = text.trim().split('\n');
+    const headers = lines[0].split(',').map(h => h.trim());
+    const result = [];
+    for (let i = 1; i < lines.length; i++) {
+        const obj = {};
+        // Esta expresión regular simple asume que no hay comas escapadas dentro de comillas
+        const values = lines[i].split(',');
+        for (let j = 0; j < headers.length; j++) {
+            obj[headers[j]] = values[j] ? values[j].trim() : '';
+        }
+        result.push(obj);
+    }
+    return result;
+}
+
+function renderCloudExplorer() {
+    const container = document.getElementById('cloud-explorer-view');
+    if (!container) return;
+
+    // Estructura HTML del explorador
+    container.innerHTML = `
+        <h2 class="text-3xl font-bold text-accent-purple mb-6 text-center">Explorador de Nubes</h2>
+        <div class="explorer-layout">
+            <aside class="explorer-sidebar">
+                <h4 class="font-bold mb-2">Carpetas</h4>
+                <ul id="folder-list"></ul>
+            </aside>
+            <main class="explorer-content">
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-bold">Archivos</h4>
+                    <input type="text" id="file-search-input" placeholder="Buscar archivos..." class="w-1/2 bg-gray-100 border-transparent rounded-lg p-2 text-sm focus:ring-2 focus:ring-accent-purple">
+                </div>
+                <div id="files-container" class="space-y-2"></div>
+            </main>
+        </div>
+    `;
+
+    if (cloudData.length === 0) {
+        document.getElementById('files-container').innerHTML = '<p class="text-text-muted text-center py-8">Cargando datos...</p>';
+        return;
+    }
+
+    displayFolders(cloudData);
+    displayFiles(cloudData);
+    
+    // Añadimos el listener para el buscador
+    document.getElementById('file-search-input').addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const filteredData = cloudData.filter(file => file['Nombre Archivo'].toLowerCase().includes(searchTerm));
+        displayFiles(filteredData);
+    });
+}
+
+function displayFolders(data) {
+    const folderListElement = document.getElementById('folder-list');
+    const paths = [...new Set(data.map(item => item['Ruta (Path)']))].filter(Boolean); // Obtiene rutas únicas y elimina vacías
+    
+    folderListElement.innerHTML = '';
+    
+    const allFoldersLi = document.createElement('li');
+    allFoldersLi.innerHTML = `<i class="fa-regular fa-folder-open mr-2"></i> Todas las carpetas`;
+    allFoldersLi.className = 'p-2 cursor-pointer rounded-lg font-semibold tab-active'; // Usamos la clase de tu app
+    allFoldersLi.onclick = () => {
+        document.querySelectorAll('#folder-list li').forEach(li => li.classList.remove('tab-active'));
+        allFoldersLi.classList.add('tab-active');
+        displayFiles(data);
+    };
+    folderListElement.appendChild(allFoldersLi);
+
+    paths.sort().forEach(path => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `<i class="fa-regular fa-folder mr-2"></i> ${path.replace('Mi unidad/', '')}`;
+        listItem.className = 'p-2 cursor-pointer rounded-lg text-text-muted hover:bg-gray-100';
+        listItem.onclick = () => {
+            document.querySelectorAll('#folder-list li').forEach(li => li.classList.remove('tab-active'));
+            listItem.classList.add('tab-active');
+            const filtered = data.filter(item => item['Ruta (Path)'] === path);
+            displayFiles(filtered, true);
+        };
+        folderListElement.appendChild(listItem);
+    });
+}
+
+function displayFiles(files, isFiltered = false) {
+    const filesContainer = document.getElementById('files-container');
+    filesContainer.innerHTML = '';
+
+    if (files.length === 0) {
+        filesContainer.innerHTML = `<p class="text-text-muted text-center py-8">${isFiltered ? 'No hay archivos en esta carpeta.' : 'No se encontraron archivos.'}</p>`;
+        return;
+    }
+
+    files.sort((a, b) => a['Nombre Archivo'].localeCompare(b['Nombre Archivo'])).forEach(file => {
+        const fileElement = document.createElement('div');
+        fileElement.className = 'bg-surface p-3 rounded-lg flex items-center justify-between card-hover';
+        
+        let fileIcon = 'fa-regular fa-file';
+        if (file.Tipo === 'Carpeta') fileIcon = 'fa-regular fa-folder text-yellow-500';
+        else if (file['Nombre Archivo'].includes('.pdf')) fileIcon = 'fa-regular fa-file-pdf text-red-500';
+        else if (/\.(png|jpg|jpeg|gif|svg)$/i.test(file['Nombre Archivo'])) fileIcon = 'fa-regular fa-file-image text-blue-500';
+        else if (/\.(doc|docx)$/i.test(file['Nombre Archivo'])) fileIcon = 'fa-regular fa-file-word text-blue-600';
+
+        const hasPublicLink = file['Enlace compartir'] && file['Enlace compartir'] !== 'Privado';
+
+        fileElement.innerHTML = `
+            <div class="flex items-center flex-grow">
+                <i class="${fileIcon} text-xl mr-4"></i>
+                <a href="${file['Enlace al original']}" target="_blank" class="font-semibold text-primary-dark hover:underline">${file['Nombre Archivo']}</a>
+            </div>
+            ${hasPublicLink ? `<a href="${file['Enlace compartir']}" target="_blank" class="text-accent-purple hover:opacity-80" title="Abrir enlace compartido"><i class="fa-solid fa-share-nodes"></i></a>` : ''}
+        `;
+        filesContainer.appendChild(fileElement);
+    });
+}
 
 // =================================================================================
 // --- RENDERIZADO DE VISTAS ---
