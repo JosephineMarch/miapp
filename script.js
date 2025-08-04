@@ -20,6 +20,11 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 let currentUser = null;
 
+// --- Variables del Explorador de Nubes ---
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTo02xMWzMN--bzWUEjCM4qPnt0irknRoH5oA5pW1q_JJ6zX1e5_Q1C1FQxa3anNLgw7zrvI-CPCTyX/pub?gid=0&single=true&output=csv';
+let cloudData = [];
+let folderTree = {};
+
 // --- Referencias a Elementos UI ---
 const ui = {
     loginView: document.getElementById('login-view'),
@@ -91,9 +96,9 @@ const texts = {
 };
 
 // =================================================================================
-// --- AUTENTICACIÓN (CON LA CORRECCIÓN PARA EL MÓVIL) ---
+// --- AUTENTICACIÓN ---
 // =================================================================================
-onAuthStateChanged(auth, async (user) => { // <-- Se añade 'async' aquí
+onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
         document.body.classList.add('logged-in');
@@ -104,7 +109,7 @@ onAuthStateChanged(auth, async (user) => { // <-- Se añade 'async' aquí
         ui.userProfileIcon.innerHTML = `<img src="${user.photoURL}" alt="User" class="w-9 h-9 rounded-full cursor-pointer">`;
         
         initializeAppShell();
-        await initCloudExplorer(); // <-- Se añade 'await' para esperar a que los datos carguen
+        await initCloudExplorer();
         
         // Una vez cargado todo, renderizamos la vista por defecto
         renderView(state.currentView);
@@ -121,22 +126,21 @@ onAuthStateChanged(auth, async (user) => { // <-- Se añade 'async' aquí
         state.tasks = [];
         state.projects = [];
         state.transactions = [];
-        cloudData = []; // <-- Limpiamos los datos de la nube también
+        cloudData = [];
+        folderTree = {};
     }
 });
 
 ui.loginButton.onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
 ui.userProfileIcon.onclick = () => { if (currentUser) signOut(auth); };
 
-
 // =================================================================================
-// --- INICIALIZACIÓN Y NAVEGACIÓN (LIGERO CAMBIO) ---
+// --- INICIALIZACIÓN Y NAVEGACIÓN ---
 // =================================================================================
 function initializeAppShell() {
     renderAppLayout();
     attachBaseEventListeners();
     setupRealtimeListeners();
-    // Ya no renderizamos la vista aquí, lo hacemos después de cargar los datos
 }
 
 function renderAppLayout() {
@@ -233,13 +237,8 @@ function renderView(viewId) {
 }
 
 // =================================================================================
-// --- LÓGICA DEL EXPLORADOR DE NUBES (VERSIÓN 2.0 con ÁRBOL DE CARPETAS) ---
+// --- EXPLORADOR DE NUBES ---
 // =================================================================================
-
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTo02xMWzMN--bzWUEjCM4qPnt0irknRoH5oA5pW1q_JJ6zX1e5_Q1C1FQxa3anNLgw7zrvI-CPCTyX/pub?gid=0&single=true&output=csv';
-let cloudData = [];
-let folderTree = {};
-
 async function initCloudExplorer() {
     if (cloudData.length > 0) return;
     try {
@@ -251,7 +250,8 @@ async function initCloudExplorer() {
         console.log(`Cargados ${cloudData.length} archivos y árbol de carpetas construido.`);
     } catch (error) {
         console.error("Error al cargar los datos del explorador:", error);
-        cloudData = []; // Asegurarse de que esté vacío si falla
+        cloudData = [];
+        folderTree = {};
     }
 }
 
@@ -310,7 +310,7 @@ function renderCloudExplorer() {
     }
 
     renderFolderTree(folderTree, document.getElementById('folder-tree-container'));
-    displayFiles(cloudData); // Muestra todos al inicio
+    displayFiles(cloudData);
     
     document.getElementById('file-search-input').addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase();
@@ -325,7 +325,7 @@ function renderCloudExplorer() {
 
 function renderFolderTree(node, parentElement, currentPath = '') {
     const ul = document.createElement('ul');
-    if(currentPath !== '') ul.className = 'ml-4 hidden'; // Oculto por defecto, excepto el nivel raíz
+    if(currentPath !== '') ul.className = 'ml-4 hidden';
 
     // Botón para mostrar todos los archivos si estamos en la raíz
     if (currentPath === '') {
@@ -381,7 +381,6 @@ function renderFolderTree(node, parentElement, currentPath = '') {
 }
 
 function displayFiles(files, isFiltered = false) {
-    // ... (Esta función no necesita grandes cambios, la pego por completitud)
     const filesContainer = document.getElementById('files-container');
     filesContainer.innerHTML = '';
 
@@ -416,7 +415,6 @@ function displayFiles(files, isFiltered = false) {
         filesContainer.appendChild(fileElement);
     });
 }
-
 
 // =================================================================================
 // --- SISTEMA DE MODALES ---
@@ -528,153 +526,6 @@ function handleAddTransaction() { openModal({ title: texts.new_transaction, fiel
 function handleEditTransaction(transaction) { openModal({ title: texts.edit_transaction, data: transaction, fields: [ { id: 'description', label: texts.description, type: 'text', required: true }, { id: 'amount', label: texts.amount, type: 'number', required: true }, { id: 'type', label: texts.type, type: 'select', options: [{value: 'expense', label: texts.expense}, {value: 'income', label: texts.income}]}, { id: 'category', label: texts.category, type: 'text' }, { id: 'date', label: texts.date, type: 'date' } ], onSave: (data) => updateDoc(doc(db, 'users', currentUser.uid, 'transactions', transaction.id), data), onDelete: () => deleteDoc(doc(db, 'users',currentUser.uid, 'transactions', transaction.id)) }); }
 
 // =================================================================================
-// --- LÓGICA DEL EXPLORADOR DE NUBES ---
-// =================================================================================
-
-// Pega aquí el enlace CSV que publicaste en Google Sheets
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTo02xMWzMN--bzWUEjCM4qPnt0irknRoH5oA5pW1q_JJ6zX1e5_Q1C1FQxa3anNLgw7zrvI-CPCTyX/pub?gid=0&single=true&output=csv';
-let cloudData = []; // Guardaremos los datos aquí para no pedirlos cada vez
-
-async function initCloudExplorer() {
-    if (cloudData.length > 0) return; // Si ya los tenemos, no hacemos nada
-    try {
-        const response = await fetch(CSV_URL);
-        if (!response.ok) { throw new Error(`Error en la red: ${response.statusText}`); }
-        const csvText = await response.text();
-        // Usamos una función de parseo más robusta
-        cloudData = parseCSV(csvText);
-        console.log(`Cargados ${cloudData.length} archivos de la nube.`);
-        // Si el usuario está viendo el explorador, lo renderizamos de nuevo
-        if(state.currentView === 'cloud-explorer-view') {
-            renderCloudExplorer();
-        }
-    } catch (error) {
-        console.error("Error al cargar los datos del explorador:", error);
-        const container = document.getElementById('cloud-explorer-view');
-        if (container) {
-             container.innerHTML = '<p class="text-center text-red-500">No se pudieron cargar los datos de la nube. Revisa el enlace CSV.</p>';
-        }
-    }
-}
-
-function parseCSV(text) {
-    // Función de parseo mejorada que maneja comas dentro de los campos
-    const lines = text.trim().split('\n');
-    const headers = lines[0].split(',').map(h => h.trim());
-    const result = [];
-    for (let i = 1; i < lines.length; i++) {
-        const obj = {};
-        // Esta expresión regular simple asume que no hay comas escapadas dentro de comillas
-        const values = lines[i].split(',');
-        for (let j = 0; j < headers.length; j++) {
-            obj[headers[j]] = values[j] ? values[j].trim() : '';
-        }
-        result.push(obj);
-    }
-    return result;
-}
-
-function renderCloudExplorer() {
-    const container = document.getElementById('cloud-explorer-view');
-    if (!container) return;
-
-    // Estructura HTML del explorador
-    container.innerHTML = `
-        <h2 class="text-3xl font-bold text-accent-purple mb-6 text-center">Explorador de Nubes</h2>
-        <div class="explorer-layout">
-            <aside class="explorer-sidebar">
-                <h4 class="font-bold mb-2">Carpetas</h4>
-                <ul id="folder-list"></ul>
-            </aside>
-            <main class="explorer-content">
-                <div class="flex justify-between items-center mb-2">
-                    <h4 class="font-bold">Archivos</h4>
-                    <input type="text" id="file-search-input" placeholder="Buscar archivos..." class="w-1/2 bg-gray-100 border-transparent rounded-lg p-2 text-sm focus:ring-2 focus:ring-accent-purple">
-                </div>
-                <div id="files-container" class="space-y-2"></div>
-            </main>
-        </div>
-    `;
-
-    if (cloudData.length === 0) {
-        document.getElementById('files-container').innerHTML = '<p class="text-text-muted text-center py-8">Cargando datos...</p>';
-        return;
-    }
-
-    displayFolders(cloudData);
-    displayFiles(cloudData);
-    
-    // Añadimos el listener para el buscador
-    document.getElementById('file-search-input').addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const filteredData = cloudData.filter(file => file['Nombre Archivo'].toLowerCase().includes(searchTerm));
-        displayFiles(filteredData);
-    });
-}
-
-function displayFolders(data) {
-    const folderListElement = document.getElementById('folder-list');
-    const paths = [...new Set(data.map(item => item['Ruta (Path)']))].filter(Boolean); // Obtiene rutas únicas y elimina vacías
-    
-    folderListElement.innerHTML = '';
-    
-    const allFoldersLi = document.createElement('li');
-    allFoldersLi.innerHTML = `<i class="fa-regular fa-folder-open mr-2"></i> Todas las carpetas`;
-    allFoldersLi.className = 'p-2 cursor-pointer rounded-lg font-semibold tab-active'; // Usamos la clase de tu app
-    allFoldersLi.onclick = () => {
-        document.querySelectorAll('#folder-list li').forEach(li => li.classList.remove('tab-active'));
-        allFoldersLi.classList.add('tab-active');
-        displayFiles(data);
-    };
-    folderListElement.appendChild(allFoldersLi);
-
-    paths.sort().forEach(path => {
-        const listItem = document.createElement('li');
-        listItem.innerHTML = `<i class="fa-regular fa-folder mr-2"></i> ${path.replace('Mi unidad/', '')}`;
-        listItem.className = 'p-2 cursor-pointer rounded-lg text-text-muted hover:bg-gray-100';
-        listItem.onclick = () => {
-            document.querySelectorAll('#folder-list li').forEach(li => li.classList.remove('tab-active'));
-            listItem.classList.add('tab-active');
-            const filtered = data.filter(item => item['Ruta (Path)'] === path);
-            displayFiles(filtered, true);
-        };
-        folderListElement.appendChild(listItem);
-    });
-}
-
-function displayFiles(files, isFiltered = false) {
-    const filesContainer = document.getElementById('files-container');
-    filesContainer.innerHTML = '';
-
-    if (files.length === 0) {
-        filesContainer.innerHTML = `<p class="text-text-muted text-center py-8">${isFiltered ? 'No hay archivos en esta carpeta.' : 'No se encontraron archivos.'}</p>`;
-        return;
-    }
-
-    files.sort((a, b) => a['Nombre Archivo'].localeCompare(b['Nombre Archivo'])).forEach(file => {
-        const fileElement = document.createElement('div');
-        fileElement.className = 'bg-surface p-3 rounded-lg flex items-center justify-between card-hover';
-        
-        let fileIcon = 'fa-regular fa-file';
-        if (file.Tipo === 'Carpeta') fileIcon = 'fa-regular fa-folder text-yellow-500';
-        else if (file['Nombre Archivo'].includes('.pdf')) fileIcon = 'fa-regular fa-file-pdf text-red-500';
-        else if (/\.(png|jpg|jpeg|gif|svg)$/i.test(file['Nombre Archivo'])) fileIcon = 'fa-regular fa-file-image text-blue-500';
-        else if (/\.(doc|docx)$/i.test(file['Nombre Archivo'])) fileIcon = 'fa-regular fa-file-word text-blue-600';
-
-        const hasPublicLink = file['Enlace compartir'] && file['Enlace compartir'] !== 'Privado';
-
-        fileElement.innerHTML = `
-            <div class="flex items-center flex-grow">
-                <i class="${fileIcon} text-xl mr-4"></i>
-                <a href="${file['Enlace al original']}" target="_blank" class="font-semibold text-primary-dark hover:underline">${file['Nombre Archivo']}</a>
-            </div>
-            ${hasPublicLink ? `<a href="${file['Enlace compartir']}" target="_blank" class="text-accent-purple hover:opacity-80" title="Abrir enlace compartido"><i class="fa-solid fa-share-nodes"></i></a>` : ''}
-        `;
-        filesContainer.appendChild(fileElement);
-    });
-}
-
-// =================================================================================
 // --- RENDERIZADO DE VISTAS ---
 // =================================================================================
 function renderDashboard() {
@@ -754,7 +605,7 @@ function renderProjects() {
     container.innerHTML = `
         <div class="flex justify-center items-center mb-4"><h2 class="text-3xl font-bold text-accent-purple">${texts.projects}</h2></div>
         <div class="flex justify-center mb-6">
-             <img src="https://cdn.prod.website-files.com/5d5e2ff58f10c53dcffd8683/5d5e30d9898356c023c60de1_loving.svg" class="w-48 h-auto rounded-2xl illustration" alt="Project illustration">
+             <img src="https://cdn.prod.website-files.com/5d5e2ff58f10c53dcffd8683/5db1e0e7e74e34610bcb4951_loving.svg" class="w-48 h-auto rounded-2xl illustration" alt="Project illustration">
         </div>
         <div class="space-y-5">
             ${state.projects.length > 0 ? state.projects.map(project => {
